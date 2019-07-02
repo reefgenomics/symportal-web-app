@@ -39,8 +39,8 @@ body{
     /* top: 0;
     left: 0; */
     z-index: 1;
-    filter: blur(1px);
-    -webkit-filter: blur(1px);
+    filter: blur(3px);
+    -webkit-filter: blur(3px);
 }
 .logo_container{
     display:None;
