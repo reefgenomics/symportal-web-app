@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<meta charset="UTF-8">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/data_dev.css">
+
+    <title>SymPortal DataSet results</title>
+</head>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<svg width="960" height="500"></svg>
+<script>
+  
+  var margin = {top: 20, right: 50, bottom: 30, left: 20},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+  // Setup a color scale. In this case we will set three greys and use a modulus to get a suitable key but eventually
+  // we will want this to be the same colour set as is used in the png plots
+  var color = d3.scaleOrdinal() // D3 Version 4
+  .domain([0, 1, 2])
+  .range(["#FF0000", "#009933" , "#0000FF"]);
+  
+  // setup the sclae for x position of the bars
+  var x = d3.scaleBand().rangeRound([0, width])
+
+  // setup the scale for the y positioning of the bars
+  var y = d3.scaleLinear().rangeRound([height, 0])
+
+  var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  // Read in the data and make the plot
+  d3.json("data/seqs.absolute.json",
+      function(data) {
+        
+        console.log(data[0]);
+
+                      }
+               );
+</script>
+</body>
+</html>
