@@ -8,3 +8,4 @@ templated-projection/*
 .DS_Store/*
 symportal_website/images/
 symportal_website/data/
+symportal_website/data_dev/html_data/
