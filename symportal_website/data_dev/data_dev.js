@@ -96,33 +96,22 @@ function chart() {
         // values if they exist.
         // Then we should enter the exit state to get rid of old stuff
         // Then finally we should work with enter() to enter in any new svg elements and attach them to data
-        group.exit().remove()
-        var group = group.enter().append("g")
-        var group = group.classed("layer", true)
-        var group = group.attr("fill", function(d){
-            // here d is a given sequence and the name can be accessed with d.key
-            // have a look in the chrome dev tools when debugging for more info on the structure of d
-            // d.key gives us the user
-            // col_scale(d.key);
-            return col_scale(d.key);
-        } );
+        group.exit().remove();
+        group.enter().append("g").classed("layer", true).attr("fill", d => col_scale(d.key));
 
         var bars = svg.selectAll("g.layer").selectAll("rect")
         .data(d => d, e => e.data.sample_name);
 
-        bars.exit().remove()
+        bars.exit().remove();
 
-        var bars = bars.enter().append("rect");
-        var bars = bars.attr("width", x.bandwidth());
-        var bars = bars.merge(bars).transition().duration(speed);
-        var bars = bars.attr("x", function(d){
+        //NB this was breaking when we had this broken up and being reassigned to var bar each time
+        bars.enter().append("rect").attr("width", x.bandwidth()).merge(bars).transition().duration(speed)
+        .attr("x", function(d){
             var foo = d;
             return x(d.data.sample_name);
-        });
-        var bars = bars.attr("y", function(d)  {
+        }).attr("y", function(d)  {
             return y(d[1]);
-        });
-        var bars = bars.attr("height", function(d) {
+        }).attr("height", function(d) {
             var height_here = y(d[0]) - y(d[1]);
             console.log("Height set to" + height_here);
             return y(d[0]) - y(d[1]);
@@ -131,8 +120,8 @@ function chart() {
 			
 			
 	var data_type_selector = d3.select("#data_type_selector").on("change", function(){
-	    update(this.value, 750)
-	})
+	    update(this.value, 750);
+	});
 			
     
 }
