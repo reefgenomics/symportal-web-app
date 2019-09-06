@@ -1,4 +1,5 @@
 media
+symportal_website/data_dev/
 ./media/*
 templated-projection
 templated-projection/*

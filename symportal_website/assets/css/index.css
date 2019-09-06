@@ -152,6 +152,8 @@ nav a {
     grid-gap: 40px;
 }
 
+
+
 .img-rnd {
     border-radius: 50%;
     height:100px;
@@ -202,10 +204,60 @@ color: #333333;
     color: #f4f4f4;
 }
 
+/* published articles */
+/*section{border: 1px sold;}*/
+.published_articles{
+    border: 1px sold;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    }
 
+#published_articles_table{
+    padding: 0;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.5);
+
+    }
+
+.grid-1{display: grid; grid-template-columns: 1fr;}
+
+.article_table{
+    display: grid;
+    grid-template-columns: 1fr
+    border: 1px solid;
+    max-width:
+}
+
+.light_header{
+   padding: 10px;
+   text-align: center;
+   font-size: 1.4em;
+}
+
+.article_table_row {
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-gap:40px;
+    padding: 5px;
+}
+
+.article_table_header{
+    font-weight: bold;
+}
+
+.article{
+    color: black;
+}
+
+/* so that we can alternate the row colors I will have a .row_on and .row_off class */
+.row_on{
+    background-color: rgba(220, 220, 220, 0.5);
+}
+
+.row_off{
+    background-color: #f4f4f4;
+}
 
 /* Footer  */
-
 footer > p {
     margin:0;
     padding:0.3em;
