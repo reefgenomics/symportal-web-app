@@ -56,20 +56,35 @@ function populate_article_table(data){
                 var td = document.createElement('td');
                 // set the href to the appropriate value
                 if (field_key == "article_url"){
-                    td.innerHTML = "Article URL"
-//                    td.setAttribute("href", article['article_url']);
-//                    var td_div = document.createElement('div')
-//                    td_div.setAttribute("style", "height:100%;width:100%")
-//                    td_div.innerHTML = "Article URL";
-//                    td.appendChild(td_div)
+//                    td.innerHTML = "Article URL"
+                    // Check to see if there is a URL
+                    if (article['article_url'].includes('.')){
+                        var td_a = document.createElement('a')
+                        td_a.setAttribute("href", article['article_url']);
+                        var td_a_div = document.createElement('div')
+                        td_a_div.setAttribute("style", "height:100%;width:100%")
+                        td_a_div.innerHTML = "Article URL";
+                        td_a.appendChild(td_a_div)
+                        td.appendChild(td_a)
+                    }else{
+                        // if not a valid URL
+                        td.innerHTML = "--"
+                    }
+
 
                 }else if (field_key == "seq_data_url"){
-                    td.innerHTML = "Seq data URL"
-//                    td.setAttribute("href", article['seq_data_url']);
-//                    var td_div = document.createElement('div')
-//                    td_div.setAttribute("style", "height:100%;width:100%")
-//                    td_div.innerHTML = "Seq data URL";
-//                    td.appendChild(td_div)
+//                    td.innerHTML = "Seq data URL"
+                    if (article['seq_data_url'].includes('.')){
+                        var td_a = document.createElement('a')
+                        td_a.setAttribute("href", article['seq_data_url']);
+                        var td_a_div = document.createElement('div')
+                        td_a_div.setAttribute("style", "height:100%;width:100%")
+                        td_a_div.innerHTML = "Seq data URL";
+                        td_a.appendChild(td_a_div)
+                        td.appendChild(td_a)
+                    }else{
+                        td.innerHTML = "--"
+                    }
                 }
             }else{
                 // if not a url then we need a normal div

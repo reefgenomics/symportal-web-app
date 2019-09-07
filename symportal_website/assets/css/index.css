@@ -204,50 +204,25 @@ color: #333333;
     color: #f4f4f4;
 }
 
-/* published articles */
-/*section{border: 1px sold;}*/
-.published_articles{
-    /*border: 1px sold;
-    padding-top: 10px;
-    padding-bottom: 10px;*/
-    }
+table{font-size: 0.8em;}
 
 #published_articles_table{
     padding: 0;
-    font-size: 0.8em;
-    /*box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.5);*/
     }
 
-.grid-1{
-/*display: grid;
-grid-template-columns: 1fr;*/
-}
-
-.article_table{
-    /*display: grid;
-    grid-template-columns: 1fr
-    border: 1px solid;
-    max-width:*/
-}
 
 .light_header{
    padding: 10px;
    text-align: center;
    font-size: 1.4em;
+   margin: 0;
 }
 
-.article_table_row {
-    /*display: grid;
-    grid-template-columns: 1fr 4fr 1fr 1fr 1fr 1fr 1fr 1fr;
-    grid-gap:40px;
-    padding: 5px;
-    border-left: 1px solid #9e9e9e;
-    border-bottom: 1px solid #9e9e9e;
-    border-right: 1px solid #9e9e9e;
-    font-size: 0.8em;*/
+/* We'll use this to over write the rather large padding that the usual continer had that leaves
+too much white space when there are several containers back to back on the white background */
+.middle_container{
+    padding: 1rem 1rem;
 }
-
-
 
 /* so that we can alternate the row colors I will have a .row_on and .row_off class */
 
@@ -260,10 +235,6 @@ grid-template-columns: 1fr;*/
     background-color: #f4f4f4;
 }
 
-.article_table_header{
-    /*font-weight: bold;
-    border: 1px solid #9e9e9e;*/
-}
 
 /* Footer  */
 footer > p {
