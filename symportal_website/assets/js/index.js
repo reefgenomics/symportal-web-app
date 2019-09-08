@@ -41,9 +41,9 @@ function populate_article_table(data){
         // The first row needs to be light, so class .row_off
         // Then alternate to dark and light
         if (index%2 == 0) {//class needs to be off
-            tr.setAttribute("class", "article_table_row row_off");
+            tr.setAttribute("class", "hover_row row_off");
         }else{
-            tr.setAttribute("class", "article_table_row row_on");
+            tr.setAttribute("class", "hover_row row_on");
         }
 
         // Add a cell for each field

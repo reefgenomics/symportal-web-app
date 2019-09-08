@@ -210,6 +210,10 @@ table{font-size: 0.8em;}
     padding: 0;
     }
 
+.table_footnotes{
+    font-size: 0.7em;
+    font-weight: bold;
+    margin: 0;}
 
 .light_header{
    padding: 10px;
@@ -235,7 +239,12 @@ too much white space when there are several containers back to back on the white
     background-color: #f4f4f4;
 }
 
-
+.hover_row:hover{
+    /*background-color: rgba(255,255,153,0.2);*/
+    outline: none;
+    border-color: #9ecaed;
+    box-shadow: 0 0 10px #9ecaed;
+}
 /* Footer  */
 footer > p {
     margin:0;
