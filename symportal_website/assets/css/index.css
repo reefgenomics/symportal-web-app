@@ -226,6 +226,7 @@ table{font-size: 0.8em;}
 too much white space when there are several containers back to back on the white background */
 .middle_container{
     padding: 1rem 1rem;
+    border-top: 1px solid #e4e6e8;
 }
 
 /* so that we can alternate the row colors I will have a .row_on and .row_off class */
