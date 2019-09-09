@@ -7,7 +7,7 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/index.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     
     <title>Symportal | home</title>
 </head>
@@ -27,7 +27,7 @@
         <!-- Content has been positioned absolutely -->
         <div class="content" id="showcase_content">
             
-            <img src="images/greyscale_alt1.svg" class="logo" alt="reef_drop">
+            <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" class="logo" alt="reef_drop">
             <div class="title">SymPortal</div>
             
             <br class="clear">
@@ -64,17 +64,17 @@
 
             <!--Submit data -->
             <div class="center">
-                <img src="images/landing_one.jpg" class="img-rnd" alt="pic01">
+                <img src="{{ url_for('static', filename='images/landing_one.jpg') }}" class="img-rnd" alt="pic01">
                 <h3>Submit data</h3>
                 <p>To submit your data and run it against the remote database, please contact: <a class="email_a" href="mailto:benjamin.hume@kaust.edu.sa?Subject=new submission enquiry">&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#046;&#104;&#117;&#109;&#101;&#064;&#107;&#097;&#117;&#115;&#116;&#046;&#101;&#100;&#117;&#046;&#115;&#097;</a>
                         </p>
-                <a class="btn" href="submit_data_learn_more.html">Learn more</a>
+                <a class="btn" href="{{ url_for('submit_data_learn_more') }}">Learn more</a>
             </div>
 
 
             <!--Run locally-->
             <div class="center">
-                <img src="images/landing_two.jpeg" class="img-rnd" alt="pic02">
+                <img src="{{ url_for('static', filename='images/landing_two.jpeg') }}" class="img-rnd" alt="pic02">
                 <h3>Run locally</h3>
                 <p>You can run the SymPortal analysis locally using your own machine and your own database.</p>
                 <a class="btn" href="https://github.com/SymPortal/SymPortal_framework/wiki/Running-SymPortal">SymPortal Local</a>
@@ -106,7 +106,7 @@
                         08 Sept. 2019
                     </td>
                     <td>
-                        <a href="assets/resources/DIV_seqs_20190908.fasta">
+                        <a href=" {{ url_for('static', filename='resources/DIV_seqs_20190908.fasta') }}">
                             <div style="height:100%;width:100%;">
                                 Download
                             </div>
@@ -125,7 +125,7 @@
                         08 Sept. 2019
                     </td>
                     <td>
-                        <a href="assets/resources/all_seqs_post_med_20190908.fasta">
+                        <a href="{{ url_for('static', filename='resources/all_seqs_post_med_20190908.fasta') }}">
                             <div style="height:100%;width:100%;">
                                 Download
                             </div>
@@ -166,9 +166,9 @@
             <div style="font-size: 0.8em;">
                 <p>If you use the SymPortal analysis or make use of any of the SymPortal resources above, please cite us:</p>
                 <p>Hume, Benjamin CC, Edward G. Smith, Maren Ziegler, Hugh JM Warrington, John A. Burt, Todd C. LaJeunesse, Joerg Wiedenmann, and Christian R. Voolstra. "SymPortal: A novel analytical framework and platform for coral algal symbiont next‐generation sequencing ITS2 profiling." Molecular ecology resources 19;1063-1080 (2019).</p>
-                <a href="assets/resources/bibtex_ref.txt">BibTeX</a>
-                <a href="assets/resources/symportal_endnote_ref.enw">EndNote</a>
-                <a href="assets/resources/symportal_refman_ref.ris">RefMan</a>
+                <a href="{{ url_for('static', filename='resources/bibtex_ref.txt') }}">BibTeX</a>
+                <a href="{{ url_for('static', filename='resources/symportal_endnote_ref.enw') }}">EndNote</a>
+                <a href="{{ url_for('static', filename='resources/symportal_refman_ref.ris') }}">RefMan</a>
             </div>
         </div>
 
@@ -184,7 +184,7 @@
         <br>
         <p>Contact: <a href="mailto:benjamin.hume@kaust.edu.sa?Subject=new submission enquiry">&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#046;&#104;&#117;&#109;&#101;&#064;&#107;&#097;&#117;&#115;&#116;&#046;&#101;&#100;&#117;&#046;&#115;&#097;</a></p>
     </footer>
-    <script src="assets/published_articles/published_articles.js"></script>
-    <script src="assets/js/index.js"></script>
+    <script src="{{ url_for('static', filename='published_articles/published_articles.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 </html>

@@ -29,7 +29,7 @@ body{
 /* nav_bar */
 
 .nav_background{
-    background-image: url(../../images/learn_more_nav_banner.JPG);
+    background-image: url(../images/learn_more_nav_banner.JPG);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;

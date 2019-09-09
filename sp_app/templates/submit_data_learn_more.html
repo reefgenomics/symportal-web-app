@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="assets/css/submit_data_learn_more.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/submit_data_learn_more.css') }}">
     <title>Submit data | learn more</title>
 </head>
 <body>
     <!-- Nav Bar -->
-    <div class="logo_container"><img src="images/greyscale_alt1.svg" alt="" class="logo"></div>
+    <div class="logo_container"><img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" alt="" class="logo"></div>
     
     <div class="nav_background"></div>
     <div class="nav_bar grid-2">
@@ -17,7 +17,7 @@
             <a href="https://reefgenomics.kaust.edu.sa/Pages/Home.aspx">Reef Genomics Lab</a>
         </div>
         <div class="nav_right">
-            <a href="https://github.com/SymPortal/SymPortal_framework">source code</a><span class="vert_div_smll"></span><a href="https://github.com/SymPortal/SymPortal_framework/wiki/Welcome-to-SymPortal">wiki</a><span class="vert_div_smll"></span><a href="index.html">home</a>
+            <a href="https://github.com/SymPortal/SymPortal_framework">source code</a><span class="vert_div_smll"></span><a href="https://github.com/SymPortal/SymPortal_framework/wiki/Welcome-to-SymPortal">wiki</a><span class="vert_div_smll"></span><a href="{{ url_for('index') }}">home</a>
         </div>
     </div>
     
@@ -33,7 +33,7 @@
             <!-- Par that is made up of the section title paried with para and image -->
             <div class="para pic_para_left">
                 <div class="para_image_container">
-                    <img src="images/text_one.jpg" class="img-rnd" alt="text_one">
+                    <img src="{{ url_for('static', filename='images/text_one.jpg') }}" class="img-rnd" alt="text_one">
                 </div>
                 <div class="para_of_pic_para">
                     <h4>Why submit my data?</h4>
@@ -52,7 +52,7 @@
                     <p>Unpublished (and not publically available) data submitted to SymPortal will not be directly available to other users. However, immediately after submission, other users of SymPortal will be able to benefit from your data, just as you will be able to benefit from theirs. This is because during the SymPortal analysis the sets of sequences found in your samples are also searched for in all other previously submitted samples (as described in the Why submit my data section above). If your samples share ITS2 type profiles in common with other samples in the database you will be informed of this in your ITS2 type profile output count table. For each ITS2 type profile an ‘ITS2 type abundance local’ and an ‘ITS2 type abundance DB' are reported. The former, subtracted from the latter, will give you an indication of how many samples in the database, that were not part of your data set, contained the ITS2 type profile in question. No other information from non-user samples are returned.</p>
                 </div>
                 <div class="para_image_container">
-                    <img src="images/text_two.JPG" class="img-rnd" alt="text_two">
+                    <img src="{{ url_for('static', filename='images/text_two.JPG') }}" class="img-rnd" alt="text_two">
                 </div>
             </div>
         </div>

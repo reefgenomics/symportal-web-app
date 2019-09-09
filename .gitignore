@@ -8,3 +8,7 @@ templated-projection/*
 .idea/*
 .DS_Store/*
 symportal_website/images/
+__pycache__/
+sp_app/data_dev/
+sp_flask_launcher.py
+sp_app/static/images/
