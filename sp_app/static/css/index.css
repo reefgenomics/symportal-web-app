@@ -335,7 +335,7 @@ footer
     border-spacing: 10px 30px;
     }
 
-    table thead{
+    table .header_row{
         display: none;
     }
 
