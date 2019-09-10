@@ -23,11 +23,13 @@ function unblur_nav_bar(){
 }
 
 
+
+// Populate the published articles tables
 function populate_article_table(data){
 
     // Get the table object to which we append rows and cells
     var table = document.getElementById('published_articles_table');
-
+    var tbody = table.querySelector("tbody")
     // For each article create row if published
     data.forEach(function(article, index){
         // If the article is not yet published, then do not add to table
@@ -49,11 +51,15 @@ function populate_article_table(data){
         // Add a cell for each field
         table_fields = ["article_name", "title", "location", "num_samples",
                         "additional_markers", "run_type", "article_url", "seq_data_url"];
+        // The labels that we will asign as attribute label and that will be used when doing the mobile
+        // version of the table
+        labels = ["Article", "Title", "Location", "#Samples", "Additional markers", "Run type", "Article URL", "Seq data URL"]
 
-        table_fields.forEach(function(field_key){
+        table_fields.forEach(function(field_key, index){
             // If url then need to make <a> otherwise plain div
             if (field_key.includes("url")){
                 var td = document.createElement('td');
+                td.setAttribute("label", labels[index]);
                 // set the href to the appropriate value
                 if (field_key == "article_url"){
 //                    td.innerHTML = "Article URL"
@@ -89,11 +95,12 @@ function populate_article_table(data){
             }else{
                 // if not a url then we need a normal div
                 var td = document.createElement('td');
+                td.setAttribute("label", labels[index]);
                 td.innerHTML = article[field_key];
             }
             tr.appendChild(td);
         });
-        table.appendChild(tr)
+        tbody.appendChild(tr)
     });
 
 //    return tr;

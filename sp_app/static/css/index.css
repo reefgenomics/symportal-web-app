@@ -268,6 +268,9 @@ footer
     padding-bottom:10px;
 }
 
+
+
+/* For when we are working on a mobile*/
 @media (max-width: 560px){
     /* Showcase background */
     #nav_cont{
@@ -326,8 +329,44 @@ footer
         padding: 1rem 1rem;
     
     }
+
+    table{
+    border-collapse: collapse;
+    border-spacing: 10px 30px;
+    }
+
+    table thead{
+        display: none;
+    }
+
+    table td{
+        display: flex;
+    }
+
+    table tr{
+        border: 1px solid #e4e6e8;
+
+    }
+
+    table td::before{
+        content: attr(label);
+        font-weight: bold;
+        width: 120px;
+        min-width: 120px;
+    }
+
+    #cite_us_text{
+        text-align: justify;
+    }
+
+    #citation_links{
+        text-align: center;
+    }
     
 }
+
+
+
 @media (max-height: 500px){
     .content .text{
         display: None;

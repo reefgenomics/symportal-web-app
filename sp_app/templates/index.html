@@ -88,50 +88,55 @@
         <div class="container middle_container">
             <h3 class="light_header">Resources</h3>
             <table id="resources_table">
-                <tr class="row_on">
-                    <th>Resource</th>
-                    <th>Description</th>
-                    <th>Upload date</th>
-                    <th>Link</th>
-                </tr>
-                <tr class="hover_row row_off">
-                    <td>
-                        DIV_fasta
-                    </td>
-                    <td>
-                        Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote that have been used as defining intragenomic variants (DIVs; used in the definition of at least one ITS2 Type Profile).
-                        This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 3360 sequences from 4 published studies.
-                    </td>
-                    <td>
-                        08 Sept. 2019
-                    </td>
-                    <td>
-                        <a href=" {{ url_for('static', filename='resources/DIV_seqs_20190908.fasta') }}">
-                            <div style="height:100%;width:100%;">
-                                Download
-                            </div>
-                        </a>
-                    </td>
-                </tr>
-                <tr class="hover_row row_on">
-                    <td>
-                        all_seqs_fasta_post_MED
-                    </td>
-                    <td>
-                        Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote after having been through the SymPortal quality control pipeline and undergoing minimum entropy decomposition on a sample by sample basis.
-                        This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 6126 sequences from 4 published studies.
-                    </td>
-                    <td>
-                        08 Sept. 2019
-                    </td>
-                    <td>
-                        <a href="{{ url_for('static', filename='resources/all_seqs_post_med_20190908.fasta') }}">
-                            <div style="height:100%;width:100%;">
-                                Download
-                            </div>
-                        </a>
-                    </td>
-                </tr>
+                <thead>
+                    <tr class="row_on">
+                        <th>Resource</th>
+                        <th>Description</th>
+                        <th>Upload date</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="hover_row row_off">
+                        <td label="Resource">
+                            DIV_fasta
+                        </td>
+                        <td label="Description">
+                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote that have been used as defining intragenomic variants (DIVs; used in the definition of at least one ITS2 Type Profile).
+                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 3360 sequences from 4 published studies.
+                        </td>
+                        <td label="Upload date">
+                            08 Sept. 2019
+                        </td>
+                        <td label="Link">
+                            <a href=" {{ url_for('static', filename='resources/DIV_seqs_20190908.fasta') }}">
+                                <div style="height:100%;width:100%;">
+                                    Download
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="hover_row row_on">
+                        <td label="Resource">
+                            all_seqs_fasta_post_MED
+                        </td>
+                        <td label="Description">
+                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote after having been through the SymPortal quality control pipeline and undergoing minimum entropy decomposition on a sample by sample basis.
+                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 6126 sequences from 4 published studies.
+                        </td>
+                        <td label="Upload date">
+                            08 Sept. 2019
+                        </td>
+                        <td label="Link">
+                            <a href="{{ url_for('static', filename='resources/all_seqs_post_med_20190908.fasta') }}">
+                                <div style="height:100%;width:100%;">
+                                    Download
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+
             </table>
             <p class="table_footnotes">Interested in a published resource that's not listed? Get in touch!</p>
         </div>
@@ -144,16 +149,21 @@
         <div class="container middle_container">
             <h3 class="light_header">Published articles using SymPortal</h3>
             <table id="published_articles_table">
-                <tr class="row_on">
-                    <th>Article</th>
-                    <th>Title</th>
-                    <th>Location</th>
-                    <th>#Samples</th>
-                    <th>Additional markers</th>
-                    <th>Run type</th>
-                    <th>Article URL</th>
-                    <th>Seq data URL</th>
-                </tr>
+                <thead>
+                    <tr class="row_on">
+                        <th>Article</th>
+                        <th>Title</th>
+                        <th>Location</th>
+                        <th>#Samples</th>
+                        <th>Additional markers</th>
+                        <th>Run type</th>
+                        <th>Article URL</th>
+                        <th>Seq data URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <!-- Article rows will go in here-->
+                </tbody>
             </table>
             <p class="table_footnotes">Do you have an article to add? Do you have additional information about an existing article? Get in touch!</p>
         </div>
@@ -163,12 +173,15 @@
     <section class="cite_us bg-light">
         <div class="container middle_container">
             <h3 class="light_header">Please cite us</h3>
-            <div style="font-size: 0.8em;">
+            <div style="font-size: 0.8em;" id="cite_us_text">
                 <p>If you use the SymPortal analysis or make use of any of the SymPortal resources above, please cite us:</p>
                 <p>Hume, Benjamin CC, Edward G. Smith, Maren Ziegler, Hugh JM Warrington, John A. Burt, Todd C. LaJeunesse, Joerg Wiedenmann, and Christian R. Voolstra. "SymPortal: A novel analytical framework and platform for coral algal symbiont next‐generation sequencing ITS2 profiling." Molecular ecology resources 19;1063-1080 (2019).</p>
-                <a href="{{ url_for('static', filename='resources/bibtex_ref.txt') }}">BibTeX</a>
-                <a href="{{ url_for('static', filename='resources/symportal_endnote_ref.enw') }}">EndNote</a>
-                <a href="{{ url_for('static', filename='resources/symportal_refman_ref.ris') }}">RefMan</a>
+                <div id="citation_links">
+                    <a href="{{ url_for('static', filename='resources/bibtex_ref.txt') }}">BibTeX</a>
+                    <a href="{{ url_for('static', filename='resources/symportal_endnote_ref.enw') }}">EndNote</a>
+                    <a href="{{ url_for('static', filename='resources/symportal_refman_ref.ris') }}">RefMan</a>
+                </div>
+
             </div>
         </div>
 
