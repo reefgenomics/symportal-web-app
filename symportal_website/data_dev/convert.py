@@ -6,13 +6,18 @@ especially as we have lots of bars that are 0 in our data.
 
 We will make an array of objects where each object is rectangle. It will have attibutes for sample, y, height, and fill
 
-
+The next thing to try will be to have a js object array of objects (i.e. a dictionary) where a sample is the key
+and a list of rectangles (as used in the previous structure will be the value.
 """
 
 import json
+from collections import defaultdict
 
 
-def make_rect_array(path_of_json_dir_to_convert_rel, path_of_json_dir_to_convert_abs, function_name, path_of_js_file_to_write_out_to, pre_post):
+def make_rect_array(
+        path_of_json_dir_to_convert_rel, path_of_json_dir_to_convert_abs, function_name_first_structure,
+        function_name_second_structure, path_of_js_file_to_write_out_to_first_structure,
+        path_of_js_file_to_write_out_to_second_structure, pre_post):
 
     # first get the relative abundance
     with open(path_of_json_dir_to_convert_rel, 'r') as f:
@@ -50,7 +55,6 @@ def make_rect_array(path_of_json_dir_to_convert_rel, path_of_json_dir_to_convert
     # we will want to have this value for both the postMED and the preMED versions of this
     # we will write the value in as another function in the .js file that we write out at the end
     max_cumulative_abs = 0
-
     for sample_key in json_rel_abund_dict_of_dicts.keys():
         rel_dict = json_rel_abund_dict_of_dicts[sample_key]
         abs_dict = json_abs_abund_dict_of_dicts[sample_key]
@@ -79,30 +83,52 @@ def make_rect_array(path_of_json_dir_to_convert_rel, path_of_json_dir_to_convert
             max_cumulative_abs = cumulative_count_abs
 
 
-    # here we should have the sample_dict populated
+    # here we should have the sample_dict populated that will be the first structure and the second structure will
+    # be made from
     # now write this out as a json file
     json_dict = json.dumps(new_rect_list)
-    # with open('html_data/rect_array_preMED_relative.json', 'w') as f:
-    #     f.write(f'{json_dict}\n')
-    js_file = ["function " + function_name + "(){"]
+
+    js_file = ["function " + function_name_first_structure + "(){"]
     js_file.append("return " + json_dict + "}")
 
     # if postMED then also write out the function that will return the larges abosulte number of sequnces
 
-    js_file.append("function " + function_name + "MaxSeq" + "(){")
+    js_file.append("function " + function_name_first_structure + "MaxSeq" + "(){")
     js_file.append("return " + str(int(max_cumulative_abs)) + "}")
-    js_file.append("function " + function_name + "SampleList" + "(){")
+    js_file.append("function " + function_name_first_structure + "SampleList" + "(){")
     js_file.append("return " + json.dumps(sample_list) + "}")
 
-    with open(path_of_js_file_to_write_out_to, 'w') as f:
+    with open(path_of_js_file_to_write_out_to_first_structure, 'w') as f:
+        for line in js_file:
+            f.write(f'{line}\n')
+
+    # Make the second data structure type
+    # here we have the second data structure ready
+    second_data_structure = defaultdict(list)
+    for sample in sample_list:
+        second_data_structure[sample] = [sub_dict for sub_dict in new_rect_list if sub_dict["sample"] == sample]
+    second_data_structure = dict(second_data_structure)
+    json_second_data_structure = json.dumps(second_data_structure)
+
+    js_file = ["function " + function_name_second_structure + "(){"]
+    js_file.append("return " + json_second_data_structure + "}")
+
+    # if postMED then also write out the function that will return the larges abosulte number of sequnces
+
+    js_file.append("function " + function_name_second_structure + "MaxSeq" + "(){")
+    js_file.append("return " + str(int(max_cumulative_abs)) + "}")
+    js_file.append("function " + function_name_second_structure + "SampleList" + "(){")
+    js_file.append("return " + json.dumps(sample_list) + "}")
+
+    with open(path_of_js_file_to_write_out_to_second_structure, 'w') as f:
         for line in js_file:
             f.write(f'{line}\n')
 
 
 
 # We will need to do this for both the absolute and relative versions of the pre and post MED so 4 times
-make_rect_array(path_of_json_dir_to_convert_rel = "html_data/seq.relative.preMED.json", path_of_json_dir_to_convert_abs="html_data/seq.absolute.preMED.json", function_name = "getRectDataPreMED", path_of_js_file_to_write_out_to = "html_data/rect_array_preMED.js", pre_post="pre")
-make_rect_array(path_of_json_dir_to_convert_rel = "html_data/seq.relative.postMED.json", path_of_json_dir_to_convert_abs = "html_data/seq.absolute.postMED.json", function_name = "getRectDataPostMED", path_of_js_file_to_write_out_to = "html_data/rect_array_postMED.js", pre_post="post")
+make_rect_array(path_of_json_dir_to_convert_rel = "html_data/seq.relative.preMED.json", path_of_json_dir_to_convert_abs="html_data/seq.absolute.preMED.json", function_name_first_structure="getRectDataPreMED", function_name_second_structure="getRectDataPreMEDBySample", path_of_js_file_to_write_out_to_first_structure="html_data/rect_array_preMED.js", path_of_js_file_to_write_out_to_second_structure="html_data/rect_array_preMED_by_sample.js", pre_post="pre")
+make_rect_array(path_of_json_dir_to_convert_rel = "html_data/seq.relative.postMED.json", path_of_json_dir_to_convert_abs = "html_data/seq.absolute.postMED.json", function_name_first_structure="getRectDataPostMED", function_name_second_structure="getRectDataPostMEDBySample", path_of_js_file_to_write_out_to_first_structure="html_data/rect_array_postMED.js", path_of_js_file_to_write_out_to_second_structure="html_data/rect_array_postMED_by_sample.js", pre_post="post")
 
 
 foo = 'bar'
