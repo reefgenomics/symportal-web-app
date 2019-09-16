@@ -78,22 +78,22 @@ function chart() {
     svg_pre_med.append("g").attr("class", "bars")
 
     if (d3.select("#data_type_selector").property("value") == 'absolute'){
-        update('absolute', 0);
+        setTimeout(update_post_med,0,'absolute', 0);
+        setTimeout(update_pre_med,1000,'absolute', 0);
     } else if (d3.select("#data_type_selector").property("value") == 'relative'){
-        update('relative', 0);
+        setTimeout(update_post_med, 0, 'relative', 0);
+        setTimeout(update_pre_med,1000, 'relative', 0);
     }
 
 
-    function update(data_type, speed){
+    function update_post_med(data_type, speed){
 
 
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
         if (data_type == "absolute"){
             y_post_med.domain([0, max_y_val_post_med]).nice();
-            y_pre_med.domain([0, max_y_val_pre_med]).nice();
         }else{
             y_post_med.domain([0, 1]).nice();
-            y_pre_med.domain([0, 1]).nice();
         }
 
 
@@ -103,14 +103,9 @@ function chart() {
         .duration(speed)
         .call(d3.axisLeft(y_post_med).ticks(null, "s"));
 
-        svg_pre_med.selectAll("#y_axis_pre_med")
-        .transition()
-        .duration(speed)
-        .call(d3.axisLeft(y_pre_med).ticks(null, "s"));
 
         // Set the domain of the x. This should be the sample names
         x_post_med.domain(sample_list);
-        x_pre_med.domain(sample_list);
 
         // Complete the x axis
         // This should be fairly invariable for the time being as we aren't playing with the order of the x axis yet
@@ -118,12 +113,7 @@ function chart() {
                 .call(d3.axisBottom(x_post_med).tickSizeOuter(0)).selectAll("text")
                 .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                 .style("text-anchor", "start").style("text-anchor", "start");
-        svg_pre_med.selectAll("#x_axis_pre_med").transition().duration(speed)
-                .call(d3.axisBottom(x_pre_med).tickSizeOuter(0)).selectAll("text")
-                .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-                .style("text-anchor", "start").style("text-anchor", "start");
 
-        //TODO this is where we switch from the stacked bar chart black magic to simple rectanges
         // Process the post_MED data first.
         var bars_post_med = svg_post_med.select("g.bars").selectAll("rect").data(data_post_med, function(d){
             return d.seq_name + d.sample;
@@ -134,65 +124,78 @@ function chart() {
         if (data_type == 'absolute'){
 
             bars_post_med.transition().duration(1000).attr("x", function(d){
-                console.log("x set to " + x_post_med(d.sample))
                 return x_post_med(d.sample);
             }).attr("y", function(d){
-                console.log("y set to " + y_post_med(d.y_abs))
                 return y_post_med(d.y_abs);
             }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
-                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_abs)));
                 return y_post_med(0) - y_post_med(d.height_abs);}
             ).attr("fill", function(d){
-                console.log("fill set to " + d.fill)
                 return d.fill;
             }).delay(function(d,i){return(i*5)});
 
 
             bars_post_med.enter().append("rect")
             .attr("x", function(d){
-                console.log("x set to " + x_post_med(d.sample))
                 return x_post_med(d.sample);
             }).attr("y", y_post_med(0)).transition().duration(1000).attr("y", function(d){
-                console.log("y set to " + y_post_med(d.y_abs))
                 return y_post_med(d.y_abs);
             }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
-                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_abs)));
                 return y_post_med(0) - y_post_med(d.height_abs);}
             ).attr("fill", function(d){
-                console.log("fill set to " + d.fill)
                 return d.fill;
             });
         }else if(data_type == 'relative'){
             bars_post_med.transition().duration(1000).attr("x", function(d){
-                console.log("x set to " + x_post_med(d.sample))
                 return x_post_med(d.sample);
             }).attr("y", function(d){
-                console.log("y set to " + y_post_med(d.y_rel))
                 return y_post_med(d.y_rel);
             }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
-                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_rel)));
                 return y_post_med(0) - y_post_med(d.height_rel);}
             ).attr("fill", function(d){
-                console.log("fill set to " + d.fill)
                 return d.fill;
             }).delay(function(d,i){return(i*5)});
 
 
             bars_post_med.enter().append("rect")
             .attr("x", function(d){
-                console.log("x set to " + x_post_med(d.sample))
                 return x_post_med(d.sample);
             }).attr("y", y_post_med(0)).transition().duration(1000).attr("y", function(d){
-                console.log("y set to " + y_post_med(d.y_rel))
                 return y_post_med(d.y_rel);
             }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
-                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_rel)));
                 return y_post_med(0) - y_post_med(d.height_rel);}
             ).attr("fill", function(d){
-                console.log("fill set to " + d.fill)
                 return d.fill;
             });
         }
+        var foo = "bar"
+
+    }
+
+    function update_pre_med(data_type, speed){
+
+
+        // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
+        if (data_type == "absolute"){
+            y_pre_med.domain([0, max_y_val_pre_med]).nice();
+        }else{
+            y_pre_med.domain([0, 1]).nice();
+        }
+
+        // Now update the y axis
+        svg_pre_med.selectAll("#y_axis_pre_med")
+        .transition()
+        .duration(speed)
+        .call(d3.axisLeft(y_pre_med).ticks(null, "s"));
+
+        // Set the domain of the x. This should be the sample names
+        x_pre_med.domain(sample_list);
+
+        // Complete the x axis
+        // This should be fairly invariable for the time being as we aren't playing with the order of the x axis yet
+        svg_pre_med.selectAll("#x_axis_pre_med").transition().duration(speed)
+                .call(d3.axisBottom(x_pre_med).tickSizeOuter(0)).selectAll("text")
+                .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+                .style("text-anchor", "start").style("text-anchor", "start");
 
         // Then let's process the pre-MED and see how we're looking
         var bars_pre_med = svg_pre_med.select("g.bars").selectAll("rect").data(data_pre_med, function(d){
@@ -249,28 +252,17 @@ function chart() {
                 return d.fill;
             });
         }
-
-
         var foo = "bar"
-
-//        bars_pre_med.enter().append("rect").attr("width", x_pre_med.bandwidth()).merge(bars_pre_med).transition().duration(speed)
-//        .attr("x", function(d){
-//            var foo = d;
-//            return x_pre_med(d.data.sample_name);
-//        }).attr("y", function(d)  {
-//            return y_pre_med(d[1]);
-//        }).attr("height", function(d) {
-//            return y_pre_med(d[0]) - y_pre_med(d[1]);
-//        }).delay(function(d, i){return(i*500)});
     }
-
 
 	var data_type_selector = d3.select("#data_type_selector").on("change", function(){
 
 	    if (this.value == 'absolute'){
-            setTimeout(update, 0, 'absolute', 1000);
+            setTimeout(update_post_med, 0, 'absolute', 1000);
+            setTimeout(update_pre_med, 1000, 'absolute', 1000);
         } else if (this.value == 'relative'){
-            setTimeout(update, 0, 'relative', 1000);
+            setTimeout(update_post_med, 0, 'relative', 1000);
+            setTimeout(update_pre_med, 1000, 'relative', 1000);
         }
 	});
 
