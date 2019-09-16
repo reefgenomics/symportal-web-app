@@ -75,6 +75,7 @@ function chart() {
 
     //Add a g to the svgs that we will use for the bars
     svg_post_med.append("g").attr("class", "bars")
+    svg_pre_med.append("g").attr("class", "bars")
 
     if (d3.select("#data_type_selector").property("value") == 'absolute'){
         update('absolute', 0);
@@ -123,16 +124,7 @@ function chart() {
                 .style("text-anchor", "start").style("text-anchor", "start");
 
         //TODO this is where we switch from the stacked bar chart black magic to simple rectanges
-
-
-
-//        var bars_post_med = svg_post_med.selectAll("bar").data(data_post_med).attr("x", d => x_post_med(d.sample) ).attr("y", d => d.y).attr("width", x_post_med.bandwidth()).attr("height", d => d.height).attr("fill", d => d.fill);
-////        var bars_pre_med = svg_pre_med.selectAll("g.layer").selectAll("rect")
-////        .data(d => d, e => e.data.sample_name);
-//
-//        bars_post_med.exit().remove();
-////        bars_pre_med.exit().remove();
-
+        // Process the post_MED data first.
         var bars_post_med = svg_post_med.select("g.bars").selectAll("rect").data(data_post_med, function(d){
             return d.seq_name + d.sample;
         });
@@ -153,7 +145,7 @@ function chart() {
             ).attr("fill", function(d){
                 console.log("fill set to " + d.fill)
                 return d.fill;
-            });
+            }).delay(function(d,i){return(i*5)});
 
 
             bars_post_med.enter().append("rect")
@@ -183,7 +175,7 @@ function chart() {
             ).attr("fill", function(d){
                 console.log("fill set to " + d.fill)
                 return d.fill;
-            });
+            }).delay(function(d,i){return(i*5)});
 
 
             bars_post_med.enter().append("rect")
@@ -198,6 +190,62 @@ function chart() {
                 return y_post_med(0) - y_post_med(d.height_rel);}
             ).attr("fill", function(d){
                 console.log("fill set to " + d.fill)
+                return d.fill;
+            });
+        }
+
+        // Then let's process the pre-MED and see how we're looking
+        var bars_pre_med = svg_pre_med.select("g.bars").selectAll("rect").data(data_pre_med, function(d){
+            return d.seq_name + d.sample;
+        });
+
+        bars_pre_med.exit().remove()
+
+        if (data_type == 'absolute'){
+
+            bars_pre_med.transition().duration(2000).attr("x", function(d){
+                return x_pre_med(d.sample);
+            }).attr("y", function(d){
+                return y_pre_med(d.y_abs);
+            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
+                return Math.max((y_pre_med(0) - y_pre_med(d.height_abs)), 1);}
+            ).attr("fill", function(d){
+                return d.fill;
+            }).delay(function(d,i){return(i*0.1)});
+
+
+            bars_pre_med.enter().append("rect")
+            .attr("x", function(d){
+                return x_pre_med(d.sample);
+            }).attr("y", y_pre_med(0)).transition().duration(2000).attr("y", function(d){
+                return y_pre_med(d.y_abs);
+            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
+                return Math.max((y_pre_med(0) - y_pre_med(d.height_abs)), 1);}
+            ).attr("fill", function(d){
+                return d.fill;
+            });
+
+        }else if(data_type == 'relative'){
+
+            bars_pre_med.transition().duration(2000).attr("x", function(d){
+                return x_pre_med(d.sample);
+            }).attr("y", function(d){
+                return y_pre_med(d.y_rel);
+            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
+                return Math.max((y_pre_med(0) - y_pre_med(d.height_rel)), 1);
+            }).attr("fill", function(d){
+                return d.fill;
+            }).delay(function(d,i){return(i*0.1)});
+
+
+            bars_pre_med.enter().append("rect")
+            .attr("x", function(d){
+                return x_pre_med(d.sample);
+            }).attr("y", y_pre_med(0)).transition().duration(2000).attr("y", function(d){
+                return y_pre_med(d.y_rel);
+            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
+                return Math.max((y_pre_med(0) - y_pre_med(d.height_rel)), 1);}
+            ).attr("fill", function(d){
                 return d.fill;
             });
         }
