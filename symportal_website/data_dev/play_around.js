@@ -3,7 +3,16 @@
 // Have a toggle for absolute/relative
 // Have a toggle for pre-MED/post-MED
 
+var data_post_med  = getRectDataPostMED();
+// if plotting absolute values we can get the highest y from the 'post_med_aboslute' property
+var max_y_val_post_med = getRectDataPostMEDMaxSeq();
 
+var data_pre_med  = getRectDataPreMED();
+
+// if plotting absolute values we can get the highest y from the 'post_taxa_... ' for the pre-med
+var max_y_val_pre_med = getRectDataPreMEDMaxSeq();
+
+var sample_list = getRectDataPreMEDSampleList();
 
 chart();
 
@@ -64,30 +73,28 @@ function chart() {
 		.attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_pre_med")
 
-    update(d3.select("#data_type_selector").property("value"), 0);
+    //Add a g to the svgs that we will use for the bars
+    svg_post_med.append("g").attr("class", "bars")
+
+    if (d3.select("#data_type_selector").property("value") == 'absolute'){
+        update('absolute', 0);
+    } else if (d3.select("#data_type_selector").property("value") == 'relative'){
+        update('relative', 0);
+    }
+
 
     function update(data_type, speed){
-        var sample_list = getRectDataAbsolutePostMEDSampleList()
-        if (data_type == 'absolute'){
-            var data_post_med  = getRectDataAbsolutePostMED();
-            // if plotting absolute values we can get the highest y from the 'post_med_aboslute' property
-            var max_y_val_post_med = getRectDataAbsolutePostMEDMaxSeq();
 
-            var data_pre_med  = getRectDataAbsolutePreMED();
-
-            // if plotting absolute values we can get the highest y from the 'post_taxa_... ' for the pre-med
-            var max_y_val_pre_med = getRectDataAbsolutePreMEDMaxSeq();
-        } else if (data_type == 'relative')
-        {
-            var data_post_med = getRectDataRelativePostMED();
-            var max_y_val_post_med = 1;
-            var data_pre_med = getRectDataRelativePreMED();
-            var max_y_val_pre_med = 1;
-        }
 
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
-        y_post_med.domain([0, max_y_val_post_med]).nice();
-        y_pre_med.domain([0, max_y_val_pre_med]).nice();
+        if (data_type == "absolute"){
+            y_post_med.domain([0, max_y_val_post_med]).nice();
+            y_pre_med.domain([0, max_y_val_pre_med]).nice();
+        }else{
+            y_post_med.domain([0, 1]).nice();
+            y_pre_med.domain([0, 1]).nice();
+        }
+
 
         // Now update the y axis
         svg_post_med.selectAll("#y_axis_post_med")
@@ -126,22 +133,75 @@ function chart() {
 //        bars_post_med.exit().remove();
 ////        bars_pre_med.exit().remove();
 
-        var bars_post_med = svg_post_med.append("g").selectAll("bar").data(data_post_med).enter().append("rect")
-
-        bars_post_med
-        .attr("x", function(d){
-        console.log("x set to " + x_post_med(d.sample))
-        return x_post_med(d.sample);
-        }).attr("y", function(d){
-        console.log("y set to " + y_post_med(d.y))
-        return y_post_med(d.y);
-        }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
-        console.log("height set to " + (y_post_med(0) - y_post_med(d.height)));
-        return y_post_med(0) - y_post_med(d.height);}
-        ).attr("fill", function(d){
-        console.log("fill set to " + d.fill)
-        return d.fill;
+        var bars_post_med = svg_post_med.select("g.bars").selectAll("rect").data(data_post_med, function(d){
+            return d.seq_name + d.sample;
         });
+
+        bars_post_med.exit().remove()
+
+        if (data_type == 'absolute'){
+
+            bars_post_med.transition().duration(1000).attr("x", function(d){
+                console.log("x set to " + x_post_med(d.sample))
+                return x_post_med(d.sample);
+            }).attr("y", function(d){
+                console.log("y set to " + y_post_med(d.y_abs))
+                return y_post_med(d.y_abs);
+            }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
+                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_abs)));
+                return y_post_med(0) - y_post_med(d.height_abs);}
+            ).attr("fill", function(d){
+                console.log("fill set to " + d.fill)
+                return d.fill;
+            });
+
+
+            bars_post_med.enter().append("rect")
+            .attr("x", function(d){
+                console.log("x set to " + x_post_med(d.sample))
+                return x_post_med(d.sample);
+            }).attr("y", y_post_med(0)).transition().duration(1000).attr("y", function(d){
+                console.log("y set to " + y_post_med(d.y_abs))
+                return y_post_med(d.y_abs);
+            }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
+                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_abs)));
+                return y_post_med(0) - y_post_med(d.height_abs);}
+            ).attr("fill", function(d){
+                console.log("fill set to " + d.fill)
+                return d.fill;
+            });
+        }else if(data_type == 'relative'){
+            bars_post_med.transition().duration(1000).attr("x", function(d){
+                console.log("x set to " + x_post_med(d.sample))
+                return x_post_med(d.sample);
+            }).attr("y", function(d){
+                console.log("y set to " + y_post_med(d.y_rel))
+                return y_post_med(d.y_rel);
+            }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
+                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_rel)));
+                return y_post_med(0) - y_post_med(d.height_rel);}
+            ).attr("fill", function(d){
+                console.log("fill set to " + d.fill)
+                return d.fill;
+            });
+
+
+            bars_post_med.enter().append("rect")
+            .attr("x", function(d){
+                console.log("x set to " + x_post_med(d.sample))
+                return x_post_med(d.sample);
+            }).attr("y", y_post_med(0)).transition().duration(1000).attr("y", function(d){
+                console.log("y set to " + y_post_med(d.y_rel))
+                return y_post_med(d.y_rel);
+            }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
+                console.log("height set to " + (y_post_med(0) - y_post_med(d.height_rel)));
+                return y_post_med(0) - y_post_med(d.height_rel);}
+            ).attr("fill", function(d){
+                console.log("fill set to " + d.fill)
+                return d.fill;
+            });
+        }
+
 
         var foo = "bar"
 
@@ -157,9 +217,14 @@ function chart() {
     }
 
 
-//	var data_type_selector = d3.select("#data_type_selector").on("change", function(){
-//	    setTimeout(update, 0, this.value, 750);
-//	});
+	var data_type_selector = d3.select("#data_type_selector").on("change", function(){
+
+	    if (this.value == 'absolute'){
+            setTimeout(update, 0, 'absolute', 1000);
+        } else if (this.value == 'relative'){
+            setTimeout(update, 0, 'relative', 1000);
+        }
+	});
 
 
 }

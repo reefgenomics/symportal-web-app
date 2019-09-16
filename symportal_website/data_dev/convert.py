@@ -12,11 +12,19 @@ We will make an array of objects where each object is rectangle. It will have at
 import json
 
 
-def make_rect_array(path_of_json_dir_to_convert, function_name, path_of_js_file_to_write_out_to, pre_post):
+def make_rect_array(path_of_json_dir_to_convert_rel, path_of_json_dir_to_convert_abs, function_name, path_of_js_file_to_write_out_to, pre_post):
 
-    with open(path_of_json_dir_to_convert, 'r') as f:
+    # first get the relative abundance
+    with open(path_of_json_dir_to_convert_rel, 'r') as f:
         json_cont = f.read()
-    json_rel_abund_pre_med = json.loads(json_cont)
+    json_rel_abund_list_of_dicts = json.loads(json_cont)
+    json_rel_abund_dict_of_dicts = {sub_dict['sample_name']: sub_dict for sub_dict in json_rel_abund_list_of_dicts}
+    sample_list = [sub_dict['sample_name'] for sub_dict in json_rel_abund_list_of_dicts]
+    # then get the absolute abundances
+    with open(path_of_json_dir_to_convert_abs, 'r') as f:
+        json_cont = f.read()
+    json_abs_abund_list_of_dicts = json.loads(json_cont)
+    json_abs_abund_dict_of_dicts = {sub_dict['sample_name']:sub_dict for sub_dict in json_abs_abund_list_of_dicts}
 
     colour_dict = {}
     if pre_post == "pre":
@@ -34,31 +42,43 @@ def make_rect_array(path_of_json_dir_to_convert, function_name, path_of_js_file_
         colour_dict[smll_dict["d_key"]] = smll_dict["d_value"]
         seq_order_list.append(smll_dict["d_key"])
     new_rect_list = []
+
+
     # each rect that we add to this needs to be a dictionary and then we'll be able to make these into a json file
     # if this is an absolute then we also want to keep track of the maximum number for a given sample
     # as we will need to use this when we are setting the domain of the y axis objects
     # we will want to have this value for both the postMED and the preMED versions of this
     # we will write the value in as another function in the .js file that we write out at the end
-    max_cumulative = 0
-    sample_list = []
-    for sample_dict in json_rel_abund_pre_med:
-        sample_list.append(sample_dict["sample_name"])
-        cumulative_count = 0
+    max_cumulative_abs = 0
+
+    for sample_key in json_rel_abund_dict_of_dicts.keys():
+        rel_dict = json_rel_abund_dict_of_dicts[sample_key]
+        abs_dict = json_abs_abund_dict_of_dicts[sample_key]
+
+        cumulative_count_rel = 0
+        cumulative_count_abs = 0
+
         for seq in seq_order_list:
-            seq_abund = sample_dict[seq]
-            if seq_abund:
-                cumulative_count += float(sample_dict[seq])
+            seq_abund_rel = rel_dict[seq]
+            seq_abund_abs = abs_dict[seq]
+            if seq_abund_rel:
+                cumulative_count_rel += float(seq_abund_rel)
+                cumulative_count_abs += float(seq_abund_abs)
+
                 new_rect_list.append({
-                    "sample": sample_dict["sample_name"],
+                    "sample": sample_key,
                     "seq_name": seq,
-                    "y": cumulative_count,
-                    "height": float(seq_abund),
+                    "y_rel": cumulative_count_rel,
+                    "y_abs": cumulative_count_abs,
+                    "height_rel": float(seq_abund_rel),
+                    "height_abs": float(seq_abund_abs),
                     "fill": colour_dict[seq]
                 })
 
+        if cumulative_count_abs > max_cumulative_abs:
+            max_cumulative_abs = cumulative_count_abs
 
-        if cumulative_count > max_cumulative:
-            max_cumulative = cumulative_count
+
     # here we should have the sample_dict populated
     # now write this out as a json file
     json_dict = json.dumps(new_rect_list)
@@ -68,9 +88,9 @@ def make_rect_array(path_of_json_dir_to_convert, function_name, path_of_js_file_
     js_file.append("return " + json_dict + "}")
 
     # if postMED then also write out the function that will return the larges abosulte number of sequnces
-    if "Absolute" in function_name:
-        js_file.append("function " + function_name + "MaxSeq" + "(){")
-        js_file.append("return " + str(int(max_cumulative)) + "}")
+
+    js_file.append("function " + function_name + "MaxSeq" + "(){")
+    js_file.append("return " + str(int(max_cumulative_abs)) + "}")
     js_file.append("function " + function_name + "SampleList" + "(){")
     js_file.append("return " + json.dumps(sample_list) + "}")
 
@@ -81,10 +101,8 @@ def make_rect_array(path_of_json_dir_to_convert, function_name, path_of_js_file_
 
 
 # We will need to do this for both the absolute and relative versions of the pre and post MED so 4 times
-make_rect_array(path_of_json_dir_to_convert = "html_data/seq.relative.preMED.json", function_name = "getRectDataRelativePreMED", path_of_js_file_to_write_out_to = "html_data/rect_array_preMED_relative.js", pre_post="pre")
-make_rect_array(path_of_json_dir_to_convert = "html_data/seq.absolute.preMED.json", function_name = "getRectDataAbsolutePreMED", path_of_js_file_to_write_out_to = "html_data/rect_array_preMED_absolute.js", pre_post="pre")
-make_rect_array(path_of_json_dir_to_convert = "html_data/seq.relative.postMED.json", function_name = "getRectDataRelativePostMED", path_of_js_file_to_write_out_to = "html_data/rect_array_postMED_relative.js", pre_post="post")
-make_rect_array(path_of_json_dir_to_convert = "html_data/seq.absolute.postMED.json", function_name = "getRectDataAbsolutePostMED", path_of_js_file_to_write_out_to = "html_data/rect_array_postMED_absolute.js", pre_post="post")
+make_rect_array(path_of_json_dir_to_convert_rel = "html_data/seq.relative.preMED.json", path_of_json_dir_to_convert_abs="html_data/seq.absolute.preMED.json", function_name = "getRectDataPreMED", path_of_js_file_to_write_out_to = "html_data/rect_array_preMED.js", pre_post="pre")
+make_rect_array(path_of_json_dir_to_convert_rel = "html_data/seq.relative.postMED.json", path_of_json_dir_to_convert_abs = "html_data/seq.absolute.postMED.json", function_name = "getRectDataPostMED", path_of_js_file_to_write_out_to = "html_data/rect_array_postMED.js", pre_post="post")
 
 
 foo = 'bar'
