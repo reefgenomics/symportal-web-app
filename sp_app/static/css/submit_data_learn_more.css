@@ -21,6 +21,7 @@ body{
     /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
     /* font-family: "Source Sans Pro", Arial, Helvetica, sans-serif; */
     font-family: "Source Sans Pro";
+    margin
 }
 
 
@@ -29,36 +30,25 @@ body{
 /* nav_bar */
 
 .nav_background{
-    background-image: url(../images/learn_more_nav_banner.JPG);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 60px;
+    background-image: linear-gradient(to right, rgb(30,71,168), rgb(106,188,255));
+    height: 100px;
     width: 100vw;
-    position: fixed;
-    /* top: 0;
-    left: 0; */
-    z-index: 1;
-    filter: blur(3px);
-    -webkit-filter: blur(3px);
+    padding-top: 40px;
+    /* position: fixed; */
 }
+
 .logo_container{
     display:None;
 }
+
 .nav_bar{
-    z-index: 2;
-    position: fixed;
     padding: 0;
     color: #fff;
-    top: 20px;
     width: 100vw;
-}
-
-.nav_bar.grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    padding: 0;
 }
+
 
 .nav_bar .nav_right{
     justify-self: end;
@@ -82,8 +72,8 @@ body{
 
 /* main content */
 .container{
-    width: 50vw;
-    padding-top: 15vh;
+    max-width: 960px;
+    padding-top: 10px;
     margin: auto;
     color: #565656;
     text-align: justify;
@@ -144,8 +134,14 @@ footer{
 }
 
 
+@media (max-width: 960px){
+    .container {
+        width: 90vw;
+    }
+}
 
 @media (max-width: 560px){
+
     .container{
         width: 90vw;
         /* margin:auto; */
@@ -160,34 +156,25 @@ footer{
     }
 
     .nav_bar{
-        visibility: hidden;
+        display: None;
     }
 
     .logo_container{
         display: block;
         width:100vw;
-        
-        position: fixed;
         z-index: 2;
-        
-        
+
     }
     .logo{
-        
         display:block;
-        
         width: 8vh;
         margin-left:auto;
         margin-right:auto;
         margin-top:1.5vh;
-        
-        
-        
-        
     }
     
     .nav_background{
-        height: 10vh;
-        
+        padding: 0;
+        height: 48px;
     }
 }
