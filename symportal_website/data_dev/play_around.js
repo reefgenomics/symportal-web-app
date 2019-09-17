@@ -16,6 +16,10 @@ var max_y_val_pre_med = getRectDataPreMEDMaxSeq();
 
 var sample_list = getRectDataPreMEDSampleList();
 
+var post_med_init_by_sample_interval = 50
+
+var pre_med_init_by_sample_interval = 50
+
 chart();
 
 function chart() {
@@ -78,11 +82,16 @@ function chart() {
     //Add a g to the svgs that we will use for the bars
     //We will have a seperate g for each of the samples so that we can hopefully plot column by column
     sample_list.forEach(function(sample){
-        svg_post_med.append("g").attr("class", sample)
-        svg_pre_med.append("g").attr("class", sample)
+    // Selectors cannot start with a number apparently so we will add an s
+        svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
+        svg_pre_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
     })
 
     if (d3.select("#data_type_selector").property("value") == 'absolute'){
+            data_type = 'absolute';
+        } else if (d3.select("#data_type_selector").property("value") == 'relative'){
+            data_type = 'relative';
+        }
         // First do the columns for the post_med
         // Eventually we can make the amount of time this takes dynamic with the number of samples and seqs
         // per sample
@@ -91,63 +100,95 @@ function chart() {
         // move this code into the general_update_post_med_by_sample
         // and only run the code specific to the given sample column updating in the
         // update_post_med_by_sample function
-        general_update_post_med_by_sample('absolute', 1000)
-        for(let i = 0; i < sample_list.length; i++){
-         setTimeout(update_post_med_by_sample, 1000, sample_list[i], 'absolute', 1000)
-        }
-        // Then do column by column for the pre_med
-        for(let i = 0; i < sample_list.length; i++){
-         setTimeout(update_pre_med_by_sample, 1000, sample_list[i], 'absolute', 1000)
-        }
-//        setTimeout(update_post_med,0,'absolute', 0);
-//        setTimeout(update_pre_med,1000,'absolute', 0);
-    } else if (d3.select("#data_type_selector").property("value") == 'relative'){
-//        setTimeout(update_post_med, 0, 'relative', 0);
-//        setTimeout(update_pre_med,1000, 'relative', 0);
-        for(let i = 0; i < sample_list.length; i++){
-             setTimeout(update_post_med_by_sample, 1000, sample_list[i], 'relative', 1000)
-        }
-        // Then do column by column for the pre_med
-        for(let i = 0; i < sample_list.length; i++){
-             setTimeout(update_pre_med_by_sample, 1000, sample_list[i], 'relative', 1000)
-        }
-    }
 
-    function general_update_post_med_by_sample(data_type, speed){
+        // Let's go really slowly to start with so that we can really see what were doing.
+        // If I understand correctly, js will run through all of the code executing as it goes without waiting
+        // for the functions to finish, so the best way to get this to work as we want is going to be to set hard
+        // times
+
+        // This var will keep track of the timing that we've already got set up cumulatively
+        cum_time = 0
+        general_update_by_sample(data_type, 1000, "post")
+        for(let i = 0; i < sample_list.length; i++){
+             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list[i], data_type, post_med_init_by_sample_interval, "post");
+             cum_time += post_med_init_by_sample_interval;
+        }
+
+        // Then do column by column for the pre_med
+        general_update_by_sample(data_type, 1000, "pre")
+        for(let i = 0; i < sample_list.length; i++){
+         setTimeout(update_by_sample, cum_time + (i * pre_med_init_by_sample_interval), sample_list[i], data_type, pre_med_init_by_sample_interval, "pre");
+         cum_time += pre_med_init_by_sample_interval
+        }
+
+
+
+    function general_update_by_sample(data_type, speed, pre_post){
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
+        if (pre_post == "post"){
+            y = y_post_med
+            x = x_post_med
+            max_y = max_y_val_post_med
+            svg = svg_post_med
+            y_axis_id = "#y_axis_post_med"
+            x_axis_id = "#x_axis_post_med"
+        }else if (pre_post == "pre"){
+            y = y_pre_med
+            x = x_pre_med
+            max_y = max_y_val_pre_med
+            svg = svg_pre_med
+            y_axis_id = "#y_axis_pre_med"
+            x_axis_id = "#x_axis_pre_med"
+        }
+
         if (data_type == "absolute"){
-            y_post_med.domain([0, max_y_val_post_med]).nice();
+            y.domain([0, max_y]).nice();
         }else{
-            y_post_med.domain([0, 1]).nice();
+            y.domain([0, 1]).nice();
         }
 
         // Now update the y axis
-        svg_post_med.selectAll("#y_axis_post_med")
+        svg.select(y_axis_id)
         .transition()
         .duration(speed)
-        .call(d3.axisLeft(y_post_med).ticks(null, "s"));
+        .call(d3.axisLeft(y).ticks(null, "s"));
 
         // Set the domain of the x. This should be the sample names
-        x_post_med.domain(sample_list);
+        x.domain(sample_list);
 
         // Complete the x axis
         // This should be fairly invariable for the time being as we aren't playing with the order of the x axis yet
-        svg_post_med.selectAll("#x_axis_post_med").transition().duration(speed)
-                .call(d3.axisBottom(x_post_med).tickSizeOuter(0)).selectAll("text")
+        svg.selectAll(x_axis_id).transition().duration(speed)
+                .call(d3.axisBottom(x).tickSizeOuter(0)).selectAll("text")
                 .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                 .style("text-anchor", "start").style("text-anchor", "start");
 
     }
 
-    function update_post_med_by_sample(col_sample, data_type, speed){
+    function update_by_sample(col_sample, data_type, speed, pre_post){
+
+        if (pre_post == "post"){
+            svg = svg_post_med
+            data_by_sample = data_post_med_by_sample
+            delay = 5
+            x = x_post_med
+            y = y_post_med
+        }else if (pre_post == "pre"){
+            svg = svg_pre_med
+            data_by_sample = data_pre_med_by_sample
+            delay = 0.1
+            x = x_pre_med
+            y = y_pre_med
+        }
 
         // Process the post_MED data first.
-        // TODO you got to here EOD. Work in doing the individual Ds.
-        var bars_post_med = svg_post_med.select(eval("g." + col_sample)).selectAll("rect").data(data_post_med_by_sample[col_sample], function(d){
+        var bars = svg.select("g.s" + col_sample.replace(/\./g, "_")).selectAll("rect").data(data_by_sample[col_sample], function(d){
+            // In theory because we're working on a sample by sample basis now we should be able to work with just the
+            // the seq name as key. But for the time being we'll keep the key as it is.
             return d.seq_name + d.sample;
         });
 
-        bars_post_med.exit().remove()
+        bars.exit().remove()
 
         if (data_type == 'absolute'){
             //if 'absolute' then use the abbreviation 'abs' for getting the attributes
@@ -157,113 +198,27 @@ function chart() {
             var abbr = 'rel'
         }
 
-        bars_post_med.transition().duration(1000).attr("x", function(d){
-            return x_post_med(d.sample);
+        bars.transition().duration(speed).attr("x", function(d){
+            return x(d.sample);
         }).attr("y", function(d){
-            return y_post_med(eval("d.y_" + abbr));
-        }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
-            return y_post_med(0) - y_post_med(eval("d.height_" + abbr));}
+            return y(eval("d.y_" + abbr));
+        }).attr("width", x.bandwidth()).attr("height", function(d){
+            return Math.max(y(0) - y(eval("d.height_" + abbr)), 1);}
         ).attr("fill", function(d){
             return d.fill;
-        }).delay(function(d,i){return(i*5)});
+        }).delay(function(d,i){return(i*delay)});
 
-
-        bars_post_med.enter().append("rect")
+        bars.enter().append("rect")
         .attr("x", function(d){
-            return x_post_med(d.sample);
-        }).attr("y", y_post_med(0)).transition().duration(1000).attr("y", function(d){
-            return y_post_med(eval("d.y_" + abbr));
-        }).attr("width", x_post_med.bandwidth()).attr("height", function(d){
-            return y_post_med(0) - y_post_med(eval("d.height_" + abbr));}
+            return x(d.sample);
+        }).attr("y", y(0)).transition().duration(1000).attr("y", function(d){
+            return y(eval("d.y_" + abbr));
+        }).attr("width", x.bandwidth()).attr("height", function(d){
+            return Math.max(y(0) - y(eval("d.height_" + abbr)), 1);}
         ).attr("fill", function(d){
             return d.fill;
         });
 
-        var foo = "bar"
-
-    }
-
-    function update_pre_med_by_sample(col_sample, data_type, speed){
-
-
-        // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
-        if (data_type == "absolute"){
-            y_pre_med.domain([0, max_y_val_pre_med]).nice();
-        }else{
-            y_pre_med.domain([0, 1]).nice();
-        }
-
-        // Now update the y axis
-        svg_pre_med.selectAll("#y_axis_pre_med")
-        .transition()
-        .duration(speed)
-        .call(d3.axisLeft(y_pre_med).ticks(null, "s"));
-
-        // Set the domain of the x. This should be the sample names
-        x_pre_med.domain(sample_list);
-
-        // Complete the x axis
-        // This should be fairly invariable for the time being as we aren't playing with the order of the x axis yet
-        svg_pre_med.selectAll("#x_axis_pre_med").transition().duration(speed)
-                .call(d3.axisBottom(x_pre_med).tickSizeOuter(0)).selectAll("text")
-                .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-                .style("text-anchor", "start").style("text-anchor", "start");
-
-        // Then let's process the pre-MED and see how we're looking
-        var bars_pre_med = svg_pre_med.select("g.bars").selectAll("rect").data(data_pre_med, function(d){
-            return d.seq_name + d.sample;
-        });
-
-        bars_pre_med.exit().remove()
-
-        if (data_type == 'absolute'){
-
-            bars_pre_med.transition().duration(2000).attr("x", function(d){
-                return x_pre_med(d.sample);
-            }).attr("y", function(d){
-                return y_pre_med(d.y_abs);
-            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
-                return Math.max((y_pre_med(0) - y_pre_med(d.height_abs)), 1);}
-            ).attr("fill", function(d){
-                return d.fill;
-            }).delay(function(d,i){return(i*2)});
-
-
-            bars_pre_med.enter().append("rect")
-            .attr("x", function(d){
-                return x_pre_med(d.sample);
-            }).attr("y", y_pre_med(0)).transition().duration(2000).attr("y", function(d){
-                return y_pre_med(d.y_abs);
-            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
-                return Math.max((y_pre_med(0) - y_pre_med(d.height_abs)), 1);}
-            ).attr("fill", function(d){
-                return d.fill;
-            });
-
-        }else if(data_type == 'relative'){
-
-            bars_pre_med.transition().duration(2000).attr("x", function(d){
-                return x_pre_med(d.sample);
-            }).attr("y", function(d){
-                return y_pre_med(d.y_rel);
-            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
-                return Math.max((y_pre_med(0) - y_pre_med(d.height_rel)), 1);
-            }).attr("fill", function(d){
-                return d.fill;
-            }).delay(function(d,i){return(i*2)});
-
-
-            bars_pre_med.enter().append("rect")
-            .attr("x", function(d){
-                return x_pre_med(d.sample);
-            }).attr("y", y_pre_med(0)).transition().duration(2000).attr("y", function(d){
-                return y_pre_med(d.y_rel);
-            }).attr("width", x_pre_med.bandwidth()).attr("height", function(d){
-                return Math.max((y_pre_med(0) - y_pre_med(d.height_rel)), 1);}
-            ).attr("fill", function(d){
-                return d.fill;
-            });
-        }
         var foo = "bar"
     }
 
@@ -438,12 +393,20 @@ function chart() {
 
 	var data_type_selector = d3.select("#data_type_selector").on("change", function(){
 
-	    if (this.value == 'absolute'){
-            setTimeout(update_post_med, 0, 'absolute', 1000);
-            setTimeout(update_pre_med, 1000, 'absolute', 1000);
-        } else if (this.value == 'relative'){
-            setTimeout(update_post_med, 0, 'relative', 1000);
-            setTimeout(update_pre_med, 1000, 'relative', 1000);
+
+        // This var will keep track of the timing that we've already got set up cumulatively
+        cum_time = 0
+        general_update_by_sample(this.value, 1000, "post")
+        for(let i = 0; i < sample_list.length; i++){
+             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list[i], this.value, post_med_init_by_sample_interval, "post");
+             cum_time += post_med_init_by_sample_interval;
+        }
+
+        // Then do column by column for the pre_med
+        setTimeout(general_update_by_sample, cum_time, this.value, 1000, "pre")
+        for(let i = 0; i < sample_list.length; i++){
+         setTimeout(update_by_sample, cum_time + (i * pre_med_init_by_sample_interval), sample_list[i], this.value, pre_med_init_by_sample_interval, "pre");
+         cum_time += pre_med_init_by_sample_interval
         }
 	});
 
