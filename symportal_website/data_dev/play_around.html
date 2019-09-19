@@ -49,6 +49,7 @@ Implement the buttons on the plot so that it can be adjusted. make these indepen
 be held side by side on wider screens but below each other on the smaller laptop screens-->
 <!--MAIN CONTENT-->
 <div class="row m-5">
+
     <div class="col-md-7">
         <!--Title of the paper-->
         <h5 class="display-4" style="font-size:2rem;">This is going to the tile to a paper lets put in the one of Alejandros in here for the time being</h5>
@@ -58,9 +59,9 @@ be held side by side on wider screens but below each other on the smaller laptop
         </div>
         <!--DIV that will hold the first svg-->
         <div class="card">
-            <div class="card-header" data-toggle="collapse" data-target="#cbody">Post-MED ITS2 sequences</div>
+            <div class="card-header" data-toggle="collapse" data-target="#post_med_svg_collapse">Post-MED ITS2 sequences</div>
 
-            <div class="card-body p-0 collapse show" id="cbody">
+            <div class="card-body p-0 collapse show" id="post_med_svg_collapse">
                 <div class="bg-light p-2" >
                     <div class="btn-group btn-group-sm" >
                         <button id="PostMEDRelDType" class="btn btn-light dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
@@ -78,7 +79,7 @@ be held side by side on wider screens but below each other on the smaller laptop
                         </div>
                     </div>
                 </div>
-                <div class=" p-1 overflow-auto text-center">
+                <div class="p-1 overflow-auto text-center">
                     <svg id="chart_post_med" class="chart" width="650" height="400"></svg>
                 </div>
             </div>
@@ -86,9 +87,30 @@ be held side by side on wider screens but below each other on the smaller laptop
         </div>
 
         <div class="card">
-            <div class="card-header">Pre-MED ITS2 sequences</div>
-            <div class="card-body">
-                <div class="d-flex justify-content-center">
+            <!--CARD HEADER-->
+            <div class="card-header" data-toggle="collapse" data-target="#pre_med_svg_collapse">
+                Pre-MED ITS2 sequences <span style="font-size:0.5rem;">(rendering the pre-MED seqs may take a little time)</span>
+            </div>
+            <!--CARD BODY-->
+            <div class="card-body p-0 collapse" id="pre_med_svg_collapse">
+                <div class="bg-light p-2" >
+                    <div class="btn-group btn-group-sm" >
+                        <button id="PreMEDRelDType" class="btn btn-light dtype-btn" data-data-type="pre" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
+                        <button id="PreMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="pre" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                               Sorted by:
+                            </button>
+                            <div class="dropdown-menu" id="data_type_pre_med" style="padding:2px 4px;font-size:0.7rem;">
+                                <a class="dropdown-item" >sequencing depth</a>
+                                <a class="dropdown-item" >sequencing similarity</a>
+                                <a class="dropdown-item" >host</a>
+                                <a class="dropdown-item" >location</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-1 overflow-auto text-center">
                     <svg id="chart_pre_med" class="chart" width="650" height="400"></svg>
                 </div>
             </div>
@@ -273,7 +295,7 @@ be held side by side on wider screens but below each other on the smaller laptop
 
 
     </div>
-</div>
+    </div>
 
 <div class="selector">
     Select view:

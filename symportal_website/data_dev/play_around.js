@@ -32,31 +32,19 @@ $(document).ready(function () {
 		margin = {top: 35, left: 35, bottom: 20, right: 0},
 		width = +svg_post_med.attr("width") - margin.left - margin.right,
 		height = +svg_post_med.attr("height") - margin.top - margin.bottom;
-
-	// We will only set the pre-MED seq parameters if we are going to open up the plot
-	// For the time being I'm going to comment out.
-//	var svg_pre_med = d3.select("#chart_pre_med"),
-//		margin = {top: 35, left: 35, bottom: 20, right: 0},
-//		width = +svg_pre_med.attr("width") - margin.left - margin.right,
-//		height = +svg_pre_med.attr("height") - margin.top - margin.bottom;
-
+    var svg_pre_med;
     // Set the x range that will be used for the x val of the bars
 	var x_post_med = d3.scaleBand()
 		.range([margin.left, width - margin.right])
 		.padding(0.1)
+    var x_pre_med;
 
-	// Set the x range that will be used for the x val of the bars
-//	var x_pre_med = d3.scaleBand()
-//		.range([margin.left, width - margin.right])
-//		.padding(0.1)
 
     // Set the y range
 	var y_post_med = d3.scaleLinear()
         .rangeRound([height - margin.bottom, margin.top])
+    var y_pre_med;
 
-    // Set the y range
-//    var y_pre_med = d3.scaleLinear()
-//        .rangeRound([height - margin.bottom, margin.top])
 
     // Set the colour scale
     // We can set both the range and domain of this as these are invariable between absolute and relative
@@ -68,34 +56,26 @@ $(document).ready(function () {
     var xAxis_post_med = svg_post_med.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .attr("id", "x_axis_post_med")
-
+    var xAxis_pre_med;
 	var yAxis_post_med = svg_post_med.append("g")
 		.attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_post_med")
-
-//    //Set up the svg element in which we will call the axis objects
-//    var xAxis_pre_med = svg_pre_med.append("g")
-//    .attr("transform", `translate(0,${height - margin.bottom})`)
-//    .attr("id", "x_axis_pre_med")
+    var yAxis_pre_med;
 //
-//	var yAxis_pre_med = svg_pre_med.append("g")
-//		.attr("transform", `translate(${margin.left},0)`)
-//        .attr("id", "y_axis_pre_med")
 
     //Add a g to the svgs that we will use for the bars
     //We will have a seperate g for each of the samples so that we can hopefully plot column by column
     sample_list.forEach(function(sample){
     // Selectors cannot start with a number apparently so we will add an s
         svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
-//        svg_pre_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
     })
 
     // We will start with only the post-MED seqs being plotted. We will check to see what is
     // selected and go with that.
     if ($("#PostMEDAbsDType").hasClass("btn-primary")){
-            data_type = 'absolute';
+            var data_type = 'absolute';
         } else if ($("#PostMEDRelDType").hasClass("btn-primary")){
-            data_type = 'relative';
+            var data_type = 'relative';
         }
         // First do the columns for the post_med
         // Eventually we can make the amount of time this takes dynamic with the number of samples and seqs
@@ -249,28 +229,62 @@ $(document).ready(function () {
         }
     });
 
+    // WE want to have a listener for the Pre-MED header opening up. When this happens, we will want to plot the
+    // pre-med plot, we will also want to remove the rendering the pre-MED seqs text. Also a good idea will be to have
+    // a spinner set off in the top right corner.
+    $('#pre_med_svg_collapse').on('show.bs.collapse', function(){
+        console.log('fish and chips');
+        // First check to see if the pre-MED svg has already been initiated. If so then there is nothing
+        // to do here.
+        //TODO implement the spinner and get rid of the text when open
+        if (!$("#chart_pre_med").hasClass("init")){
 
+            //Plot as relative or absolute abundances according to which button is currently primary
+            if($("#PreMEDRelDType").hasClass("btn-primary")){
+                var data_type = "relative";
+            }else{
+                var data_type = "absolute";
+            }
 
-	// This is the old listener.
+            //Now do the init of the pre-MED svg
+            svg_pre_med = d3.select("#chart_pre_med"),
+            margin = {top: 35, left: 35, bottom: 20, right: 0},
+            width = +svg_pre_med.attr("width") - margin.left - margin.right,
+            height = +svg_pre_med.attr("height") - margin.top - margin.bottom;
 
-	var data_type_selector = d3.select("#data_type_selector").on("change", function(){
+            // Set the x range that will be used for the x val of the bars
+            x_pre_med = d3.scaleBand()
+            .range([margin.left, width - margin.right])
+            .padding(0.1)
 
+            // Set the y range
+            y_pre_med = d3.scaleLinear()
+            .rangeRound([height - margin.bottom, margin.top])
 
-        // This var will keep track of the timing that we've already got set up cumulatively
-        cum_time = 0
-        general_update_by_sample(this.value, 1000, "post")
-        for(let i = 0; i < sample_list.length; i++){
-             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list[i], this.value, post_med_init_by_sample_interval, "post");
-             cum_time += post_med_init_by_sample_interval;
+            //Set up the svg element in which we will call the axis objects
+            xAxis_pre_med = svg_pre_med.append("g")
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .attr("id", "x_axis_pre_med")
+
+            yAxis_pre_med = svg_pre_med.append("g")
+                .attr("transform", `translate(${margin.left},0)`)
+                .attr("id", "y_axis_pre_med")
+
+            //Add a g to the svgs that we will use for the bars
+            //We will have a seperate g for each of the samples so that we can hopefully plot column by column
+             sample_list.forEach(function(sample){
+                svg_pre_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
+             });
+
+            general_update_by_sample(data_type, 1000, "pre")
+            for(let i = 0; i < sample_list.length; i++){
+                setTimeout(update_by_sample, cum_time + (i * pre_med_init_by_sample_interval), sample_list[i], data_type, pre_med_init_by_sample_interval, "pre");
+                cum_time += pre_med_init_by_sample_interval;
+            }
+
         }
 
-        // Then do column by column for the pre_med
-//        setTimeout(general_update_by_sample, cum_time, this.value, 1000, "pre")
-//        for(let i = 0; i < sample_list.length; i++){
-//         setTimeout(update_by_sample, cum_time + (i * pre_med_init_by_sample_interval), sample_list[i], this.value, pre_med_init_by_sample_interval, "pre");
-//         cum_time += pre_med_init_by_sample_interval
-//        }
-	});
+    });
 
 
 
