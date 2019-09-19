@@ -1,3 +1,10 @@
+<!--TODO list:
+implement drop down to change what category the x axis is annotated with
+Implement the sample viewer when clicking on the sample, should show the stats for the sample i.e. contigs
+post med pre med this kind of thing, but put the metadata first
+Then also have a network window for when the sample is clicked on (this can be later)
+Implement the profiles window. Maybe put these in collapsable cards
+Implement the buttons on the plot so that it can be adjusted. make these independent for each plot-->
 <!doctype html>
 <html lang="en">
 <meta charset="UTF-8">
@@ -11,6 +18,7 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <link rel="stylesheet" href="css/data_dev.css">
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <title>SymPortal DataSet results</title>
 </head>
 <body>
@@ -35,8 +43,11 @@
         </li>
     </ul>
 </nav>
+
+
 <!--TODO put in a main div that will hold the fraphs and the info boxes. Make it so that the plots will
 be held side by side on wider screens but below each other on the smaller laptop screens-->
+<!--MAIN CONTENT-->
 <div class="row m-5">
     <div class="col-md-7">
         <!--Title of the paper-->
@@ -47,17 +58,39 @@ be held side by side on wider screens but below each other on the smaller laptop
         </div>
         <!--DIV that will hold the first svg-->
         <div class="card">
-            <div class="card-header">Post-MED ITS2 sequences</div>
-            <div class="card-body">
-                <svg id="chart_post_med" class="chart" width="650" height="400"></svg>
+            <div class="card-header" data-toggle="collapse" data-target="#cbody">Post-MED ITS2 sequences</div>
+
+            <div class="card-body p-0 collapse show" id="cbody">
+                <div class="bg-light p-2" >
+                    <div class="btn-group btn-group-sm" >
+                        <button id="PostMEDRelDType" class="btn btn-light dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
+                        <button id="PostMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                               Sorted by:
+                            </button>
+                            <div class="dropdown-menu" id="data_type_post_med" style="padding:2px 4px;font-size:0.7rem;">
+                                <a class="dropdown-item" >sequencing depth</a>
+                                <a class="dropdown-item" >sequencing similarity</a>
+                                <a class="dropdown-item" >host</a>
+                                <a class="dropdown-item" >location</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class=" p-1 overflow-auto text-center">
+                    <svg id="chart_post_med" class="chart" width="650" height="400"></svg>
+                </div>
             </div>
             <div class="card-footer">Footer</div>
         </div>
 
         <div class="card">
-            <div class="card-header">Post-MED ITS2 sequences</div>
+            <div class="card-header">Pre-MED ITS2 sequences</div>
             <div class="card-body">
-                <svg id="chart_pre_med" class="chart" width="650" height="400"></svg>
+                <div class="d-flex justify-content-center">
+                    <svg id="chart_pre_med" class="chart" width="650" height="400"></svg>
+                </div>
             </div>
             <div class="card-footer">Footer</div>
         </div>
@@ -242,7 +275,7 @@ be held side by side on wider screens but below each other on the smaller laptop
     </div>
 </div>
 
-<div class="selecter">
+<div class="selector">
     Select view:
     <select id="data_type_selector">
         <option value="relative">relative</option>
@@ -254,6 +287,7 @@ be held side by side on wider screens but below each other on the smaller laptop
 <script src="html_data/rect_array_preMED_by_sample.js"></script>
 <script src="html_data/rect_array_postMED.js"></script>
 <script src="html_data/rect_array_postMED_by_sample.js"></script>
+
 
 <script src="play_around.js"></script>
 
