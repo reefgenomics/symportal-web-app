@@ -38,7 +38,7 @@
 <!--TODO put in a main div that will hold the fraphs and the info boxes. Make it so that the plots will
 be held side by side on wider screens but below each other on the smaller laptop screens-->
 <div class="row m-5">
-    <div class="col-md-9">
+    <div class="col-md-7">
         <!--Title of the paper-->
         <h5 class="display-4" style="font-size:2rem;">This is going to the tile to a paper lets put in the one of Alejandros in here for the time being</h5>
         <!--Authors of the paper-->
@@ -63,34 +63,182 @@ be held side by side on wider screens but below each other on the smaller laptop
         </div>
     </div>
 
-    <div class="col-md-3">
+    <!--This is the right hand side of the screen-->
+    <div class="col-md-5">
 
-        <div class="jumbotron pl-1 pr-1 pt-2 pt-2" style="font-size: 0.7rem;">
-
-            <div class="row p-0 m-0">
-                <div class="col-md-6 font-weight-bold p-0">
-                    Data set name:
+        <!--TODO make it so that there is an arrow and that the whole bar is clickable
+        https://codepen.io/nhembram/pen/XKEJJp -->
+        <div id="accordion">
+            <div class="card">
+                <div class="card-header">
+                  <a class="card-link" data-toggle="collapse" href="#dataset_collapse" style="color:black;">
+                    Dataset
+                  </a>
                 </div>
-                <div class="col-md-6 p-0">
-                    restrepo_20190908
+                <div id="dataset_collapse" class="collapse show" data-parent="#accordion">
+                    <div class="card-body" style="font-size:0.8rem;">
+                        <div class="row  " >
+                            <dt class="col-sm-6">
+                                <span class="float-right">Dataset Name:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                restrepo_20190918
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Dataset UID:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                343
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">First recieved:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                13 September, 2019
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">SymPortal Version (loading):</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                V0.3.13
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">SymPortal version (analysis):</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                V0.3.13
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Datasheet:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">datasheet_20190918.xlsx</a>
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Number of samples:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                604
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Sequencing accesion:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">PBA647382</a>
+                            </dd>
+                            <!--TODO can have popup on the anlysis that will show stats for that-->
+                            <dt class="col-sm-6">
+                                <span class="float-right">Analysis UID:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                604
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Analysis name:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                DBV_20190809
+                            </dd>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <a href="#home">json dump</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!--This div is for the grey line-->
-            <div class="ml-3 mr-3 mt-0 mb-0" style="border-bottom: 1px solid black;">
-            </div>
-            <div class="row">
-                <div class="col-md-6 font-weight-bold">
-                    Data set UID:
+            <div class="card">
+                <div class="card-header">
+                  <a class="collapsed card-link" data-toggle="collapse" href="#analysis_collapse" style="color:black;">
+                    Analysis
+                  </a>
                 </div>
-                <div class="col-md-6">
-                    235
+                <div id="analysis_collapse" class="collapse" data-parent="#accordion">
+                  <div class="card-body" style="font-size:0.8rem;">
+                    <div class="row" >
+                            <dt class="col-sm-6">
+                                <span class="float-right">Analysis UID:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                604
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Analysis name:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                DBV_20190809
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">SymPortal version (analysis):</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                V0.3.13
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Number of profiles:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                23
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Datasheet:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">datasheet_20190918.xlsx</a>
+                            </dd>
+                        </div>
+                  </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                  <a class="collapsed card-link" data-toggle="collapse" href="#download_resource_collapse" style="color:black;">
+                    Resource download
+                  </a>
+                </div>
+                <div id="download_resource_collapse" class="collapse" data-parent="#accordion">
+                    <div class="card-body" style="font-size:0.8rem;">
+                        <div class="row" >
+                            <dt class="col-sm-6">
+                                <span class="float-right">Pre-MED seq count table:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Post-MED seq count table::</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">ITS2 type profile count table:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Between sample distances:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
+                            </dd>
+                            <dt class="col-sm-6">
+                                <span class="float-right">Between profile distances:</span>
+                            </dt>
+                            <dd class="col-sm-6">
+                                <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
+                            </dd>
+                        </div>
+                    <div class="d-flex justify-content-end">
+                            <a href="#home">Download all</a>
+                    </div>
+                  </div>
                 </div>
             </div>
         </div>
 
-        <div class="jumbotron">
-            This is the second jumbo tron
-        </div>
+
+
     </div>
 </div>
 
