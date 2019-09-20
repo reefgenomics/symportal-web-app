@@ -287,17 +287,44 @@ $(document).ready(function () {
     });
 
 
+    //INIT MAP
+    function initMap() {
+
+        var location = new google.maps.LatLng(22.193730, 38.957069);
+
+        var mapCanvas = document.getElementById('map');
+        var mapOptions = {
+            center: location,
+            zoom: 10,
+            panControl: false,
+            mapTypeId: google.maps.MapTypeId.SATELLITE
+        }
+        var map = new google.maps.Map(mapCanvas, mapOptions);
+
+        var marker_data = [{'lat': 22.235196, 'lng': 39.006563, 'label': "reef_1"}, {'lat': 22.190266, 'lng': 38.978879, 'label': "reef_2"}]
+
+        marker_data.forEach(function(data){
+            var marker =  new google.maps.Marker({
+            position: {lat: data['lat'], lng: data['lng']},
+            label: data['label'], map:map
+            });
+        });
+//        var first_marker = new google.maps.Marker({position: {lat: 22.235196, lng: 39.006563}, map:map, label:"reef_two"})
+//        var second_marker = new google.maps.Marker({position: {lat: 22.190266, lng: 38.978879}, map:map, label:"Thuwal"})
+
+//        var markerCluster = new MarkerClusterer(map, map_markers,
+//            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+
+    }
+
+    google.maps.event.addDomListener(window, 'load', initMap);
 
 
 });
-//JQuery code
 
 
-    $("#data_type_post_med a").click(function(){
-    //  $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
-      console.log($(this).text());
-      $(this).parents(".btn-group").find('.dropdown-toggle').text($(this).text());
-    });
+
+
 
 
 
