@@ -301,12 +301,66 @@ $(document).ready(function () {
         }
         var map = new google.maps.Map(mapCanvas, mapOptions);
 
+
+        var contentString = '<div >' +
+            '<span style="font-weight:bold;">lat:</span> 32.18876, <span style="font-weight:bold;">lon:</span> 98.7985, <span style="font-weight:bold;">site_name:</span> --, <span style="font-weight:bold;">num_samples:</span> 42'+
+        '</div>'+
+        '<table class="table table-hover table-sm" style="font-size:0.5rem;">'+
+            '<thead>'+
+                '<tr>'+
+                    '<th>sample_name</th>'+
+                    '<th>host_taxa</th>'+
+                    '<th>depth</th>'+
+                '</tr>'+
+            '</thead>'+
+            '<tbody>'+
+            '<tr>'+
+                '<td>Xj.wer.28392</td>'+
+                '<td>P. lobata</td>'+
+                '<td>2-8m</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td>Xj.wer.28392</td>'+
+                '<td>P. lobata</td>'+
+                '<td>2-8m</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td>Xj.wer.28392</td>'+
+                '<td>P. lobata</td>'+
+                '<td>2-8m</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td>Xj.wer.28392</td>'+
+                '<td>P. lobata</td>'+
+                '<td>2-8m</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td>Xj.wer.28392</td>'+
+                '<td>P. lobata</td>'+
+                '<td>2-8m</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td>Xj.wer.28392</td>'+
+                '<td>P. lobata</td>'+
+                '<td>2-8m</td>'+
+            '</tr>'+
+            '</tbody>'+
+        '</table>';
+
         var marker_data = [{'lat': 22.235196, 'lng': 39.006563, 'label': "reef_1"}, {'lat': 22.190266, 'lng': 38.978879, 'label': "reef_2"}]
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString
+        });
 
         marker_data.forEach(function(data){
             var marker =  new google.maps.Marker({
             position: {lat: data['lat'], lng: data['lng']},
-            label: data['label'], map:map
+            map:map
+            });
+
+            marker.addListener('click', function() {
+                infowindow.open(map, marker);
             });
         });
 //        var first_marker = new google.maps.Marker({position: {lat: 22.235196, lng: 39.006563}, map:map, label:"reef_two"})
