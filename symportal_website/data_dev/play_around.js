@@ -75,6 +75,26 @@ $(document).ready(function () {
         svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
     })
 
+
+    // Create Tooltips
+    var tip = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
+        .html(function(d) {
+            var content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+            '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
+            '</div>';
+//            content +=`
+//                <table style="margin-top: 2.5px;">
+//                        <tr><td>Max: </td><td style="text-align: right">` + d3.format(".2f")(d.whiskers[0]) + `</td></tr>
+//                        <tr><td>Q3: </td><td style="text-align: right">` + d3.format(".2f")(d.quartile[0]) + `</td></tr>
+//                        <tr><td>Median: </td><td style="text-align: right">` + d3.format(".2f")(d.quartile[1]) + `</td></tr>
+//                        <tr><td>Q1: </td><td style="text-align: right">` + d3.format(".2f")(d.quartile[2]) + `</td></tr>
+//                        <tr><td>Min: </td><td style="text-align: right">` + d3.format(".2f")(d.whiskers[1]) + `</td></tr>
+//                </table>
+//                `;
+            return content;
+        });
+    svg_post_med.call(tip);
+
     // We will start with only the post-MED seqs being plotted. We will check to see what is
     // selected and go with that.
     if ($("#PostMEDAbsDType").hasClass("btn-primary")){
@@ -195,10 +215,19 @@ $(document).ready(function () {
             return d.fill;
         }).delay(function(d,i){return(i*delay)});
 
+        // Interesting article on the positioning of the .on method
+        // https://stackoverflow.com/questions/44495524/d3-transition-not-working-with-events?rq=1
         bars.enter().append("rect")
         .attr("x", function(d){
             return x(d.sample);
-        }).attr("y", y(0)).transition().duration(1000).attr("y", function(d){
+        }).attr("y", y(0)).on('mouseover', function(d){
+            tip.show(d);
+            d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+        })
+        .on('mouseout', function(d){
+            tip.hide(d);
+            d3.select(this).attr("style", null);
+        }).transition().duration(1000).attr("y", function(d){
             return y(d["y_" + abbr]);
         }).attr("width", x.bandwidth()).attr("height", function(d){
             return Math.max(y(0) - y(d["height_" + abbr]), 1);}
