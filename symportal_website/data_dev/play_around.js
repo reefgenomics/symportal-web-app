@@ -18,10 +18,13 @@ $(document).ready(function () {
     var max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
 
     // if plotting absolute values we can get the highest y from the 'post_taxa_... ' for the pre-med
-    var sample_list = getRectDataPreMEDSampleList();
+    // TODO we are going to need separate sample lists for each of the post, pre and profiles
+    var sample_list_post = getRectDataPreMEDSampleList();
+    var sample_list_pre = getRectDataPreMEDSampleList();
+    var sample_list_profile = getRectDataPreMEDSampleList();
 
     // Speed at which the sample by sample plotting will be done initially
-    var post_med_init_by_sample_interval = 50
+    var post_med_init_by_sample_interval = 10
     var pre_med_init_by_sample_interval = 50
 
     //This initial chart function will take care of all of the svg elements that are not going to change during
@@ -65,7 +68,9 @@ $(document).ready(function () {
 
     //Add a g to the svgs that we will use for the bars
     //We will have a seperate g for each of the samples so that we can hopefully plot column by column
-    sample_list.forEach(function(sample){
+    // The pre-med plot will not get init until later.
+    //TODO initiate the profiles plot here too
+    sample_list_post.forEach(function(sample){
     // Selectors cannot start with a number apparently so we will add an s
         svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
     })
@@ -89,8 +94,8 @@ $(document).ready(function () {
         // This var will keep track of the timing that we've already got set up cumulatively
         cum_time = 0
         general_update_by_sample(data_type, 1000, "post")
-        for(let i = 0; i < sample_list.length; i++){
-             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list[i], data_type, post_med_init_by_sample_interval, "post");
+        for(let i = 0; i < sample_list_post.length; i++){
+             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list_post[i], data_type, post_med_init_by_sample_interval, "post");
              cum_time += post_med_init_by_sample_interval;
         }
 
@@ -110,6 +115,7 @@ $(document).ready(function () {
             svg = svg_post_med
             y_axis_id = "#y_axis_post_med"
             x_axis_id = "#x_axis_post_med"
+            var sample_list = sample_list_post
         }else if (pre_post == "pre"){
             y = y_pre_med
             x = x_pre_med
@@ -117,6 +123,7 @@ $(document).ready(function () {
             svg = svg_pre_med
             y_axis_id = "#y_axis_pre_med"
             x_axis_id = "#x_axis_pre_med"
+            var sample_list = sample_list_pre
         }
 
         if (data_type == "absolute"){
@@ -148,15 +155,17 @@ $(document).ready(function () {
         if (pre_post == "post"){
             svg = svg_post_med
             data_by_sample = data_post_med_by_sample
-            delay = 5
+            delay = 0.1
             x = x_post_med
             y = y_post_med
+            var sample_list = sample_list_post
         }else if (pre_post == "pre"){
             svg = svg_pre_med
             data_by_sample = data_pre_med_by_sample
             delay = 0.1
             x = x_pre_med
             y = y_pre_med
+            var sample_list = sample_list_pre
         }
 
         // Process the post_MED data first.
@@ -179,9 +188,9 @@ $(document).ready(function () {
         bars.transition().duration(speed).attr("x", function(d){
             return x(d.sample);
         }).attr("y", function(d){
-            return y(eval("d.y_" + abbr));
+            return y(d["y_" + abbr]);
         }).attr("width", x.bandwidth()).attr("height", function(d){
-            return Math.max(y(0) - y(eval("d.height_" + abbr)), 1);}
+            return Math.max(y(0) - y(d["height_" + abbr]), 1);}
         ).attr("fill", function(d){
             return d.fill;
         }).delay(function(d,i){return(i*delay)});
@@ -190,9 +199,9 @@ $(document).ready(function () {
         .attr("x", function(d){
             return x(d.sample);
         }).attr("y", y(0)).transition().duration(1000).attr("y", function(d){
-            return y(eval("d.y_" + abbr));
+            return y(d["y_" + abbr]);
         }).attr("width", x.bandwidth()).attr("height", function(d){
-            return Math.max(y(0) - y(eval("d.height_" + abbr)), 1);}
+            return Math.max(y(0) - y(d["height_" + abbr]), 1);}
         ).attr("fill", function(d){
             return d.fill;
         });
@@ -221,10 +230,28 @@ $(document).ready(function () {
             //Second change update the plot to represent the newly selected datatype
             // This var will keep track of the timing that we've already got set up cumulatively
             cum_time = 0
-            general_update_by_sample($(this).text(), 1000, $(this).attr("data-data-type"))
+            var pre_post = $(this).attr("data-data-type")
+            var sample_list;
+            var init_speed;
+            switch(pre_post){
+                case "post":
+                    sample_list = sample_list_post;
+                    init_speed = post_med_init_by_sample_interval;
+                    break;
+                case "pre":
+                    sample_list = sample_list_pre;
+                    init_speed = pre_med_init_by_sample_interval;
+                    break;
+                case "profile":
+                    sample_list = sample_list_profile;
+                    // TODO
+//                    init_speed = post_med_init_by_sample_interval;
+                    break;
+            }
+            general_update_by_sample($(this).text(), 1000, pre_post)
             for(let i = 0; i < sample_list.length; i++){
-                 setTimeout(update_by_sample, i * eval($(this).attr("data-data-type") + "_med_init_by_sample_interval"), sample_list[i], $(this).text(), eval($(this).attr("data-data-type") + "_med_init_by_sample_interval"), $(this).attr("data-data-type"));
-                 cum_time += eval($(this).attr("data-data-type") + "_med_init_by_sample_interval");
+                 setTimeout(update_by_sample, i * init_speed, sample_list[i], $(this).text(), init_speed, pre_post);
+                 cum_time += init_speed;
             }
         }
     });
@@ -233,7 +260,6 @@ $(document).ready(function () {
     // pre-med plot, we will also want to remove the rendering the pre-MED seqs text. Also a good idea will be to have
     // a spinner set off in the top right corner.
     $('#pre_med_svg_collapse').on('show.bs.collapse', function(){
-        console.log('fish and chips');
         // First check to see if the pre-MED svg has already been initiated. If so then there is nothing
         // to do here.
         //TODO implement the spinner and get rid of the text when open
@@ -272,13 +298,13 @@ $(document).ready(function () {
 
             //Add a g to the svgs that we will use for the bars
             //We will have a seperate g for each of the samples so that we can hopefully plot column by column
-             sample_list.forEach(function(sample){
+             sample_list_pre.forEach(function(sample){
                 svg_pre_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
              });
 
             general_update_by_sample(data_type, 1000, "pre")
-            for(let i = 0; i < sample_list.length; i++){
-                setTimeout(update_by_sample, cum_time + (i * pre_med_init_by_sample_interval), sample_list[i], data_type, pre_med_init_by_sample_interval, "pre");
+            for(let i = 0; i < sample_list_pre.length; i++){
+                setTimeout(update_by_sample, cum_time + (i * pre_med_init_by_sample_interval), sample_list_pre[i], data_type, pre_med_init_by_sample_interval, "pre");
                 cum_time += pre_med_init_by_sample_interval;
             }
 
@@ -286,6 +312,63 @@ $(document).ready(function () {
 
     });
 
+    // Listening for the sorting button clicks
+    $(".svg_sort_by a").click(function(){
+        var current_text = $(this).closest(".btn-group").find(".btn").text();
+
+        if (current_text !== $(this).text()){
+            $(this).closest(".btn-group").find(".btn").text($(this).text());
+
+
+            // hopefully we can reuse some of the update code we already have
+            // we can call general_update_by_sample as this will reset the x domain using the
+            // current state of sample_list (that we just reversed).
+            // we need to work out if we are doing a relative or absolute and a pre or post
+            // get the dtype-btn items
+            var dtype;
+            var pre_post;
+            var sample_list;
+            var init_speed;
+            $(this).closest(".btn-group-sm").find(".dtype-btn").each(function(){
+                // We need to infer the rel_abs from the primary coloured button
+                if ($(this).hasClass("btn-primary")){
+                    pre_post = $(this).attr("data-data-type");
+                    if ($(this).attr("id").includes("Rel")){dtype = "relative";}else{dtype = "absolute";}
+                }
+
+            });
+
+            //TODO perform sorting here.
+            // In place of getting a new sample order for real we will simply
+            // reverse the current one
+            switch (pre_post){
+                case "post":
+                    sample_list_post = sample_list_post.reverse();
+                    sample_list = sample_list_post;
+                    init_speed = post_med_init_by_sample_interval;
+                    break;
+                case "pre":
+                    sample_list_pre = sample_list_pre.reverse();
+                    sample_list = sample_list_pre;
+                    init_speed = pre_med_init_by_sample_interval;
+                    break;
+                case "profile":
+                    sample_list_profile = sample_list_profile.reverse();
+                    sample_list = sample_list_profile;
+                    break;
+            }
+
+
+            //Here we have the dtype and pre_post now we can do the update
+            general_update_by_sample(dtype, 1000, pre_post)
+            cum_time = 0
+            for(let i = 0; i < sample_list.length; i++){
+                 setTimeout(update_by_sample, i * init_speed, sample_list[i], data_type, init_speed, pre_post);
+                 cum_time += init_speed;
+            }
+        }
+
+    });
 
     //INIT MAP
     function initMap() {
