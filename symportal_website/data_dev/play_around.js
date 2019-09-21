@@ -12,26 +12,37 @@ $(document).ready(function () {
     // DATA FOR PRE AND POST MED
     var data_post_med_by_sample = getRectDataPostMEDBySample();
     var data_pre_med_by_sample = getRectDataPreMEDBySample();
+    var data_profile_by_sample = getRectDataProfileBySample();
 
     // if plotting absolute values we can get the highest y from the 'post_med_aboslute' property
     var max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
     var max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
+    var max_y_val_profile = getRectDataProfileBySampleMaxSeq();
 
     // if plotting absolute values we can get the highest y from the 'post_taxa_... ' for the pre-med
     // TODO we are going to need separate sample lists for each of the post, pre and profiles
-    var sample_list_post = getRectDataPreMEDSampleList();
-    var sample_list_pre = getRectDataPreMEDSampleList();
-    var sample_list_profile = getRectDataPreMEDSampleList();
+    var sample_list_post = getRectDataPostMEDBySampleSampleList();
+    var sample_list_pre = getRectDataPreMEDBySampleSampleList();
+    var sample_list_profile = getRectDataProfileBySampleSampleList();
 
     // Speed at which the sample by sample plotting will be done initially
     var post_med_init_by_sample_interval = 10
     var pre_med_init_by_sample_interval = 50
+    var profile_init_by_sample_interval = 10
 
     //This initial chart function will take care of all of the svg elements that are not going to change during
     // an update. i.e. when we are changing from relative to absolute data
+    // We init the profile and post-MED plots in full buy hold off on the pre-MED
+    // The pre-MED takes a lot of time and will only be loaded if its collapsed DIV is opened
+    // We will however init the vars that will be used later on for the pre-MED plot so that
+    // They are available within the initiating functions.
 
     // Here we set the margins of the svg chart
     var svg_post_med = d3.select("#chart_post_med"),
+		margin = {top: 35, left: 35, bottom: 20, right: 0},
+		width = +svg_post_med.attr("width") - margin.left - margin.right,
+		height = +svg_post_med.attr("height") - margin.top - margin.bottom;
+    var svg_profile = d3.select("#chart_profile"),
 		margin = {top: 35, left: 35, bottom: 20, right: 0},
 		width = +svg_post_med.attr("width") - margin.left - margin.right,
 		height = +svg_post_med.attr("height") - margin.top - margin.bottom;
@@ -40,11 +51,16 @@ $(document).ready(function () {
 	var x_post_med = d3.scaleBand()
 		.range([margin.left, width - margin.right])
 		.padding(0.1)
+    var x_profile = d3.scaleBand()
+		.range([margin.left, width - margin.right])
+		.padding(0.1)
     var x_pre_med;
 
 
     // Set the y range
 	var y_post_med = d3.scaleLinear()
+        .rangeRound([height - margin.bottom, margin.top])
+    var y_profile = d3.scaleLinear()
         .rangeRound([height - margin.bottom, margin.top])
     var y_pre_med;
 
@@ -59,10 +75,17 @@ $(document).ready(function () {
     var xAxis_post_med = svg_post_med.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .attr("id", "x_axis_post_med")
+    var xAxis_profile = svg_profile.append("g")
+    .attr("transform", `translate(0,${height - margin.bottom})`)
+    .attr("id", "x_axis_profile")
     var xAxis_pre_med;
+
 	var yAxis_post_med = svg_post_med.append("g")
 		.attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_post_med")
+    var yAxis_profile = svg_profile.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_profile")
     var yAxis_pre_med;
 //
 
@@ -72,28 +95,29 @@ $(document).ready(function () {
     //TODO initiate the profiles plot here too
     sample_list_post.forEach(function(sample){
     // Selectors cannot start with a number apparently so we will add an s
-        svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
+        svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
+        svg_profile.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
     })
 
 
     // Create Tooltips
-    var tip = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
+    var tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
         .html(function(d) {
             var content = '<div style="background-color:rgba(255,255,255,0.9);">' +
             '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
             '</div>';
-//            content +=`
-//                <table style="margin-top: 2.5px;">
-//                        <tr><td>Max: </td><td style="text-align: right">` + d3.format(".2f")(d.whiskers[0]) + `</td></tr>
-//                        <tr><td>Q3: </td><td style="text-align: right">` + d3.format(".2f")(d.quartile[0]) + `</td></tr>
-//                        <tr><td>Median: </td><td style="text-align: right">` + d3.format(".2f")(d.quartile[1]) + `</td></tr>
-//                        <tr><td>Q1: </td><td style="text-align: right">` + d3.format(".2f")(d.quartile[2]) + `</td></tr>
-//                        <tr><td>Min: </td><td style="text-align: right">` + d3.format(".2f")(d.whiskers[1]) + `</td></tr>
-//                </table>
-//                `;
             return content;
         });
-    svg_post_med.call(tip);
+    var tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
+        .html(function(d) {
+            var content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+            '<span style="margin-left: 2.5px;"><b>' + d.prof_name + '</b></span><br>' +
+            '</div>';
+            return content;
+        });
+
+    svg_post_med.call(tip_seqs);
+    svg_profile.call(tip_profiles);
 
     // We will start with only the post-MED seqs being plotted. We will check to see what is
     // selected and go with that.
@@ -119,31 +143,39 @@ $(document).ready(function () {
              cum_time += post_med_init_by_sample_interval;
         }
 
-//         Then do column by column for the pre_med
-//        general_update_by_sample(data_type, 1000, "pre")
-//        for(let i = 0; i < sample_list.length; i++){
-//         setTimeout(update_by_sample, cum_time + (i * pre_med_init_by_sample_interval), sample_list[i], data_type, pre_med_init_by_sample_interval, "pre");
-//         cum_time += pre_med_init_by_sample_interval
-//        }
+        cum_time = 0
+        general_update_by_sample(data_type, 1000, "profile")
+        for(let i = 0; i < sample_list_profile.length; i++){
+             setTimeout(update_by_sample, i * profile_init_by_sample_interval, sample_list_profile[i], data_type, profile_init_by_sample_interval, "profile");
+             cum_time += profile_init_by_sample_interval;
+        }
 
-    function general_update_by_sample(data_type, speed, pre_post){
+    function general_update_by_sample(data_type, speed, pre_post_profile){
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
-        if (pre_post == "post"){
-            y = y_post_med
-            x = x_post_med
-            max_y = max_y_val_post_med
-            svg = svg_post_med
-            y_axis_id = "#y_axis_post_med"
-            x_axis_id = "#x_axis_post_med"
-            var sample_list = sample_list_post
-        }else if (pre_post == "pre"){
-            y = y_pre_med
-            x = x_pre_med
-            max_y = max_y_val_pre_med
-            svg = svg_pre_med
-            y_axis_id = "#y_axis_pre_med"
-            x_axis_id = "#x_axis_pre_med"
-            var sample_list = sample_list_pre
+        if (pre_post_profile == "post"){
+            y = y_post_med;
+            x = x_post_med;
+            max_y = max_y_val_post_med;
+            svg = svg_post_med;
+            y_axis_id = "#y_axis_post_med";
+            x_axis_id = "#x_axis_post_med";
+            var sample_list = sample_list_post;
+        }else if (pre_post_profile == "pre"){
+            y = y_pre_med;
+            x = x_pre_med;
+            max_y = max_y_val_pre_med;
+            svg = svg_pre_med;
+            y_axis_id = "#y_axis_pre_med";
+            x_axis_id = "#x_axis_pre_med";
+            var sample_list = sample_list_pre;
+        }else if (pre_post_profile == "profile"){
+            y = y_profile;
+            x = x_profile;
+            max_y = max_y_val_profile;
+            svg = svg_profile;
+            y_axis_id = "#y_axis_profile";
+            x_axis_id = "#x_axis_profile";
+            var sample_list = sample_list_profile;
         }
 
         if (data_type == "absolute"){
@@ -183,29 +215,36 @@ $(document).ready(function () {
 
     }
 
-    function update_by_sample(col_sample, data_type, speed, pre_post){
+    function update_by_sample(col_sample, data_type, speed, pre_post_profile){
 
-        if (pre_post == "post"){
-            svg = svg_post_med
-            data_by_sample = data_post_med_by_sample
-            delay = 0.1
-            x = x_post_med
-            y = y_post_med
-            var sample_list = sample_list_post
-        }else if (pre_post == "pre"){
-            svg = svg_pre_med
-            data_by_sample = data_pre_med_by_sample
-            delay = 0.1
-            x = x_pre_med
-            y = y_pre_med
-            var sample_list = sample_list_pre
+        if (pre_post_profile == "post"){
+            svg = svg_post_med;
+            data_by_sample = data_post_med_by_sample;
+            delay = 0.1;
+            x = x_post_med;
+            y = y_post_med;
+            var sample_list = sample_list_post;
+        }else if (pre_post_profile == "pre"){
+            svg = svg_pre_med;
+            data_by_sample = data_pre_med_by_sample;
+            delay = 0.1;
+            x = x_pre_med;
+            y = y_pre_med;
+            var sample_list = sample_list_pre;
+        }else if (pre_post_profile == "profile"){
+            svg = svg_profile;
+            data_by_sample = data_profile_by_sample;
+            delay = 0.1;
+            x = x_profile;
+            y = y_profile;
+            var sample_list = sample_list_profile;
         }
-
         // Process the post_MED data first.
         var bars = svg.select("g.s" + col_sample.replace(/\./g, "_")).selectAll("rect").data(data_by_sample[col_sample], function(d){
             // In theory because we're working on a sample by sample basis now we should be able to work with just the
             // the seq name as key. But for the time being we'll keep the key as it is.
-            return d.seq_name + d.sample;
+            if (pre_post_profile == "profile"){return d.prof_name + d.sample;}else{return d.seq_name + d.sample;}
+
         });
 
         bars.exit().remove()
@@ -230,25 +269,43 @@ $(document).ready(function () {
 
         // Interesting article on the positioning of the .on method
         // https://stackoverflow.com/questions/44495524/d3-transition-not-working-with-events?rq=1
-        bars.enter().append("rect")
-        .attr("x", function(d){
-            return x(d.sample);
-        }).attr("y", y(0)).on('mouseover', function(d){
-            tip.show(d);
-            d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-        })
-        .on('mouseout', function(d){
-            tip.hide(d);
-            d3.select(this).attr("style", null);
-        }).transition().duration(1000).attr("y", function(d){
-            return y(d["y_" + abbr]);
-        }).attr("width", x.bandwidth()).attr("height", function(d){
-            return Math.max(y(0) - y(d["height_" + abbr]), 1);}
-        ).attr("fill", function(d){
-            return d.fill;
-        });
-
-        var foo = "bar"
+        if (pre_post_profile == "profile"){
+            bars.enter().append("rect")
+            .attr("x", function(d){
+                return x(d.sample);
+            }).attr("y", y(0)).on('mouseover', function(d){
+                tip_profiles.show(d);
+                d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+            })
+            .on('mouseout', function(d){
+                tip_profiles.hide(d);
+                d3.select(this).attr("style", null);
+            }).transition().duration(1000).attr("y", function(d){
+                return y(d["y_" + abbr]);
+            }).attr("width", x.bandwidth()).attr("height", function(d){
+                return Math.max(y(0) - y(d["height_" + abbr]), 1);}
+            ).attr("fill", function(d){
+                return d.fill;
+            });
+        }else{
+            bars.enter().append("rect")
+            .attr("x", function(d){
+                return x(d.sample);
+            }).attr("y", y(0)).on('mouseover', function(d){
+                tip_seqs.show(d);
+                d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+            })
+            .on('mouseout', function(d){
+                tip_seqs.hide(d);
+                d3.select(this).attr("style", null);
+            }).transition().duration(1000).attr("y", function(d){
+                return y(d["y_" + abbr]);
+            }).attr("width", x.bandwidth()).attr("height", function(d){
+                return Math.max(y(0) - y(d["height_" + abbr]), 1);}
+            ).attr("fill", function(d){
+                return d.fill;
+            });
+        }
     }
 
 
