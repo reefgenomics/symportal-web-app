@@ -66,7 +66,7 @@ be held side by side on wider screens but below each other on the smaller laptop
             <P>Author 1, Author2, Bamino. d. Hector, Senor Pulap. and Osacar Trunkey and more and more and more anad more and amorena dndfndn amoer</P>
         </div>
 
-        <!--POST MED SNG HOLDER-->
+        <!--POST MED SVG HOLDER-->
         <div class="card mb-3">
 
             <div class="card-header" data-toggle="collapse" data-target="#post_med_svg_collapse">Post-MED ITS2 sequences</div>
@@ -110,6 +110,52 @@ be held side by side on wider screens but below each other on the smaller laptop
             </div>
         </div>
 
+        <!--PROFILE SVG HOLDER-->
+        <div class="card mb-3">
+            <!--CARD HEADER-->
+            <div class="card-header" data-toggle="collapse" data-target="#profile_svg_collapse">
+                ITS2 type profiles
+            </div>
+            <!--CARD BODY-->
+            <div class="card-body p-0 collapse" id="profile_svg_collapse">
+                <div class="bg-light p-2" >
+                    <div class="btn-group btn-group-sm" >
+                        <button id="ProfileMEDRelDType" class="btn btn-light dtype-btn" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
+                        <button id="ProfileMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                               Sorted by:
+                            </button>
+                            <div class="dropdown-menu svg_sort_by" id="data_type_profile" style="padding:2px 4px;font-size:0.7rem;">
+                                <a class="dropdown-item" >sequencing depth</a>
+                                <a class="dropdown-item" >sequencing similarity</a>
+                                <a class="dropdown-item" >host</a>
+                                <a class="dropdown-item" >location</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-1 overflow-auto text-center">
+                    <svg id="chart_profile" class="chart" width="650" height="400"></svg>
+                </div>
+            </div>
+            <div class="card-footer" style="font-size:0.5rem;">
+                <span style="font-weight:bold;">Sample:</span>
+                <span class="meta_sample_name">--</span>
+                <span style="font-weight:bold;">UID:</span>
+                <span class="meta_sample_uid">--</span>
+                <span style="font-weight:bold;">Host</span>
+                <span class="meta_sample_host">--</span>
+                <span style="font-weight:bold;">Depth:</span>
+                <span class="meta_sample_depth">--</span>
+                <span style="font-weight:bold;">Lat:</span>
+                <span class="meta_sample_lat">--</span>
+                <span style="font-weight:bold;">Lon:</span>
+                <span class="meta_sample_lon">--</span>
+            </div>
+        </div>
+
+        <!--PRE MED SVG HOLDER-->
         <div class="card mb-3">
             <!--CARD HEADER-->
             <div class="card-header" data-toggle="collapse" data-target="#pre_med_svg_collapse">
@@ -138,7 +184,20 @@ be held side by side on wider screens but below each other on the smaller laptop
                     <svg id="chart_pre_med" class="chart" width="650" height="400"></svg>
                 </div>
             </div>
-            <div class="card-footer">Footer</div>
+            <div class="card-footer" style="font-size:0.5rem;">
+                <span style="font-weight:bold;">Sample:</span>
+                <span class="meta_sample_name">--</span>
+                <span style="font-weight:bold;">UID:</span>
+                <span class="meta_sample_uid">--</span>
+                <span style="font-weight:bold;">Host</span>
+                <span class="meta_sample_host">--</span>
+                <span style="font-weight:bold;">Depth:</span>
+                <span class="meta_sample_depth">--</span>
+                <span style="font-weight:bold;">Lat:</span>
+                <span class="meta_sample_lat">--</span>
+                <span style="font-weight:bold;">Lon:</span>
+                <span class="meta_sample_lon">--</span>
+            </div>
         </div>
     </div>
 
@@ -306,6 +365,7 @@ be held side by side on wider screens but below each other on the smaller laptop
 
         </div>
         <!--MAP-->
+        <span style="font-size:0.5rem;font-weight:bold;">Click for site details</span>
         <div id="map" style="height:400px;border:1px solid black;"></div>
 
     </div>
@@ -321,9 +381,9 @@ be held side by side on wider screens but below each other on the smaller laptop
 <!--TODO to enable the marker clustering we will need to have the library on the server-->
 <!--<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">-->
 <script src="play_around.js"></script>
-<!--AIzaSyDvYQZjmmrwLYthdxiFTBGvEg6TS4b76lA-->
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvYQZjmmrwLYthdxiFTBGvEg6TS4b76lA"></script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAkCzzx0s24NKJ3qGS-4xVBwzMGSI4thNA"></script>
 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>

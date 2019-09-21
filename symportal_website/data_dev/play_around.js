@@ -171,9 +171,7 @@ $(document).ready(function () {
                 .style("text-anchor", "start").style("text-anchor", "start");
 
         //Try to put a listener in here
-        var ticks = svg.select(x_axis_id).selectAll(".tick")._groups[0]
-        ticks.forEach(function(d1){
-            var bob = "asdf";
+        var ticks = svg.select(x_axis_id).selectAll(".tick")._groups[0].forEach(function(d1){
             d3.select(d1).on("mouseover", function(){
                 d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
                 var sample_name = this.__data__;
