@@ -158,6 +158,8 @@ $(document).ready(function () {
         .duration(speed)
         .call(d3.axisLeft(y).ticks(null, "s"));
 
+
+
         // Set the domain of the x. This should be the sample names
         x.domain(sample_list);
 
@@ -167,6 +169,19 @@ $(document).ready(function () {
                 .call(d3.axisBottom(x).tickSizeOuter(0)).selectAll("text")
                 .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                 .style("text-anchor", "start").style("text-anchor", "start");
+
+        //Try to put a listener in here
+        var ticks = svg.select(x_axis_id).selectAll(".tick")._groups[0]
+        ticks.forEach(function(d1){
+            var bob = "asdf";
+            d3.select(d1).on("mouseover", function(){
+                d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
+                var sample_name = this.__data__;
+                $(this).closest(".card").find(".meta_sample_name").text(sample_name);
+            }).on("mouseout", function(){
+                d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
+            })
+        })
 
     }
 
