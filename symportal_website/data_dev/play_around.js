@@ -20,7 +20,7 @@ $(document).ready(function () {
     var max_y_val_profile = getRectDataProfileBySampleMaxSeq();
 
     // if plotting absolute values we can get the highest y from the 'post_taxa_... ' for the pre-med
-    // TODO we are going to need separate sample lists for each of the post, pre and profiles
+
     var sample_list_post = getRectDataPostMEDBySampleSampleList();
     var sample_list_pre = getRectDataPreMEDBySampleSampleList();
     var sample_list_profile = getRectDataProfileBySampleSampleList();
@@ -276,6 +276,7 @@ $(document).ready(function () {
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                $(this).closest(".card").find(".meta_profile_name").text(d["prof_name"]);
             })
             .on('mouseout', function(d){
                 tip_profiles.hide(d);
