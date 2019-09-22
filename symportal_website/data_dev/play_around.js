@@ -138,6 +138,7 @@ $(document).ready(function () {
         // This var will keep track of the timing that we've already got set up cumulatively
         cum_time = 0
         general_update_by_sample(data_type, 1000, "post")
+        setTimeout(centerAlignXLabels, 1500)
         for(let i = 0; i < sample_list_post.length; i++){
              setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list_post[i], data_type, post_med_init_by_sample_interval, "post");
              cum_time += post_med_init_by_sample_interval;
@@ -150,7 +151,7 @@ $(document).ready(function () {
              cum_time += profile_init_by_sample_interval;
         }
 
-    function general_update_by_sample(data_type, speed, pre_post_profile){
+    function general_update_by_sample(data_type, speed, pre_post_profile, callback=null){
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
         if (pre_post_profile == "post"){
             y = y_post_med;
@@ -213,6 +214,13 @@ $(document).ready(function () {
             })
         })
 
+        // Callback for centering the labels
+        if (callback){
+            callback();
+        }else{
+            var foo = "bar";
+        }
+
     }
 
     function update_by_sample(col_sample, data_type, speed, pre_post_profile){
@@ -239,7 +247,7 @@ $(document).ready(function () {
             y = y_profile;
             var sample_list = sample_list_profile;
         }
-        // Process the post_MED data first.
+
         var bars = svg.select("g.s" + col_sample.replace(/\./g, "_")).selectAll("rect").data(data_by_sample[col_sample], function(d){
             // In theory because we're working on a sample by sample basis now we should be able to work with just the
             // the seq name as key. But for the time being we'll keep the key as it is.
@@ -556,6 +564,30 @@ $(document).ready(function () {
 
     google.maps.event.addDomListener(window, 'load', initMap);
 
+    // This is our trial to see if we can adjust the labels of the x axis so that they are
+    // aligned centrally to each other
+    //TODO plan of attach for tomorrow is to get the labels centered, make a new svg below it
+    // have the bars going down from the top, plot a path and little ticklines, badda bing.
+    function centerAlignXLabels(){
+        // Get a list of the heights of the boxes
+        // Get the highest and move the others down according to that
+        var highest_text = 0;
+        $('#x_axis_post_med').find('text').each(function(){
+            var text_height = this.getBBox().width;
+            if (text_height > highest_text){
+                highest_text = text_height;
+            };
+        });
+        // Here we have the hieght of the biggest text box
+        // Now move each text box down by the (highest - its height) / 2
+        // By ading to the attribute x
+        $('#x_axis_post_med').find('text').each(function(){
+            var current_x = +$(this).attr("x");
+            var current_height = this.getBBox().width;
+            var new_x = current_x + ((highest_text - current_height)/2);
+            $(this).attr("x", new_x);
+        });
+    }
 
 });
 
