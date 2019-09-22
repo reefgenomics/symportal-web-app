@@ -491,25 +491,35 @@ $(document).ready(function () {
             });
 
             //Second change update the plot to represent the newly selected datatype
-
+            // If one of the modal buttons then need to update both plots
+            // else just the one plot.
             var pre_post_profile = $(this).attr("data-data-type")
             var sample_list;
             var init_speed;
-            switch(pre_post_profile){
-                case "post":
-                    sample_list = sample_list_post;
-                    init_speed = post_med_init_by_sample_interval;
-                    break;
-                case "pre":
-                    sample_list = sample_list_pre;
-                    init_speed = pre_med_init_by_sample_interval;
-                    break;
-                case "profile":
-                    sample_list = sample_list_profile;
-                    init_speed = profile_init_by_sample_interval;
-                    break;
+            if (pre_post_profile == "post-profile"){
+                // Update post modal
+                update_plot_by_sample($(this).text(), "post-modal",
+                sample_list_post, post_med_init_by_sample_interval);
+                // Update profile modal
+                update_plot_by_sample($(this).text(), "profile-modal",
+                sample_list_profile, profile_init_by_sample_interval);
+            }else{
+                switch(pre_post_profile){
+                    case "post":
+                        sample_list = sample_list_post;
+                        init_speed = post_med_init_by_sample_interval;
+                        break;
+                    case "pre":
+                        sample_list = sample_list_pre;
+                        init_speed = pre_med_init_by_sample_interval;
+                        break;
+                    case "profile":
+                        sample_list = sample_list_profile;
+                        init_speed = profile_init_by_sample_interval;
+                        break;
+                }
+                update_plot_by_sample($(this).text(), pre_post_profile, sample_list, init_speed);
             }
-            update_plot_by_sample($(this).text(), pre_post_profile, sample_list, init_speed);
 
 
         }
