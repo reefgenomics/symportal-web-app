@@ -474,7 +474,6 @@ $(document).ready(function () {
 	// LISTENERS RELATED TO CHARTING
 	// RELATIVE to ABSOLUTE switch
 	// When we change the modal or regular version we want these changes relected in the other.
-    // TODO we still need to implement this for the modal but we need the buttons first.
     $(".dtype-btn").click(function(){
         console.log($(this).text());
         //If the button is of class btn light then it is not selected and this click should fire
@@ -595,7 +594,7 @@ $(document).ready(function () {
                 // We need to infer the rel_abs from the primary coloured button
                 if ($(this).hasClass("btn-primary")){
                     pre_post_profile = $(this).attr("data-data-type");
-                    if ($(this).attr("id").includes("Rel")){data_type = "relative";}else{data_type = "absolute";}
+                    data_type = $(this).text();
                 }
 
             });
@@ -603,25 +602,36 @@ $(document).ready(function () {
             //TODO perform sorting here.
             // In place of getting a new sample order for real we will simply
             // reverse the current one
-            switch (pre_post_profile){
-                case "post":
-                    sample_list_post = sample_list_post.reverse();
-                    sample_list = sample_list_post;
-                    init_speed = post_med_init_by_sample_interval;
-                    break;
-                case "pre":
-                    sample_list_pre = sample_list_pre.reverse();
-                    sample_list = sample_list_pre;
-                    init_speed = pre_med_init_by_sample_interval;
-                    break;
-                case "profile":
-                    sample_list_profile = sample_list_profile.reverse();
-                    sample_list = sample_list_profile;
-                    break;
-            }
+            if (pre_post_profile == "post-profile"){
+                sample_list_post = sample_list_post.reverse()
+                sample_list_profile = sample_list_profile.reverse()
+                // Update post modal
+                update_plot_by_sample(data_type, "post-modal",
+                sample_list_post, post_med_init_by_sample_interval);
+                // Update profile modal
+                update_plot_by_sample(data_type, "profile-modal",
+                sample_list_profile, profile_init_by_sample_interval);
+            }else{
+                switch (pre_post_profile){
+                    case "post":
+                        sample_list_post = sample_list_post.reverse();
+                        sample_list = sample_list_post;
+                        init_speed = post_med_init_by_sample_interval;
+                        break;
+                    case "pre":
+                        sample_list_pre = sample_list_pre.reverse();
+                        sample_list = sample_list_pre;
+                        init_speed = pre_med_init_by_sample_interval;
+                        break;
+                    case "profile":
+                        sample_list_profile = sample_list_profile.reverse();
+                        sample_list = sample_list_profile;
+                        init_speed = profile_init_by_sample_interval;
+                        break;
+                }
+                update_plot_by_sample(data_type, pre_post_profile, sample_list_pre, pre_med_init_by_sample_interval)
 
-            //Here we have the data_type and pre_post_profile now we can do the update
-            update_plot_by_sample(data_type, pre_post_profile, sample_list_pre, pre_med_init_by_sample_interval)
+            }
         }
 
     });
