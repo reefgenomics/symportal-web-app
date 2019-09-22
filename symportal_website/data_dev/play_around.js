@@ -13,7 +13,37 @@ $(document).ready(function () {
     var data_post_med_by_sample = getRectDataPostMEDBySample();
     var data_pre_med_by_sample = getRectDataPreMEDBySample();
     var data_profile_by_sample = getRectDataProfileBySample();
+    // Because this dataset is going to be used in the inverted modal plot we need to
+    // remove the cummulative y values that have been added to the above
+    var data_profile_inv_by_sample = getRectDataProfileBySample();
+    function processProfileInvData(data){
+        // For each sample in the data
+        Object.keys(data).forEach(function (dkey){
+            // First check to see if there are any rectangles for this sample
+            if (data[dkey].length == 0){
+                return;
+            }
+            // First sort the list so that we are working in order
+            // of either y_rel or y_abs in ascending order
+            data[dkey].sort((a, b) => (a["y_rel"] < b["y_rel"]) ? 1 : -1);
 
+            // Now that the data is sorted, go through each element removing the cummulative y
+            // we can do this by setting the y to 0 for the first element and then
+            // for each next element we can set it to the y of the element that is n-1
+            new_y_rel = 0;
+            new_y_abs = 0;
+            for (j = 0; j < data[dkey].length; j++){
+                old_y_rel = data[dkey][j]["y_rel"];
+                old_y_abs = data[dkey][j]["y_abs"];
+                data[dkey][j]["y_rel"] = new_y_rel;
+                data[dkey][j]["y_abs"] = new_y_abs;
+                new_y_rel = old_y_rel;
+                new_y_abs = old_y_abs;
+            }
+
+        })
+    }
+    processProfileInvData(data_profile_inv_by_sample);
     // if plotting absolute values we can get the highest y from the 'post_med_aboslute' property
     var max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
     var max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
@@ -24,6 +54,7 @@ $(document).ready(function () {
     var sample_list_post = getRectDataPostMEDBySampleSampleList();
     var sample_list_pre = getRectDataPreMEDBySampleSampleList();
     var sample_list_profile = getRectDataProfileBySampleSampleList();
+    var sample_list_post_2 = getRectDataPostMEDBySampleSampleList();
 
     // Speed at which the sample by sample plotting will be done initially
     var post_med_init_by_sample_interval = 10
@@ -42,14 +73,16 @@ $(document).ready(function () {
 		margin = {top: 35, left: 35, bottom: 20, right: 0},
 		width = +svg_post_med.attr("width") - margin.left - margin.right,
 		height = +svg_post_med.attr("height") - margin.top - margin.bottom;
-    var svg_profile = d3.select("#chart_profile"),
-		margin = {top: 35, left: 35, bottom: 20, right: 0},
-		width = +svg_post_med.attr("width") - margin.left - margin.right,
-		height = +svg_post_med.attr("height") - margin.top - margin.bottom;
+    var svg_post_med_2 = d3.select("#chart_post_med_2"),
+		alt_margin = {top: 5, left: 35, bottom: 20, right: 0};
+    var svg_profile = d3.select("#chart_profile");
     var svg_pre_med;
     // Set the x range that will be used for the x val of the bars
 	var x_post_med = d3.scaleBand()
 		.range([margin.left, width - margin.right])
+		.padding(0.1)
+    var x_post_med_2 = d3.scaleBand()
+		.range([alt_margin.left, width - alt_margin.right])
 		.padding(0.1)
     var x_profile = d3.scaleBand()
 		.range([margin.left, width - margin.right])
@@ -60,6 +93,8 @@ $(document).ready(function () {
     // Set the y range
 	var y_post_med = d3.scaleLinear()
         .rangeRound([height - margin.bottom, margin.top])
+    var y_post_med_2 = d3.scaleLinear()
+        .rangeRound([alt_margin.top, height - alt_margin.bottom])
     var y_profile = d3.scaleLinear()
         .rangeRound([height - margin.bottom, margin.top])
     var y_pre_med;
@@ -75,6 +110,9 @@ $(document).ready(function () {
     var xAxis_post_med = svg_post_med.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .attr("id", "x_axis_post_med")
+    var xAxis_post_med_2 = svg_post_med_2.append("g")
+    .attr("transform", `translate(0,${alt_margin.top})`)
+    .attr("id", "x_axis_post_med_2")
     var xAxis_profile = svg_profile.append("g")
     .attr("transform", `translate(0,${height - margin.bottom})`)
     .attr("id", "x_axis_profile")
@@ -83,6 +121,9 @@ $(document).ready(function () {
 	var yAxis_post_med = svg_post_med.append("g")
 		.attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_post_med")
+    var yAxis_post_med_2 = svg_post_med_2.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_post_med_2")
     var yAxis_profile = svg_profile.append("g")
 		.attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_profile")
@@ -96,6 +137,7 @@ $(document).ready(function () {
     sample_list_post.forEach(function(sample){
     // Selectors cannot start with a number apparently so we will add an s
         svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
+        svg_post_med_2.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
         svg_profile.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
     })
 
@@ -118,6 +160,7 @@ $(document).ready(function () {
 
     svg_post_med.call(tip_seqs);
     svg_profile.call(tip_profiles);
+    svg_post_med_2.call(tip_profiles);
 
     // We will start with only the post-MED seqs being plotted. We will check to see what is
     // selected and go with that.
@@ -126,46 +169,176 @@ $(document).ready(function () {
         } else if ($("#PostMEDRelDType").hasClass("btn-primary")){
             var data_type = 'relative';
         }
-        // First do the columns for the post_med
-        // Eventually we can make the amount of time this takes dynamic with the number of samples and seqs
-        // per sample
 
-        // So that we don't run the same code for the axes etc for every sample we will
-        // move this code into the general_update_post_med_by_sample
-        // and only run the code specific to the given sample column updating in the
-        // update_post_med_by_sample function
 
-        // This var will keep track of the timing that we've already got set up cumulatively
+
+        // POST-MED
+        init_plot(data_type, "post", sample_list_post, post_med_init_by_sample_interval)
+//        // This var will keep track of the timing that we've already got set up cumulatively
+//        cum_time = 0
+//        // SETUP AXIS just once
+//        general_update_by_sample(data_type, 1000, "post")
+//        setTimeout(centerAlignXLabels, 1500)
+//        for(let i = 0; i < sample_list_post.length; i++){
+//             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list_post[i],
+//             data_type, post_med_init_by_sample_interval, "post");
+//             cum_time += post_med_init_by_sample_interval;
+//        }
+
+        // POST-MED-2
+        init_plot(data_type, "post-2", sample_list_post_2, post_med_init_by_sample_interval)
+//        // This var will keep track of the timing that we've already got set up cumulatively
+//        cum_time = 0
+//        // SETUP AXIS just once
+//        general_update_by_sample(data_type, 1000, "post-2")
+//        for(let i = 0; i < sample_list_post.length; i++){
+//             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list_post_2[i],
+//             data_type, post_med_init_by_sample_interval, "post-2");
+//             cum_time += post_med_init_by_sample_interval;
+//        }
+
+        // PROFILES
+        init_plot(data_type, "profile", sample_list_profile, profile_init_by_sample_interval)
+//        cum_time = 0
+//        // SETUP AXIS just once
+//        general_update_by_sample(data_type, 1000, "profile")
+//        for(let i = 0; i < sample_list_profile.length; i++){
+//             setTimeout(update_by_sample, i * profile_init_by_sample_interval, sample_list_profile[i], data_type, profile_init_by_sample_interval, "profile");
+//             cum_time += profile_init_by_sample_interval;
+//        }
+
+    // We are putting this all in a method so that we can better control the flow of
+    // the plotting
+    function init_plot(data_type, pre_post_profile, sample_list, init_sample_interval){
+        // Update the domains first
+        update_axis_domains_by_sample(data_type, pre_post_profile)
+        // then plot the bars sample by sample
         cum_time = 0
-        general_update_by_sample(data_type, 1000, "post")
-        setTimeout(centerAlignXLabels, 1500)
         for(let i = 0; i < sample_list_post.length; i++){
-             setTimeout(update_by_sample, i * post_med_init_by_sample_interval, sample_list_post[i], data_type, post_med_init_by_sample_interval, "post");
-             cum_time += post_med_init_by_sample_interval;
+             setTimeout(update_by_sample, i * init_sample_interval, sample_list_post_2[i],
+             data_type, init_sample_interval, pre_post_profile);
+             cum_time += init_sample_interval;
+        }
+        // Now draw the axis last so that they are on top of the bars
+        // we can then use a transition .on event to call the centering of the labels
+        setTimeout(call_axes, cum_time, 1000, pre_post_profile)
+    }
+
+    function update_axis_domains_by_sample(data_type, pre_post_profile){
+        // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
+        if (pre_post_profile == "post"){
+            y = y_post_med;
+            x = x_post_med;
+            max_y = max_y_val_post_med;
+            var sample_list = sample_list_post;
+        }else if (pre_post_profile == "post-2"){
+            y = y_post_med_2;
+            x = x_post_med_2;
+            max_y = max_y_val_profile;
+            var sample_list = sample_list_post_2;
+        }else if (pre_post_profile == "pre"){
+            y = y_pre_med;
+            x = x_pre_med;
+            max_y = max_y_val_pre_med;
+            var sample_list = sample_list_pre;
+        }else if (pre_post_profile == "profile"){
+            y = y_profile;
+            x = x_profile;
+            max_y = max_y_val_profile;
+            var sample_list = sample_list_profile;
         }
 
-        cum_time = 0
-        general_update_by_sample(data_type, 1000, "profile")
-        for(let i = 0; i < sample_list_profile.length; i++){
-             setTimeout(update_by_sample, i * profile_init_by_sample_interval, sample_list_profile[i], data_type, profile_init_by_sample_interval, "profile");
-             cum_time += profile_init_by_sample_interval;
+        if (data_type == "absolute"){
+            y.domain([0, max_y]).nice();
+        }else{
+            y.domain([0, 1]).nice();
         }
 
+        // Set the domain of the x. This should be the sample names
+        x.domain(sample_list);
+
+    }
+
+    function call_axes(speed, pre_post_profile){
+        // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
+        if (pre_post_profile == "post"){
+            y = y_post_med;
+            x = x_post_med;
+            y_axis_id = "#y_axis_post_med";
+            x_axis_id = "#x_axis_post_med";
+        }else if (pre_post_profile == "post-2"){
+            y = y_post_med_2;
+            x = x_post_med_2;
+            y_axis_id = "#y_axis_post_med_2";
+            x_axis_id = "#x_axis_post_med_2";
+        }else if (pre_post_profile == "pre"){
+            y = y_pre_med;
+            x = x_pre_med;
+            y_axis_id = "#y_axis_pre_med";
+            x_axis_id = "#x_axis_pre_med";
+        }else if (pre_post_profile == "profile"){
+            y = y_profile;
+            x = x_profile;
+            y_axis_id = "#y_axis_profile";
+            x_axis_id = "#x_axis_profile";
+        }
+
+        // Call the y axis
+        d3.select(y_axis_id)
+        .transition()
+        .duration(speed)
+        .call(d3.axisLeft(y).ticks(null, "s"));
+
+        // Call the x axis
+        if (pre_post_profile == "post-2"){
+            // Axis with ticks above and no text
+            d3.select(x_axis_id).transition().duration(speed)
+                    .call(d3.axisTop(x).tickSizeOuter(0));
+
+        }else{
+            // The regular axis with ticks and text below
+            // callback .on function to center the labels
+            d3.selectAll(x_axis_id).transition().duration(speed)
+                    .call(d3.axisBottom(x).tickSizeOuter(0)).selectAll("text")
+                    .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+                    .style("text-anchor", "start").style("text-anchor", "start")
+                    .on("end", centerAlignXLabels);
+        }
+
+        // Listener to highlight sample names on mouse over.
+        // Not needed for the post-2
+        if (pre_post_profile !== "post-2"){
+            var ticks = d3.select(x_axis_id).selectAll(".tick")._groups[0].forEach(function(d1){
+                d3.select(d1).on("mouseover", function(){
+                    d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
+                    var sample_name = this.__data__;
+                    $(this).closest(".card").find(".meta_sample_name").text(sample_name);
+                }).on("mouseout", function(){
+                    d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
+                })
+            })
+        }
+    }
     function general_update_by_sample(data_type, speed, pre_post_profile, callback=null){
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
         if (pre_post_profile == "post"){
             y = y_post_med;
             x = x_post_med;
             max_y = max_y_val_post_med;
-            svg = svg_post_med;
             y_axis_id = "#y_axis_post_med";
             x_axis_id = "#x_axis_post_med";
             var sample_list = sample_list_post;
+        }else if (pre_post_profile == "post-2"){
+            y = y_post_med_2;
+            x = x_post_med_2;
+            max_y = max_y_val_profile;
+            y_axis_id = "#y_axis_post_med_2";
+            x_axis_id = "#x_axis_post_med_2";
+            var sample_list = sample_list_post_2;
         }else if (pre_post_profile == "pre"){
             y = y_pre_med;
             x = x_pre_med;
             max_y = max_y_val_pre_med;
-            svg = svg_pre_med;
             y_axis_id = "#y_axis_pre_med";
             x_axis_id = "#x_axis_pre_med";
             var sample_list = sample_list_pre;
@@ -173,7 +346,6 @@ $(document).ready(function () {
             y = y_profile;
             x = x_profile;
             max_y = max_y_val_profile;
-            svg = svg_profile;
             y_axis_id = "#y_axis_profile";
             x_axis_id = "#x_axis_profile";
             var sample_list = sample_list_profile;
@@ -186,7 +358,7 @@ $(document).ready(function () {
         }
 
         // Now update the y axis
-        svg.select(y_axis_id)
+        d3.select(y_axis_id)
         .transition()
         .duration(speed)
         .call(d3.axisLeft(y).ticks(null, "s"));
@@ -198,28 +370,41 @@ $(document).ready(function () {
 
         // Complete the x axis
         // This should be fairly invariable for the time being as we aren't playing with the order of the x axis yet
-        svg.selectAll(x_axis_id).transition().duration(speed)
-                .call(d3.axisBottom(x).tickSizeOuter(0)).selectAll("text")
-                .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-                .style("text-anchor", "start").style("text-anchor", "start");
-
-        //Try to put a listener in here
-        var ticks = svg.select(x_axis_id).selectAll(".tick")._groups[0].forEach(function(d1){
-            d3.select(d1).on("mouseover", function(){
-                d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
-                var sample_name = this.__data__;
-                $(this).closest(".card").find(".meta_sample_name").text(sample_name);
-            }).on("mouseout", function(){
-                d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
-            })
-        })
-
-        // Callback for centering the labels
-        if (callback){
-            callback();
+        if (pre_post_profile == "post-2"){
+            // TODO make this axis just the line with the ticks above
+            d3.select(x_axis_id).transition().duration(speed)
+                    .call(d3.axisTop(x).tickSizeOuter(0));
+//                    .selectAll("text")
+//                    .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+//                    .style("text-anchor", "start").style("text-anchor", "start");
         }else{
-            var foo = "bar";
+            // The regular axis
+            d3.selectAll(x_axis_id).transition().duration(speed)
+                    .call(d3.axisBottom(x).tickSizeOuter(0)).selectAll("text")
+                    .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+                    .style("text-anchor", "start").style("text-anchor", "start");
         }
+
+        if (pre_post_profile !== "post-2"){
+            //Try to put a listener in here
+            var ticks = d3.select(x_axis_id).selectAll(".tick")._groups[0].forEach(function(d1){
+                d3.select(d1).on("mouseover", function(){
+                    d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
+                    var sample_name = this.__data__;
+                    $(this).closest(".card").find(".meta_sample_name").text(sample_name);
+                }).on("mouseout", function(){
+                    d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
+                })
+            })
+        }
+
+
+//        // Callback for centering the labels
+//        if (callback){
+//            callback();
+//        }else{
+//            var foo = "bar";
+//        }
 
     }
 
@@ -232,6 +417,13 @@ $(document).ready(function () {
             x = x_post_med;
             y = y_post_med;
             var sample_list = sample_list_post;
+        }else if (pre_post_profile == "post-2"){
+            svg = svg_post_med_2;
+            data_by_sample = data_profile_inv_by_sample;
+            delay = 0.1;
+            x = x_post_med_2;
+            y = y_post_med_2;
+            var sample_list = sample_list_post_2;
         }else if (pre_post_profile == "pre"){
             svg = svg_pre_med;
             data_by_sample = data_pre_med_by_sample;
@@ -251,7 +443,11 @@ $(document).ready(function () {
         var bars = svg.select("g.s" + col_sample.replace(/\./g, "_")).selectAll("rect").data(data_by_sample[col_sample], function(d){
             // In theory because we're working on a sample by sample basis now we should be able to work with just the
             // the seq name as key. But for the time being we'll keep the key as it is.
-            if (pre_post_profile == "profile"){return d.prof_name + d.sample;}else{return d.seq_name + d.sample;}
+            if (pre_post_profile == "profile" || pre_post_profile == "post-2"){
+                return d.prof_name + d.sample;
+            }else{
+                return d.seq_name + d.sample;
+            }
 
         });
 
@@ -293,6 +489,25 @@ $(document).ready(function () {
                 return y(d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
                 return Math.max(y(0) - y(d["height_" + abbr]), 1);}
+            ).attr("fill", function(d){
+                return d.fill;
+            });
+        }else if(pre_post_profile == "post-2"){
+            bars.enter().append("rect")
+            .attr("x", function(d){
+                return x(d.sample);
+            }).attr("y", y(0)).on('mouseover', function(d){
+                tip_profiles.show(d);
+                d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                $(this).closest(".card").find(".meta_profile_name").text(d["prof_name"]);
+            })
+            .on('mouseout', function(d){
+                tip_profiles.hide(d);
+                d3.select(this).attr("style", null);
+            }).transition().duration(1000).attr("y", function(d){
+                return y(d["y_" + abbr]);
+            }).attr("width", x.bandwidth()).attr("height", function(d){
+                return Math.max(y(d["height_" + abbr]), 1);}
             ).attr("fill", function(d){
                 return d.fill;
             });
@@ -569,23 +784,29 @@ $(document).ready(function () {
     //TODO plan of attach for tomorrow is to get the labels centered, make a new svg below it
     // have the bars going down from the top, plot a path and little ticklines, badda bing.
     function centerAlignXLabels(){
-        // Get a list of the heights of the boxes
-        // Get the highest and move the others down according to that
-        var highest_text = 0;
+        // This function aims to move the text labels down slightly
+        // to align them vertically centrally.
+        // Only those labels shorter than others need moving
+        // We use the bottom of the bounding box of the axis (svg g element)
+        // We calculate the distance between the bottom of the text element
+        // and this g box and then move it down by half of this.
+
         $('#x_axis_post_med').find('text').each(function(){
-            var text_height = this.getBBox().width;
-            if (text_height > highest_text){
-                highest_text = text_height;
-            };
-        });
-        // Here we have the hieght of the biggest text box
-        // Now move each text box down by the (highest - its height) / 2
-        // By ading to the attribute x
-        $('#x_axis_post_med').find('text').each(function(){
-            var current_x = +$(this).attr("x");
-            var current_height = this.getBBox().width;
-            var new_x = current_x + ((highest_text - current_height)/2);
             $(this).attr("x", new_x);
+            var text_current_x = +$(this).attr("x");
+            var g_bbox_height = $("#x_axis_post_med")[0].getBoundingClientRect().height;
+            var text_bbox_height_inc_tick = this.getBBox().width + text_current_x;
+            var distance_btwn_g_and_text = g_bbox_height - text_bbox_height_inc_tick;
+            // I have no idea why I have to divide by four here, but dividing by two
+            // and adding this to the attributes was moving it all the way to the bottom.
+            var dist_to_move = distance_btwn_g_and_text/4;
+            if (dist_to_move > 1){
+                var new_x = (text_current_x + dist_to_move).toString();
+                $(this).attr("x", new_x);
+                var now_is = +$(this).attr("x");
+                var foo = "basdf"
+            }
+
         });
     }
 
