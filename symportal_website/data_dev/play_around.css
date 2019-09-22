@@ -8,3 +8,17 @@
     background-color: #fff;
     border-radius: 2px;
 }
+
+.viewer_link:hover{
+    cursor:pointer;
+    color: #0056B3;
+}
+
+.d3-tip{
+    z-index: 1151 !important;
+}
+/*.navbar{
+    -webkit-box-shadow: 0 4px 3px -3px #999;
+    -moz-box-shadow: 0 4px 3px -3px #999;
+    box-shadow: 0 4px 3px -3px #999;
+}*/

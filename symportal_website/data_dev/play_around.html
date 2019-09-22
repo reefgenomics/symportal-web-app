@@ -22,6 +22,8 @@ sequencs above and profiles below.-->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <link rel="stylesheet" href="play_around.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="d3-tip.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -65,31 +67,110 @@ sequencs above and profiles below.-->
         <!--POST MED SVG HOLDER-->
         <div class="card mb-3">
 
-            <div class="card-header" data-toggle="collapse" data-target="#post_med_svg_collapse">Post-MED ITS2 sequences</div>
+            <div class="card-header d-inline-flex" data-toggle="collapse" data-target="#post_med_svg_collapse">
+                <div class="mr-auto">Post-MED ITS2 sequences</div>
+
+
+            </div>
 
             <div class="card-body p-0 collapse show" id="post_med_svg_collapse">
                 <div class="bg-light p-2" >
-                    <div class="btn-group btn-group-sm" >
-                        <button id="PostMEDRelDType" class="btn btn-light dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
-                        <button id="PostMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
-                               Sorted by:
-                            </button>
-                            <div class="dropdown-menu svg_sort_by" id="sort_by_post_med" style="padding:2px 4px;font-size:0.7rem;">
-                                <a class="dropdown-item" >sequencing depth</a>
-                                <a class="dropdown-item" >sequencing similarity</a>
-                                <a class="dropdown-item" >host</a>
-                                <a class="dropdown-item" >location</a>
+                    <div class="d-flex">
+                        <div class="btn-group btn-group-sm mr-auto" >
+                            <button id="PostMEDRelDType" class="btn btn-light dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
+                            <button id="PostMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                   Sorted by:
+                                </button>
+                                <div class="dropdown-menu svg_sort_by" id="sort_by_post_med" style="padding:2px 4px;font-size:0.7rem;">
+                                    <a class="dropdown-item" >sequencing depth</a>
+                                    <a class="dropdown-item" >sequencing similarity</a>
+                                    <a class="dropdown-item" >host</a>
+                                    <a class="dropdown-item" >location</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex viewer_link" data-toggle="modal" data-target="#seq-prof-modal">
+                            <div class="">Open viewer</div>
+                            <i class="material-icons">launch</i>
+                        </div>
+                        <!-- The Modal -->
+                        <div class="modal fade" id="seq-prof-modal">
+                            <div class="modal-dialog modal-xl">
+                                <div class="modal-content">
+
+                                    <!-- Modal body -->
+                                    <div class="modal-body">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+
+                                        <div class="bg-light p-2" >
+                                            <div class="d-flex">
+                                                <div class="btn-group btn-group-sm mr-auto" >
+                                                    <button id="PostMEDRelDType" class="btn btn-light dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
+                                                    <button id="PostMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                                           Sorted by:
+                                                        </button>
+                                                        <div class="dropdown-menu svg_sort_by" id="sort_by_post_med" style="padding:2px 4px;font-size:0.7rem;">
+                                                            <a class="dropdown-item" >sequencing depth</a>
+                                                            <a class="dropdown-item" >sequencing similarity</a>
+                                                            <a class="dropdown-item" >host</a>
+                                                            <a class="dropdown-item" >location</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="p-1 overflow-auto text-center">
+                                            <svg id="chart_post_med_modal" class="chart" width="650" height="400"></svg>
+                                            <svg id="chart_profile_modal" class="chart" width="650" height="400"></svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal footer -->
+                                    <div class="modal-footer" style="font-size:0.5rem;display:block;">
+                                        <div class="pb-2" style="border-bottom:1px solid lightgrey;">
+                                            <span style="font-weight:bold;">Sample:</span>
+                                            <span class="meta_sample_name">--</span>
+                                            <span style="font-weight:bold;">UID:</span>
+                                            <span class="meta_sample_uid">--</span>
+                                            <span style="font-weight:bold;">Host</span>
+                                            <span class="meta_sample_host">--</span>
+                                            <span style="font-weight:bold;">Depth:</span>
+                                            <span class="meta_sample_depth">--</span>
+                                            <span style="font-weight:bold;">Lat:</span>
+                                            <span class="meta_sample_lat">--</span>
+                                            <span style="font-weight:bold;">Lon:</span>
+                                            <span class="meta_sample_lon">--</span>
+                                        </div>
+                                        <div class="pt-2">
+                                            <span style="font-weight:bold;">Profile:</span>
+                                            <span class="meta_profile_name">--</span>
+                                            <span style="font-weight:bold;">UID:</span>
+                                            <span class="meta_profile_uid">--</span>
+                                            <span style="font-weight:bold;">Host</span>
+                                            <span class="meta_profile_host">--</span>
+                                            <span style="font-weight:bold;">Depth:</span>
+                                            <span class="meta_profile_depth">--</span>
+                                            <span style="font-weight:bold;">Lat:</span>
+                                            <span class="meta_profile_lat">--</span>
+                                            <span style="font-weight:bold;">Lon:</span>
+                                            <span class="meta_profile_lon">--</span>
+                                        </div>
+                                    </div>
+
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
                 <div class="p-1 overflow-auto text-center">
                     <svg id="chart_post_med" class="chart" width="650" height="400"></svg>
-                    <!--TODO setup second svg so that we have the profiles below the post-med
-                    sequence plot-->
-                    <svg id="chart_post_med_2" class="chart" width="650" height="400"></svg>
+
                 </div>
             </div>
             <div class="card-footer" style="font-size:0.5rem;">
@@ -118,19 +199,25 @@ sequencs above and profiles below.-->
             <!--CARD BODY-->
             <div class="card-body p-0 collapse show" id="profile_svg_collapse">
                 <div class="bg-light p-2" >
-                    <div class="btn-group btn-group-sm" >
-                        <button id="ProfileMEDRelDType" class="btn btn-light dtype-btn" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
-                        <button id="ProfileMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
-                               Sorted by:
-                            </button>
-                            <div class="dropdown-menu svg_sort_by" id="data_type_profile" style="padding:2px 4px;font-size:0.7rem;">
-                                <a class="dropdown-item" >sequencing depth</a>
-                                <a class="dropdown-item" >sequencing similarity</a>
-                                <a class="dropdown-item" >host</a>
-                                <a class="dropdown-item" >location</a>
+                    <div class="d-flex">
+                        <div class="btn-group btn-group-sm mr-auto" >
+                            <button id="ProfileMEDRelDType" class="btn btn-light dtype-btn" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
+                            <button id="ProfileMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                   Sorted by:
+                                </button>
+                                <div class="dropdown-menu svg_sort_by" id="data_type_profile" style="padding:2px 4px;font-size:0.7rem;">
+                                    <a class="dropdown-item" >sequencing depth</a>
+                                    <a class="dropdown-item" >sequencing similarity</a>
+                                    <a class="dropdown-item" >host</a>
+                                    <a class="dropdown-item" >location</a>
+                                </div>
                             </div>
+                        </div>
+                        <div class="d-flex viewer_link" data-toggle="modal" data-target="#seq-prof-modal">
+                            <div class="">Open viewer</div>
+                            <i class="material-icons">launch</i>
                         </div>
                     </div>
                 </div>
