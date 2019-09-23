@@ -1,15 +1,14 @@
 <!--TODO list:
-implement drop down to change what category the x axis is annotated with
-Implement the sample viewer when clicking on the sample, should show the stats for the sample i.e. contigs
-post med pre med this kind of thing, but put the metadata first
+Implement distance info viewers
 Then also have a network window for when the sample is clicked on (this can be later)
-Implement the profiles window. Maybe put these in collapsable cards
-Implement the buttons on the plot so that it can be adjusted. make these independent for each plot-->
+-->
 
-<!--IDEAS
-Have a button that fixes scrolling so that the two plot track each other.
-Also have a modal that is 'side-by-side' that will allow the sqeuences and profiles to be on the same plot with the
-sequencs above and profiles below.-->
+<!--IDEAS:
+In the sample and profile viewers (modals) make them extra large and allow to select (using shift key) two
+of the samples or profiles and then have the respective networks for those above one another or either
+side of the main dist plot.-->
+
+
 <!doctype html>
 <html lang="en">
 <meta charset="UTF-8">
@@ -21,9 +20,12 @@ sequencs above and profiles below.-->
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/css/bootstrap-slider.css">
+
     <link rel="stylesheet" href="play_around.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
+
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="d3-tip.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -31,7 +33,7 @@ sequencs above and profiles below.-->
 </head>
 <body>
 
-<!--TODO put in a shadow on the nav bar-->
+<!--NAVBAR-->
 <nav class="navbar bg-light navbar-expand-sm" style="border-bottom: 1px solid rgb(243,243,243);">
 
     <!--To the left-->
@@ -81,7 +83,7 @@ sequencs above and profiles below.-->
                             <button id="PostMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
-                                   Sorted by:
+                                   Sort by:
                                 </button>
                                 <div class="dropdown-menu svg_sort_by" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
                                     <a class="dropdown-item" >sequencing depth</a>
@@ -111,7 +113,7 @@ sequencs above and profiles below.-->
                                                     <button  class="btn btn-primary dtype-btn" data-data-type="post-profile" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
                                                     <div class="btn-group">
                                                         <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
-                                                           Sorted by:
+                                                           Sort by:
                                                         </button>
                                                         <div class="dropdown-menu svg_sort_by" data-data-type="post-profile" style="padding:2px 4px;font-size:0.7rem;">
                                                             <a class="dropdown-item" >sequencing depth</a>
@@ -125,8 +127,8 @@ sequencs above and profiles below.-->
                                         </div>
 
                                         <div class="p-1 overflow-auto text-center">
-                                            <svg id="chart_post_med_modal" class="chart" width="650" height="400"></svg>
-                                            <svg id="chart_profile_modal" class="chart" width="650" height="400"></svg>
+                                            <svg id="chart_post_med_modal" class="chart seq_prof_chart" width="650" height="400"></svg>
+                                            <svg id="chart_profile_modal" class="chart seq_prof_chart" width="650" height="400"></svg>
                                         </div>
                                     </div>
 
@@ -169,7 +171,7 @@ sequencs above and profiles below.-->
 
                 </div>
                 <div class="p-1 overflow-auto text-center">
-                    <svg id="chart_post_med" class="chart" width="650" height="400"></svg>
+                    <svg id="chart_post_med" class="chart seq_prof_chart" width="650" height="400"></svg>
 
                 </div>
             </div>
@@ -205,7 +207,7 @@ sequencs above and profiles below.-->
                             <button id="ProfileMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
-                                   Sorted by:
+                                   Sort by:
                                 </button>
                                 <div class="dropdown-menu svg_sort_by" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;">
                                     <a class="dropdown-item" >sequencing depth</a>
@@ -222,7 +224,7 @@ sequencs above and profiles below.-->
                     </div>
                 </div>
                 <div class="p-1 overflow-auto text-center">
-                    <svg id="chart_profile" class="chart" width="650" height="400"></svg>
+                    <svg id="chart_profile" class="chart seq_prof_chart" width="650" height="400"></svg>
                 </div>
             </div>
             <div class="card-footer" style="font-size:0.5rem;">
@@ -274,7 +276,7 @@ sequencs above and profiles below.-->
                         <button id="PreMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="pre" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
-                               Sorted by:
+                               Sort by:
                             </button>
                             <div class="dropdown-menu svg_sort_by" data-data-type="pre" style="padding:2px 4px;font-size:0.7rem;">
                                 <a class="dropdown-item" >sequencing depth</a>
@@ -286,7 +288,7 @@ sequencs above and profiles below.-->
                     </div>
                 </div>
                 <div class="p-1 overflow-auto text-center">
-                    <svg id="chart_pre_med" class="chart" width="650" height="400"></svg>
+                    <svg id="chart_pre_med" class="chart seq_prof_chart" width="650" height="400"></svg>
                 </div>
             </div>
             <div class="card-footer" style="font-size:0.5rem;">
@@ -302,6 +304,287 @@ sequencs above and profiles below.-->
                 <span class="meta_sample_lat">--</span>
                 <span style="font-weight:bold;">Lon:</span>
                 <span class="meta_sample_lon">--</span>
+            </div>
+        </div>
+
+        <!--BTWN sample distances-->
+        <div class="card mb-3">
+
+            <div class="card-header d-inline-flex" data-toggle="collapse" data-target="#btwn_sample_dist_collapse">
+                <div class="mr-auto">Genera separated between sample distances</div>
+                <div style="font-weight:bold;font-style: italic;">Symbiodinium</div>
+            </div>
+            <div class="card-body p-0 collapse show" id="btwn_sample_dist_collapse">
+                <div class="bg-light p-2" >
+                    <div class="d-flex">
+                        <div class="btn-group btn-group-sm mr-auto" >
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                   Genera:
+                                </button>
+                                <div class="dropdown-menu genera_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                    <a class="dropdown-item" style="font-style:italic;">Symbiodinium</a>
+                                    <a class="dropdown-item" style="font-style:italic;">Breviolum</a>
+                                    <a class="dropdown-item" style="font-style:italic;">Cladocopium</a>
+                                    <a class="dropdown-item" style="font-style:italic;">Durusdinium</a>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                   Color by:
+                                </button>
+                                <div class="dropdown-menu color_by" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                    <a class="dropdown-item" >host</a>
+                                    <a class="dropdown-item" >location</a>
+                                    <a class="dropdown-item" >no color</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--<div class="input-group input-group-sm w-25 mr-auto ml-2" >-->
+                            <!--<input type="text" class="form-control" placeholder="Mask by abundance" style="padding:2px 4px;font-size:0.7rem;">-->
+                            <!--<div class="input-group-append">-->
+                                <!--<button class="btn btn-light" type="submit" style="padding:2px 4px;font-size:0.7rem;">mask</button>-->
+                            <!--</div>-->
+                        <!--</div>-->
+
+
+                        <div class="d-flex viewer_link" data-toggle="modal" data-target="#btwn_sample_modal">
+                            <div class="">Open viewer</div>
+                            <i class="material-icons">launch</i>
+                        </div>
+
+                        <!-- The Modal -->
+                        <div class="modal fade" id="btwn_sample_modal">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+
+                                    <!-- Modal body -->
+                                    <div class="modal-body">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+
+                                        <div class="bg-light p-2" >
+                                            <div class="d-flex">
+                                                <div class="btn-group btn-group-sm mr-auto" >
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                                           Genera:
+                                                        </button>
+                                                        <div class="dropdown-menu genera_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                                            <a class="dropdown-item" style="font-style:italic;">Symbiodinium</a>
+                                                            <a class="dropdown-item" style="font-style:italic;">Breviolum</a>
+                                                            <a class="dropdown-item" style="font-style:italic;">Cladocopium</a>
+                                                            <a class="dropdown-item" style="font-style:italic;">Durusdinium</a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                                           Color by:
+                                                        </button>
+                                                        <div class="dropdown-menu color_by" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                                            <a class="dropdown-item" >host</a>
+                                                            <a class="dropdown-item" >location</a>
+                                                            <a class="dropdown-item" >no color</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div style="margin-right:1rem;font-weight:bold;font-style:italic;">Symbiodinium</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="p-1 overflow-auto text-center">
+                                            <svg id="chart_btwn_sample_modal" class="chart dist_chart" style="border:1px solid black;" width="400" height="400"></svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal footer -->
+                                    <div class="modal-footer" style="font-size:0.5rem;display:block;">
+                                        <div class="pb-2">
+                                            <span style="font-weight:bold;">Sample:</span>
+                                            <span class="meta_sample_name">--</span>
+                                            <span style="font-weight:bold;">UID:</span>
+                                            <span class="meta_sample_uid">--</span>
+                                            <span style="font-weight:bold;">Host</span>
+                                            <span class="meta_sample_host">--</span>
+                                            <span style="font-weight:bold;">Depth:</span>
+                                            <span class="meta_sample_depth">--</span>
+                                            <span style="font-weight:bold;">Lat:</span>
+                                            <span class="meta_sample_lat">--</span>
+                                            <span style="font-weight:bold;">Lon:</span>
+                                            <span class="meta_sample_lon">--</span>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div style="font-size:0.7rem;" class="m-auto" style="width:30%;">
+                            Mask by abundance: <b>min (0)</b> <input id="ex2" type="text" class="span2" value="" data-slider-min="0" data-slider-max="1" data-slider-step="0.01" data-slider-value="[0.25,0.45]"/> <b>max (1)</b>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-1 overflow-auto text-center">
+                    <!--BTWN sample svg-->
+                    <svg id="chart_btwn_sample" class="chart dist_chart" width="650" height="400"></svg>
+                </div>
+            </div>
+            <div class="card-footer" style="font-size:0.5rem;">
+                <span style="font-weight:bold;">Sample:</span>
+                <span class="meta_sample_name">--</span>
+                <span style="font-weight:bold;">UID:</span>
+                <span class="meta_sample_uid">--</span>
+                <span style="font-weight:bold;">Host</span>
+                <span class="meta_sample_host">--</span>
+                <span style="font-weight:bold;">Depth:</span>
+                <span class="meta_sample_depth">--</span>
+                <span style="font-weight:bold;">Lat:</span>
+                <span class="meta_sample_lat">--</span>
+                <span style="font-weight:bold;">Lon:</span>
+                <span class="meta_sample_lon">--</span>
+
+            </div>
+        </div>
+
+        <!--BTWN profile distances-->
+        <div class="card mb-3">
+
+            <div class="card-header d-inline-flex" data-toggle="collapse" data-target="#btwn_profile_dist_collapse">
+                <div class="mr-auto">Genera separated between profile distances</div>
+                <div style="font-weight:bold;font-style: italic;">Symbiodinium</div>
+            </div>
+
+            <div class="card-body p-0 collapse show" id="btwn_profile_dist_collapse">
+                <div class="bg-light p-2" >
+                    <div class="d-flex">
+                        <div class="btn-group btn-group-sm mr-auto" >
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                   Genera:
+                                </button>
+                                <div class="dropdown-menu genera_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                    <a class="dropdown-item" style="font-style:italic;">Symbiodinium</a>
+                                    <a class="dropdown-item" style="font-style:italic;">Breviolum</a>
+                                    <a class="dropdown-item" style="font-style:italic;">Cladocopium</a>
+                                    <a class="dropdown-item" style="font-style:italic;">Durusdinium</a>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                   Color by:
+                                </button>
+                                <div class="dropdown-menu color_by" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                    <a class="dropdown-item" >profile identity</a>
+                                    <a class="dropdown-item" >abundance</a>
+                                    <a class="dropdown-item" >no color</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex viewer_link" data-toggle="modal" data-target="#btwn_profile_modal">
+                            <div class="">Open viewer</div>
+                            <i class="material-icons">launch</i>
+                        </div>
+                        <!-- The Modal -->
+                        <div class="modal fade" id="btwn_profile_modal">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <!-- Modal body -->
+                                    <div class="modal-body">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+
+                                        <div class="bg-light p-2" >
+                                            <div class="d-flex">
+                                                <div class="btn-group btn-group-sm mr-auto" >
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                                           Genera:
+                                                        </button>
+                                                        <div class="dropdown-menu genera_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                                            <a class="dropdown-item" style="font-style:italic;">Symbiodinium</a>
+                                                            <a class="dropdown-item" style="font-style:italic;">Breviolum</a>
+                                                            <a class="dropdown-item" style="font-style:italic;">Cladocopium</a>
+                                                            <a class="dropdown-item" style="font-style:italic;">Durusdinium</a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
+                                                           Color by:
+                                                        </button>
+                                                        <div class="dropdown-menu color_by" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                                            <a class="dropdown-item" >host</a>
+                                                            <a class="dropdown-item" >location</a>
+                                                            <a class="dropdown-item" >no color</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div style="margin-right:1rem;font-weight:bold;font-style:italic;">Symbiodinium</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="p-1 overflow-auto text-center">
+                                            <svg id="chart_btwn_prof_modal" class="chart dist_chart" width="650" height="400"></svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal footer -->
+                                    <div class="modal-footer" style="font-size:0.5rem;display:block;">
+                                        <div class="pb-2" style="border-bottom:1px solid lightgrey;">
+                                            <span style="font-weight:bold;">Sample:</span>
+                                            <span class="meta_sample_name">--</span>
+                                            <span style="font-weight:bold;">UID:</span>
+                                            <span class="meta_sample_uid">--</span>
+                                            <span style="font-weight:bold;">Host</span>
+                                            <span class="meta_sample_host">--</span>
+                                            <span style="font-weight:bold;">Depth:</span>
+                                            <span class="meta_sample_depth">--</span>
+                                            <span style="font-weight:bold;">Lat:</span>
+                                            <span class="meta_sample_lat">--</span>
+                                            <span style="font-weight:bold;">Lon:</span>
+                                            <span class="meta_sample_lon">--</span>
+                                        </div>
+                                        <div class="pt-2">
+                                            <span style="font-weight:bold;">Profile:</span>
+                                            <span class="meta_profile_name">--</span>
+                                            <span style="font-weight:bold;">UID:</span>
+                                            <span class="meta_profile_uid">--</span>
+                                            <span style="font-weight:bold;">Host</span>
+                                            <span class="meta_profile_host">--</span>
+                                            <span style="font-weight:bold;">Depth:</span>
+                                            <span class="meta_profile_depth">--</span>
+                                            <span style="font-weight:bold;">Lat:</span>
+                                            <span class="meta_profile_lat">--</span>
+                                            <span style="font-weight:bold;">Lon:</span>
+                                            <span class="meta_profile_lon">--</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="p-1 overflow-auto text-center">
+                    <svg id="chart_btwn_prof" class="chart dist_chart" width="650" height="400"></svg>
+
+                </div>
+            </div>
+            <div class="card-footer" style="font-size:0.5rem;">
+                <span style="font-weight:bold;">Sample:</span>
+                <span class="meta_sample_name">--</span>
+                <span style="font-weight:bold;">UID:</span>
+                <span class="meta_sample_uid">--</span>
+                <span style="font-weight:bold;">Host</span>
+                <span class="meta_sample_host">--</span>
+                <span style="font-weight:bold;">Depth:</span>
+                <span class="meta_sample_depth">--</span>
+                <span style="font-weight:bold;">Lat:</span>
+                <span class="meta_sample_lat">--</span>
+                <span style="font-weight:bold;">Lon:</span>
+                <span class="meta_sample_lon">--</span>
+
             </div>
         </div>
     </div>
@@ -485,12 +768,13 @@ sequencs above and profiles below.-->
 
 <!--TODO to enable the marker clustering we will need to have the library on the server-->
 <!--<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">-->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="play_around.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/bootstrap-slider.js"></script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAkCzzx0s24NKJ3qGS-4xVBwzMGSI4thNA"></script>
 
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 

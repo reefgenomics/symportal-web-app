@@ -13,6 +13,7 @@ $(document).ready(function () {
     var data_post_med_by_sample = getRectDataPostMEDBySample();
     var data_pre_med_by_sample = getRectDataPreMEDBySample();
     var data_profile_by_sample = getRectDataProfileBySample();
+
     // Because this dataset is going to be used in the inverted modal plot we need to
     // remove the cummulative y values that have been added to the above
     var data_profile_inv_by_sample = getRectDataProfileBySample();
@@ -44,17 +45,22 @@ $(document).ready(function () {
         })
     }
     processProfileInvData(data_profile_inv_by_sample);
-    // if plotting absolute values we can get the highest y from the 'post_med_aboslute' property
+
+
     var max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
     var max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
     var max_y_val_profile = getRectDataProfileBySampleMaxSeq();
 
-    // if plotting absolute values we can get the highest y from the 'post_taxa_... ' for the pre-med
+
 
     var sample_list_post = getRectDataPostMEDBySampleSampleList();
     var sample_list_pre = getRectDataPreMEDBySampleSampleList();
     var sample_list_profile = getRectDataProfileBySampleSampleList();
+    var sample_list_modal = getRectDataProfileBySampleSampleList();
 
+    // Set the width of the svg html charts according to number of samples
+    // we will work with 13 px per sample + 70 for the margins
+    $(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString())
 
     // Speed at which the sample by sample plotting will be done initially
     var post_med_init_by_sample_interval = 10
@@ -184,13 +190,13 @@ $(document).ready(function () {
         update_plot_by_sample(data_type, "post", sample_list_post, post_med_init_by_sample_interval)
 
         // POST-MED-MODAL INIT
-        update_plot_by_sample(data_type, "post-modal", sample_list_post, post_med_init_by_sample_interval)
+        update_plot_by_sample(data_type, "post-modal", sample_list_modal, post_med_init_by_sample_interval)
 
         // PROFILES INIT
         update_plot_by_sample(data_type, "profile", sample_list_profile, profile_init_by_sample_interval)
 
         // PROFILES-MODAL INIT
-        update_plot_by_sample(data_type, "profile-modal", sample_list_profile, profile_init_by_sample_interval)
+        update_plot_by_sample(data_type, "profile-modal", sample_list_modal, profile_init_by_sample_interval)
 
 
     // Functions for doing the init and updating of the d3 plots
@@ -225,11 +231,16 @@ $(document).ready(function () {
         var x;
         var max_y;
         var sample_list;
-        if (pre_post_profile.includes("post")){
+        if (pre_post_profile == "post"){
             y = y_post_med;
             x = x_post_med;
             max_y = max_y_val_post_med;
             sample_list = sample_list_post;
+        }else if (pre_post_profile == "post-modal"){
+            y = y_post_med;
+            x = x_post_med;
+            max_y = max_y_val_post_med;
+            sample_list = sample_list_modal;
         }else if (pre_post_profile == "pre"){
             y = y_pre_med;
             x = x_pre_med;
@@ -244,7 +255,7 @@ $(document).ready(function () {
             y = y_profile_modal;
             x = x_profile;
             max_y = max_y_val_profile;
-            sample_list = sample_list_profile;
+            sample_list = sample_list_modal;
         }
 
         if (data_type == "absolute"){
@@ -268,8 +279,13 @@ $(document).ready(function () {
             data_by_sample = data_post_med_by_sample;
             x = x_post_med;
             y = y_post_med;
-            sample_list = sample_list_post;
-            if (pre_post_profile == "post-modal"){svg = svg_post_med_modal;}else{svg = svg_post_med;}
+            if (pre_post_profile == "post-modal"){
+                svg = svg_post_med_modal;
+                sample_list = sample_list_modal;
+            }else{
+                svg = svg_post_med;
+                sample_list = sample_list_post;
+            }
         }else if (pre_post_profile == "pre"){
             svg = svg_pre_med;
             data_by_sample = data_pre_med_by_sample;
@@ -287,7 +303,7 @@ $(document).ready(function () {
             data_by_sample = data_profile_inv_by_sample;
             x = x_profile;
             y = y_profile_modal;
-            sample_list = sample_list_profile;
+            sample_list = sample_list_modal;
         }
 
         var bars = svg.select("g.s" + col_sample.replace(/\./g, "_")).selectAll("rect").data(data_by_sample[col_sample], function(d){
@@ -498,10 +514,10 @@ $(document).ready(function () {
             if (pre_post_profile == "post-profile"){
                 // Update post modal
                 update_plot_by_sample($(this).text(), "post-modal",
-                sample_list_post, post_med_init_by_sample_interval);
+                sample_list_modal, post_med_init_by_sample_interval);
                 // Update profile modal
                 update_plot_by_sample($(this).text(), "profile-modal",
-                sample_list_profile, profile_init_by_sample_interval);
+                sample_list_modal, profile_init_by_sample_interval);
             }else{
                 switch(pre_post_profile){
                     case "post":
@@ -579,7 +595,7 @@ $(document).ready(function () {
     });
 
     // Listening for the sorting button clicks
-    // TODO we still need to implement this for the modal and join it with the others but we need buttons first
+    // TODO we need to have a separate samplelist that is shared by the modals.
     $(".svg_sort_by a").click(function(){
         var current_text = $(this).closest(".btn-group").find(".btn").text();
 
@@ -603,14 +619,13 @@ $(document).ready(function () {
             // In place of getting a new sample order for real we will simply
             // reverse the current one
             if (pre_post_profile == "post-profile"){
-                sample_list_post = sample_list_post.reverse()
-                sample_list_profile = sample_list_profile.reverse()
+                sample_list_modal = sample_list_modal.reverse();
                 // Update post modal
                 update_plot_by_sample(data_type, "post-modal",
-                sample_list_post, post_med_init_by_sample_interval);
+                sample_list_modal, post_med_init_by_sample_interval);
                 // Update profile modal
                 update_plot_by_sample(data_type, "profile-modal",
-                sample_list_profile, profile_init_by_sample_interval);
+                sample_list_modal, profile_init_by_sample_interval);
             }else{
                 switch (pre_post_profile){
                     case "post":
@@ -719,6 +734,9 @@ $(document).ready(function () {
 //            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
 
     }
+
+    //INIT slider
+    $("#ex2").slider({});
 
     google.maps.event.addDomListener(window, 'load', initMap);
 

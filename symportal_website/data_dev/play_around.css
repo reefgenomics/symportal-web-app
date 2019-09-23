@@ -17,6 +17,19 @@
 .d3-tip{
     z-index: 1151 !important;
 }
+
+.btn-light{
+    border: 1px solid #ced4da;
+}
+
+.slider-handle{
+    width: 15px;
+    height: 15px;
+    /* background-image: linear-gradient(to bottom, lightgrey 0%, grey 100%);;*/
+    background-color: lightgrey;
+    background-image: none;
+    border:1px solid #ced4da;
+}
 /*.navbar{
     -webkit-box-shadow: 0 4px 3px -3px #999;
     -moz-box-shadow: 0 4px 3px -3px #999;
