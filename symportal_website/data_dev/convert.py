@@ -12,7 +12,8 @@ and a list of rectangles (as used in the previous structure will be the value.
 
 import json
 from collections import defaultdict
-
+import pandas as pd
+import os
 
 def make_rect_array(
         path_of_json_dir_to_convert_rel, path_of_json_dir_to_convert_abs,
@@ -145,6 +146,59 @@ def make_rect_array(
             f.write(f'{line}\n')
 
 
+
+# We will also output .js files that will be used for the between sample and between profile data
+# These will be used to make interactive scatter plots
+# We want to have one function that will get an object that has sample names as
+# properties and then for each value will be another object
+# that has the PC1, PC2 etc, coordinates.
+
+# The second object will have the variances explained by each of the principal coordinate
+# a single object with the PCs as the properties and the variances as the values
+# We will create these two objects by making python dictionaries, json dumps them and then place
+# strings around the data to make functions same as we do with the make_rect_array method
+
+
+def make_sample_dist_array_objs(path_to_sp_csv_dist_output, js_file_name, function_name_pc_coords, function_name_pc_variances):
+    with open(path_to_sp_csv_dist_output, 'r') as f:
+        file = f.read().split('\n')[:-1]
+        dist_df_text = file[:-1]
+        var_ser_text = file[-1:]
+
+
+    dist_df = pd.DataFrame([ _.split(',') for _ in dist_df_text[1:]], columns=dist_df_text[0].split(',')).set_index('sample').astype('float')
+
+    variance_series = pd.Series(var_ser_text[0].split(',')[1:], name=var_ser_text[0].split(',')[0], index=dist_df.columns).astype('float')
+    variance_series = variance_series[variance_series > 0]
+    # get a list of the PCs that actually had some variance to explain
+    var_pcs = variance_series.index.values.tolist()
+
+    pc_coords_dict = {}
+    for sample in dist_df.index.values.tolist():
+        pc_coords_dict[sample] = {pc_ind:coord for pc_ind, coord in dist_df.loc[sample].items() if pc_ind in var_pcs}
+
+    pc_coordinates_json = json.dumps(pc_coords_dict)
+    variance_pc_json = json.dumps(dict(variance_series))
+
+    js_file = ["function " + function_name_pc_coords + "(){"]
+    js_file.append("\treturn " + pc_coordinates_json + ";\n}")
+
+    # if postMED then also write out the function that will return the larges abosulte number of sequnces
+
+    js_file.append("function " + function_name_pc_variances + "(){")
+    js_file.append("\treturn " + variance_pc_json + ";\n}")
+
+    with open(os.path.join("/Users/humebc/Documents/symportal.org/symportal_website/data_dev/html_data/distances/samples/breviolum", js_file_name), 'w') as f:
+        for line in js_file:
+            f.write(f'{line}\n')
+
+
+make_sample_dist_array_objs(
+    path_to_sp_csv_dist_output='/Users/humebc/Documents/symportal.org/symportal_website/data_dev/html_data/distances/'
+                               'samples/breviolumn/2019-08-29_07-00-04.933486.unifrac_sample_PCoA_coords_B.csv',
+    js_file_name='btwn_smpl_coord_breviolum.js',
+    function_name_pc_coords='GetBtwnSmplPCCoordsBreviolum',
+    function_name_pc_variances='GetBtwnSmplPCVarBreviolum')
 
 # For each rect there will be data for the absolute and for relative so we only need to run it once for each of
 # pre and POST.
