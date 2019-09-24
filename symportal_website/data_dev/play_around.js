@@ -8,7 +8,7 @@
 $(document).ready(function () {
 
 
-    //INIT sliders
+    //INIT sliders for distance plots
     $("#sample_mask_slider").slider({});
     $("#profile_mask_slider").slider({});
 
@@ -64,6 +64,22 @@ $(document).ready(function () {
     let btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
     let btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
 
+    // INIT the genera drop downs for the btween sample and between profile dist cards
+
+
+    // Get PC that are available for each of the genera to populate the dropdown menus
+    let available_pcs_btwn_samples = {};
+    for (let i = 0; i < btwn_sample_genera_array.length; i++){
+        available_pcs_btwn_samples[btwn_sample_genera_array[i]] = Object.keys(btwn_sample_genera_pc_variances)
+    }
+
+    // Get PC that are available for each of the genera to populate the dropdown menus
+    let available_pcs_btwn_profiles = {};
+    for (let i = 0; i < btwn_profile_genera_array.length; i++){
+        available_pcs_btwn_profiles[btwn_sample_genera_array[i]] = Object.keys(btwn_profile_genera_pc_variances)
+    }
+
+
     let max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
     let max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
     let max_y_val_profile = getRectDataProfileBySampleMaxSeq();
@@ -88,15 +104,41 @@ $(document).ready(function () {
     }
 
     // Init the text value of the genera_identifier in each of the distance plots
-    // TODO do for the profile dist plot
+    // INIT the genera drop down
+    // INIT the PC drop down
     let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
+    let dist_cards_to_init_ids = ["#between_sample_distances", "#between_profile_distances"]
+    for (let i = 0; i < dist_cards_to_init_ids.length; i++) {
+        let card_element = $(dist_cards_to_init_ids[i]);
+        let first_genera_present;
+        for (let j = 0; j < genera_array.length; j++) {
+            // init the genera_indentifier with the first of the genera in the genera_array that we have data for
+            // We only want to do this for the first genera that we find so we check whether the data-genera attribute
+            // already has been set or not.
+            if (btwn_sample_genera_array.includes(genera_array[j].toLowerCase())){
+                let attr = card_element.find(".genera_identifier_sample").attr("data-genera");
+                if (typeof attr !== typeof undefined && attr !== false) {
+                    // then already set. just add genera link
+                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
+                }else{
+                    // then genera_identifier not set
+                    card_element.find(".genera_identifier_sample").text(genera_array[j]);
+                    card_element.find(".genera_identifier_sample").attr("data-genera", genera_array[j].toLowerCase());
+                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
+                    first_genera_present = genera_array[i];
+                }
+            }
+        }
+        // Now that we have set the genera_identifier we need to se the PC options
+        let pcs_available;
+        if (dist_cards_to_init_ids.includes("sample")){
+            pcs_available = available_pcs_btwn_samples[first_genera_present];
+        }else{
+            pcs_available = available_pcs_btwn_profiles[first_genera_present];
+        }
 
-    for (let i = 0; i < genera_array.length; i++) {
-        // init the genera_indentifier with the first of the genera in the genera_array that we have data for
-        if (btwn_sample_genera_array.includes(genera_array[i].toLowerCase())){
-            $(".genera_identifier_sample").text(genera_array[i]);
-            $(".genera_identifier_sample").attr("data-genera", genera_array[i].toLowerCase());
-            break;
+        for (let j = 0; j < pcs_available.length; j++){
+            card_element.find(".pc").find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
         }
     }
     for (let i = 0; i < genera_array.length; i++) {
