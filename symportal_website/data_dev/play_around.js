@@ -58,7 +58,11 @@ $(document).ready(function () {
     let btwn_sample_genera_coords_data = {'breviolum': GetBtwnSmplPCCoordsBreviolum()};
     let btwn_sample_genera_pc_variances = {'breviolum': GetBtwnSmplPCVarBreviolum()};
 
+    let btwn_profile_genera_coords_data = {'breviolum': GetBtwnProfPCCoordsBreviolum()};
+    let btwn_profile_genera_pc_variances = {'breviolum': GetBtwnProfPCVarBreviolum()};
+
     let btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
+    let btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
 
     let max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
     let max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
@@ -71,10 +75,16 @@ $(document).ready(function () {
     let sample_list_modal = getRectDataProfileBySampleSampleList();
 
     // We will do this dynamically for real but for the time being I will hard code
-    let sample_list_btwn_smp_dist = {};
+    let sample_list_btwn_sample_dist = {};
     for (let i = 0; i < btwn_sample_genera_array.length; i++){
         let genera = btwn_sample_genera_array[i];
-        sample_list_btwn_smp_dist[genera] = Object.keys(btwn_sample_genera_coords_data[genera]);
+        sample_list_btwn_sample_dist[genera] = Object.keys(btwn_sample_genera_coords_data[genera]);
+    }
+    
+    let sample_list_btwn_profile_dist = {};
+    for (let i = 0; i < btwn_profile_genera_array.length; i++){
+        let genera = btwn_profile_genera_array[i];
+        sample_list_btwn_profile_dist[genera] = Object.keys(btwn_profile_genera_coords_data[genera]);
     }
 
     // Init the text value of the genera_identifier in each of the distance plots
@@ -84,8 +94,16 @@ $(document).ready(function () {
     for (let i = 0; i < genera_array.length; i++) {
         // init the genera_indentifier with the first of the genera in the genera_array that we have data for
         if (btwn_sample_genera_array.includes(genera_array[i].toLowerCase())){
-            $(".genera_identifier_sample").text(genera_array[i].toLowerCase());
+            $(".genera_identifier_sample").text(genera_array[i]);
             $(".genera_identifier_sample").attr("data-genera", genera_array[i].toLowerCase());
+            break;
+        }
+    }
+    for (let i = 0; i < genera_array.length; i++) {
+        // init the genera_indentifier with the first of the genera in the genera_array that we have data for
+        if (btwn_profile_genera_array.includes(genera_array[i].toLowerCase())){
+            $(".genera_identifier_profile").text(genera_array[i]);
+            $(".genera_identifier_profile").attr("data-genera", genera_array[i].toLowerCase());
             break;
         }
     }
@@ -187,6 +205,9 @@ $(document).ready(function () {
     let xAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
     .attr("transform", `translate(0,${dist_height - margin.bottom})`)
     .attr("id", "x_axis_btwn_sample")
+    let xAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
+    .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+    .attr("id", "x_axis_btwn_profile")
     
 
 	let yAxis_post_med = svg_post_med.append("g")
@@ -207,6 +228,9 @@ $(document).ready(function () {
     let yAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
         .attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_btwn_sample");
+    let yAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
+        .attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_btwn_profile");
 
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
     // We will have a seperate g for each of the samples so that we can plot column by column
@@ -264,6 +288,9 @@ $(document).ready(function () {
 
     // BTWN SAMPLE INIT
     update_dist_plot("#chart_btwn_sample");
+
+    // BTWN SAMPLE INIT
+    update_dist_plot("#chart_btwn_profile");
 
     // Functions for doing the init and updating of the d3 bar plots
     function update_bar_plot_by_sample(data_type, pre_post_profile, sample_list, init_sample_interval){
@@ -557,6 +584,7 @@ $(document).ready(function () {
     function update_dist_plot(dist_plot_id){
         let svg;
         let coords;
+        let pc_variances;
         let first_pc_variance;
         let second_pc_variance;
         let sample_array;
@@ -565,6 +593,8 @@ $(document).ready(function () {
         let x_scale;
         let y_scale;
         let data = [];
+        let x_axis_id;
+        let y_axis_id;
 
         //TODO this will need updating to include the profile distances and the modals
         // but to save dev time we will try to get the scatter working with just this one first
@@ -575,62 +605,73 @@ $(document).ready(function () {
             // We want to end up with two arrays, one for the x and one for the y
             case "#chart_btwn_sample":
                 svg = svg_btwn_sample_dist;
-                coords = btwn_sample_genera_coords_data;
                 pc_variances = btwn_sample_genera_pc_variances;
-
-
+                x_axis_id = "#x_axis_btwn_sample";
+                y_axis_id = "#y_axis_btwn_sample"
                 // get the genera
                 // NB the genera identifier is updated from the click of the genera drop down or
                 // as part of the init.
                 genera = $(dist_plot_id).closest(".card").find(".genera_identifier_sample").attr("data-genera");
-                sample_array = sample_list_btwn_smp_dist[genera];
-
-                // get the PC from the PC selector
-
-                let pc_selector_text = $(dist_plot_id).closest(".card-body").find(".pc_selector").attr("data-pc");
-                if ( pc_selector_text == "PC:"){second_pc="PC2";}else{second_pc=pc_selector_text;}
-
+                sample_array = sample_list_btwn_sample_dist[genera];
                 coords = btwn_sample_genera_coords_data[genera];
-                first_pc_variance = btwn_sample_genera_pc_variances[genera]["PC1"];
-                second_pc_variance = btwn_sample_genera_pc_variances[genera][second_pc];
-
                 x_scale = x_btwn_sample;
                 y_scale = y_btwn_sample;
+                break;
+            case "#chart_btwn_profile":
+                svg = svg_btwn_profile_dist;
+                pc_variances = btwn_profile_genera_pc_variances;
+                x_axis_id = "#x_axis_btwn_profile";
+                y_axis_id = "#y_axis_btwn_profile"
+                // get the genera
+                // NB the genera identifier is updated from the click of the genera drop down or
+                // as part of the init.
+                genera = $(dist_plot_id).closest(".card").find(".genera_identifier_profile").attr("data-genera");
+                sample_array = sample_list_btwn_profile_dist[genera];
+                coords = btwn_profile_genera_coords_data[genera];
+                x_scale = x_btwn_profile;
+                y_scale = y_btwn_profile;
+                break;
+            
+        }
 
-                for (let i = 0; i < sample_array.length; i++){
-                    let sample = sample_array[i]
-                    data.push({
-                        sample_name:sample,
-                        x : coords[sample]["PC1"],
-                        y : coords[sample][second_pc]
-                    })
+        // get the second PC from the PC selector
+        let pc_selector_text = $(dist_plot_id).closest(".card-body").find(".pc_selector").attr("data-pc");
+        if ( pc_selector_text == "PC:"){second_pc="PC2";}else{second_pc=pc_selector_text;}
 
-                }
+        first_pc_variance = pc_variances[genera]["PC1"];
+        second_pc_variance = pc_variances[genera][second_pc];
 
-                let min_x = d3.min(data, d => d.x);
-                let max_x = d3.max(data, d => d.x);
-                let min_y = d3.min(data, d => d.y);
-                let max_y = d3.max(data, d => d.y);
+        // Populate the data array that will be used for plotting
+        for (let i = 0; i < sample_array.length; i++){
+            let sample = sample_array[i]
+            data.push({
+                sample_name:sample,
+                x : coords[sample]["PC1"],
+                y : coords[sample][second_pc]
+            })
+        }
 
-                let x_buffer = (max_x - min_x) * 0.05;
-                let y_buffer = (max_y - min_y) * 0.05;
+        let min_x = d3.min(data, d => d.x);
+        let max_x = d3.max(data, d => d.x);
+        let min_y = d3.min(data, d => d.y);
+        let max_y = d3.max(data, d => d.y);
 
-                x_scale.domain([min_x - x_buffer, max_x + x_buffer]);
-                y_scale.domain([min_y - y_buffer, max_y + y_buffer]);
+        // A buffer so that the points don't fall exactly on the axis lines
+        let x_buffer = (max_x - min_x) * 0.05;
+        let y_buffer = (max_y - min_y) * 0.05;
 
+        x_scale.domain([min_x - x_buffer, max_x + x_buffer]);
+        y_scale.domain([min_y - y_buffer, max_y + y_buffer]);
 
-                d3.select("#x_axis_btwn_sample")
-                .transition()
-                .duration(1000)
-                .call(d3.axisBottom(x_scale).ticks(0));
+        d3.select(x_axis_id)
+        .transition()
+        .duration(1000)
+        .call(d3.axisBottom(x_scale).ticks(0));
 
-
-                d3.select("#y_axis_btwn_sample")
-                .transition()
-                .duration(1000)
-                .call(d3.axisLeft(y_scale).ticks(0));
-
-                }
+        d3.select(y_axis_id)
+        .transition()
+        .duration(1000)
+        .call(d3.axisLeft(y_scale).ticks(0));
 
         // Here do the plotting of the scatter
         let dots = svg.selectAll(".dot").data(data, d => d.sample);
@@ -684,7 +725,6 @@ $(document).ready(function () {
             .style("text-anchor", "middle")
             .text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`);
         }
-
 
     }
 

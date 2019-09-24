@@ -165,7 +165,6 @@ def make_sample_dist_array_objs(path_to_sp_csv_dist_output, js_file_name, functi
         dist_df_text = file[:-1]
         var_ser_text = file[-1:]
 
-
     dist_df = pd.DataFrame([ _.split(',') for _ in dist_df_text[1:]], columns=dist_df_text[0].split(',')).set_index('sample').astype('float')
 
     variance_series = pd.Series(var_ser_text[0].split(',')[1:], name=var_ser_text[0].split(',')[0], index=dist_df.columns).astype('float')
@@ -188,17 +187,23 @@ def make_sample_dist_array_objs(path_to_sp_csv_dist_output, js_file_name, functi
     js_file.append("function " + function_name_pc_variances + "(){")
     js_file.append("\treturn " + variance_pc_json + ";\n}")
 
-    with open(os.path.join("/Users/humebc/Documents/symportal.org/symportal_website/data_dev/html_data/distances/samples/breviolum", js_file_name), 'w') as f:
+    with open(os.path.join(os.path.dirname(path_to_sp_csv_dist_output), js_file_name), 'w') as f:
         for line in js_file:
             f.write(f'{line}\n')
 
 
+# make_sample_dist_array_objs(
+#     path_to_sp_csv_dist_output='/Users/humebc/Documents/symportal.org/symportal_website/data_dev/html_data/distances/'
+#                                'samples/breviolumn/2019-08-29_07-00-04.933486.unifrac_sample_PCoA_coords_B.csv',
+#     js_file_name='btwn_smpl_coord_breviolum.js',
+#     function_name_pc_coords='GetBtwnSmplPCCoordsBreviolum',
+#     function_name_pc_variances='GetBtwnSmplPCVarBreviolum')
 make_sample_dist_array_objs(
     path_to_sp_csv_dist_output='/Users/humebc/Documents/symportal.org/symportal_website/data_dev/html_data/distances/'
-                               'samples/breviolumn/2019-08-29_07-00-04.933486.unifrac_sample_PCoA_coords_B.csv',
-    js_file_name='btwn_smpl_coord_breviolum.js',
-    function_name_pc_coords='GetBtwnSmplPCCoordsBreviolum',
-    function_name_pc_variances='GetBtwnSmplPCVarBreviolum')
+                               'profiles/breviolum/2019-08-29_07-00-04.933486.unifrac_profiles_PCoA_coords_B.csv',
+    js_file_name='btwn_prof_coord_breviolum.js',
+    function_name_pc_coords='GetBtwnProfPCCoordsBreviolum',
+    function_name_pc_variances='GetBtwnProfPCVarBreviolum')
 
 # For each rect there will be data for the absolute and for relative so we only need to run it once for each of
 # pre and POST.
