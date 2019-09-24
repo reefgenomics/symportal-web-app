@@ -30,6 +30,12 @@
     background-image: none;
     border:1px solid #ced4da;
 }
+
+.grey_axis{
+    color: lightgrey;
+
+}
+
 /*.navbar{
     -webkit-box-shadow: 0 4px 3px -3px #999;
     -moz-box-shadow: 0 4px 3px -3px #999;

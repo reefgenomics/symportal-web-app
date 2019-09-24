@@ -182,6 +182,11 @@ $(document).ready(function () {
     .attr("transform", `translate(0,${inv_prof_margin.top})`)
     .attr("id", "x_axis_profile_modal")
     let xAxis_pre_med;
+
+    //Dist plot axes
+    let xAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
+    .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+    .attr("id", "x_axis_btwn_sample")
     
 
 	let yAxis_post_med = svg_post_med.append("g")
@@ -197,7 +202,11 @@ $(document).ready(function () {
 		.attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_profile");
     let yAxis_pre_med;
-//
+
+    //Dist plot axes
+    let yAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
+        .attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_btwn_sample");
 
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
     // We will have a seperate g for each of the samples so that we can plot column by column
@@ -598,11 +607,30 @@ $(document).ready(function () {
 
                 }
 
-                let min_sanity = d3.min(data, d => d.x);
+                let min_x = d3.min(data, d => d.x);
+                let max_x = d3.max(data, d => d.x);
+                let min_y = d3.min(data, d => d.y);
+                let max_y = d3.max(data, d => d.y);
 
-                x_scale.domain([d3.min(data, d => d.x), d3.max(data, d => d.x)]);
-                y_scale.domain([d3.min(data, d => d.y), d3.max(data, d => d.y)]);
-        }
+                let x_buffer = (max_x - min_x) * 0.05;
+                let y_buffer = (max_y - min_y) * 0.05;
+
+                x_scale.domain([min_x - x_buffer, max_x + x_buffer]);
+                y_scale.domain([min_y - y_buffer, max_y + y_buffer]);
+
+
+                d3.select("#x_axis_btwn_sample")
+                .transition()
+                .duration(1000)
+                .call(d3.axisBottom(x_scale).ticks(0));
+
+
+                d3.select("#y_axis_btwn_sample")
+                .transition()
+                .duration(1000)
+                .call(d3.axisLeft(y_scale).ticks(0));
+
+                }
 
         // Here do the plotting of the scatter
         let dots = svg.selectAll(".dot").data(data, d => d.sample);
@@ -619,6 +647,44 @@ $(document).ready(function () {
 
         // Remove points
         dots.exit().remove()
+
+        // Y axis title
+        //we need to be able to change the axis titles so we will give them ids and then
+        // check to see if they exist. if they do, simply change text otherwise make from scratch
+        let text_x = 15;
+        let text_y = dist_height/2;
+        let y_axis_selection = $(dist_plot_id).find(".y_axis_title")
+        if (y_axis_selection.length){
+            // Then the y axis title exists. Change the text of this axis
+            y_axis_selection.text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
+        }else{
+            // yaxis doesn't exist. make from scratch
+            svg.append("text").attr("class", "x_axis_title")
+            .attr("y", text_y)
+            .attr("x", text_x)
+            .attr("dy", "1em").attr("font-size", "0.8rem")
+            .style("text-anchor", "middle")
+            .text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
+            .attr("transform", `rotate(-90, ${text_x}, ${text_y})`);
+        }
+
+        // X axis title
+        text_x = dist_width/2;
+        text_y = dist_height -15;
+        let x_axis_selection = $(dist_plot_id).find(".y_axis_title")
+        if (x_axis_selection.length){
+            // Then the y axis title exists. Change the text of this axis
+            x_axis_selection.text(`${second_pc} - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
+        }else{
+            // yaxis doesn't exist. make from scratch
+            svg.append("text").attr("class", "y_axis_title")
+            .attr("y", text_y)
+            .attr("x", text_x)
+            .attr("dy", "1em").attr("font-size", "0.8rem")
+            .style("text-anchor", "middle")
+            .text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`);
+        }
+
 
     }
 
