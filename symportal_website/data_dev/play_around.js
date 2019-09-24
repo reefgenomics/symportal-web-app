@@ -674,7 +674,9 @@ $(document).ready(function () {
         .call(d3.axisLeft(y_scale).ticks(0));
 
         // Here do the plotting of the scatter
-        let dots = svg.selectAll(".dot").data(data, d => d.sample);
+        let dots = svg.selectAll("circle").data(data, function(d) {
+            return d.sample_name;
+        } );
 
         // Place any new scatter points
         dots.enter().append("circle").attr("class", "dot").attr("r", 3.5).attr("cx", function(d){
@@ -683,7 +685,7 @@ $(document).ready(function () {
         .style("fill", "rgba(0,0,0,0.5)");
 
         // Update any changes to points that already exist
-        dots.transition().duration(20).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
+        dots.transition().duration(2000).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
         .style("fill", "rgba(0,0,0,0.5)");
 
         // Remove points
@@ -833,8 +835,7 @@ $(document).ready(function () {
 
     });
 
-    // Listening for the sorting button clicks
-    // TODO we need to have a separate samplelist that is shared by the modals.
+    // Listening for the bar chart sorting button clicks
     $(".svg_sort_by a").click(function(){
         let current_text = $(this).closest(".btn-group").find(".btn").text();
 
@@ -888,6 +889,24 @@ $(document).ready(function () {
             }
         }
 
+    });
+
+    // Listenting for the PC change on the distance plots
+    $(".pc_select a").click(function(){
+        let pc_button = $(this).closest(".btn-group").find(".btn")
+        let current_pc = pc_button.attr("data-pc");
+        let selected_pc = $(this).attr("data-pc")
+
+        if (current_pc !== selected_pc){
+            pc_button.text(selected_pc);
+            pc_button.attr("data-pc", selected_pc);
+
+            // We need to get the chart is
+            // TODO eventually we will want to link this into the modal as well so that it mirrors the non-modal
+            chart_id = '#' + pc_button.closest('.card').find('.chart').attr("id");
+
+            update_dist_plot(chart_id);
+        }
     });
 
     //INIT MAP
