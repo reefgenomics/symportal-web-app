@@ -165,9 +165,10 @@ $(document).ready(function () {
     let svg_profile = d3.select("#chart_profile");
     let svg_profile_modal = d3.select("#chart_profile_modal");
     let svg_pre_med;
+
+    // INIT for the distance plots needs some extra work for the zooming and panning functions
     let svg_btwn_sample_dist = d3.select("#chart_btwn_sample");
     let svg_btwn_profile_dist = d3.select("#chart_btwn_profile");
-
 
     let margin = {top: 35, left: 35, bottom: 20, right: 0},
     seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right,
@@ -178,6 +179,42 @@ $(document).ready(function () {
     let dist_width = +svg_btwn_sample_dist.attr("width") - margin.left - margin.right,
     dist_height = +svg_btwn_sample_dist.attr("height") - margin.top - margin.bottom;
 
+    // Add a clip
+    let clip_btwn_sample = svg_btwn_sample_dist.append("defs").append("clipPath")
+      .attr("id", "sample_clip")
+      .append("rect")
+      .attr("width", dist_width - margin.right - margin.left)
+      .attr("height", dist_height - margin.bottom - margin.top)
+      .attr("x", margin.left)
+      .attr("y", margin.top);
+
+    // This is the group where we will do the drawing and that has the above
+    // clipping mask applied to it
+    let scatter_btwn_sample = svg_btwn_sample_dist.append('g')
+    .attr("clip-path", "url(#sample_clip)")
+
+    // Add a clip
+    let clip_btwn_profile = svg_btwn_profile_dist.append("defs").append("clipPath")
+      .attr("id", "profile_clip")
+      .append("rect")
+      .attr("width", dist_width - margin.right - margin.left)
+      .attr("height", dist_height - margin.bottom - margin.top)
+      .attr("x", margin.left)
+      .attr("y", margin.top);
+
+    // This is the group where we will do the drawing and that has the above
+    // clipping mask applied to it
+    let scatter_btwn_profile = svg_btwn_profile_dist.append('g')
+    .attr("clip-path", "url(#profile_clip)")
+
+    // Set up the zoom object (one for all dist plots)
+    let zoom = d3.zoom()
+    .scaleExtent([.5, 20])  // This control how much you can unzoom (x0.5) and zoom (x20)
+    .extent([[0, 0], [dist_width, dist_height]])
+    .on("zoom", update_dist_plot_zoom);
+
+    svg_btwn_sample_dist.call(zoom);
+    svg_btwn_profile_dist.call(zoom);
 
     // Set the x range that will be used for the x val of the bars
 	let x_post_med = d3.scaleBand()
@@ -623,6 +660,7 @@ $(document).ready(function () {
     // Functions for doing the init and updating of the d3 dist plots
     function update_dist_plot(dist_plot_id){
         let svg;
+        let scatter;
         let coords;
         let pc_variances;
         let first_pc_variance;
@@ -645,9 +683,10 @@ $(document).ready(function () {
             // We want to end up with two arrays, one for the x and one for the y
             case "#chart_btwn_sample":
                 svg = svg_btwn_sample_dist;
+                scatter = scatter_btwn_sample;
                 pc_variances = btwn_sample_genera_pc_variances;
                 x_axis_id = "#x_axis_btwn_sample";
-                y_axis_id = "#y_axis_btwn_sample"
+                y_axis_id = "#y_axis_btwn_sample";
                 // get the genera
                 // NB the genera identifier is updated from the click of the genera drop down or
                 // as part of the init.
@@ -659,9 +698,10 @@ $(document).ready(function () {
                 break;
             case "#chart_btwn_profile":
                 svg = svg_btwn_profile_dist;
+                scatter = scatter_btwn_profile;
                 pc_variances = btwn_profile_genera_pc_variances;
                 x_axis_id = "#x_axis_btwn_profile";
-                y_axis_id = "#y_axis_btwn_profile"
+                y_axis_id = "#y_axis_btwn_profile";
                 // get the genera
                 // NB the genera identifier is updated from the click of the genera drop down or
                 // as part of the init.
@@ -671,7 +711,6 @@ $(document).ready(function () {
                 x_scale = x_btwn_profile;
                 y_scale = y_btwn_profile;
                 break;
-            
         }
 
         // get the second PC from the PC selector
@@ -714,7 +753,7 @@ $(document).ready(function () {
         .call(d3.axisLeft(y_scale).ticks(0));
 
         // Here do the plotting of the scatter
-        let dots = svg.selectAll("circle").data(data, function(d) {
+        let dots = scatter.selectAll("circle").data(data, function(d) {
             return d.sample_name;
         } );
 
@@ -727,10 +766,10 @@ $(document).ready(function () {
         .on("mouseover", function(d) {
           dist_tooltip.transition().duration(200).style("opacity", .9);
           dist_tooltip.html(d.sample_name).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
-      })
-      .on("mouseout", function(d) {
-          dist_tooltip.transition().duration(500).style("opacity", 0);
-      });
+          })
+          .on("mouseout", function(d) {
+              dist_tooltip.transition().duration(500).style("opacity", 0);
+          });
 
         // Update any changes to points that already exist
         dots.transition().duration(2000).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
@@ -778,6 +817,36 @@ $(document).ready(function () {
 
     }
 
+    //TODO we will need to work out how we can get the information for which plot is triggering the zoom
+    //for the time being we will just hard code it to try to get the btwn sample working
+    function update_dist_plot_zoom(){
+        let newX;
+        let newY;
+        let scatter;
+        let x_axis_id;
+        let y_axis_id;
+        if (this.id.includes("sample")){
+            // recover the new scale
+            newX = d3.event.transform.rescaleX(x_btwn_sample);
+            newY = d3.event.transform.rescaleY(y_btwn_sample);
+            x_axis_id = "#x_axis_btwn_sample";
+            y_axis_id = "#y_axis_btwn_sample";
+            scatter = scatter_btwn_sample;
+        }else{
+            // recover the new scale
+            newX = d3.event.transform.rescaleX(x_btwn_profile);
+            newY = d3.event.transform.rescaleY(y_btwn_profile);
+            x_axis_id = "#x_axis_btwn_profile";
+            y_axis_id = "#y_axis_btwn_profile";
+            scatter = scatter_btwn_profile;
+        }
+        // update axes with these new boundaries
+        d3.select(x_axis_id).call(d3.axisBottom(newX).ticks(0));
+        d3.select(y_axis_id).call(d3.axisLeft(newY).ticks(0));
+
+        // update circle position
+        scatter.selectAll("circle").attr('cx', function(d) {return newX(d.x)}).attr('cy', function(d) {return newY(d.y)});
+    }
 
 	// LISTENERS RELATED TO CHARTING
 	// RELATIVE to ABSOLUTE switch
