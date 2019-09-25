@@ -70,13 +70,13 @@ $(document).ready(function () {
     // Get PC that are available for each of the genera to populate the dropdown menus
     let available_pcs_btwn_samples = {};
     for (let i = 0; i < btwn_sample_genera_array.length; i++){
-        available_pcs_btwn_samples[btwn_sample_genera_array[i]] = Object.keys(btwn_sample_genera_pc_variances)
+        available_pcs_btwn_samples[btwn_sample_genera_array[i]] = Object.keys(btwn_sample_genera_pc_variances[btwn_sample_genera_array[i]])
     }
 
     // Get PC that are available for each of the genera to populate the dropdown menus
     let available_pcs_btwn_profiles = {};
     for (let i = 0; i < btwn_profile_genera_array.length; i++){
-        available_pcs_btwn_profiles[btwn_sample_genera_array[i]] = Object.keys(btwn_profile_genera_pc_variances)
+        available_pcs_btwn_profiles[btwn_sample_genera_array[i]] = Object.keys(btwn_profile_genera_pc_variances[btwn_sample_genera_array[i]])
     }
 
 
@@ -116,37 +116,30 @@ $(document).ready(function () {
             // We only want to do this for the first genera that we find so we check whether the data-genera attribute
             // already has been set or not.
             if (btwn_sample_genera_array.includes(genera_array[j].toLowerCase())){
-                let attr = card_element.find(".genera_identifier_sample").attr("data-genera");
+                let attr = card_element.find(".genera_identifier").attr("data-genera");
                 if (typeof attr !== typeof undefined && attr !== false) {
                     // then already set. just add genera link
                     card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
                 }else{
                     // then genera_identifier not set
-                    card_element.find(".genera_identifier_sample").text(genera_array[j]);
-                    card_element.find(".genera_identifier_sample").attr("data-genera", genera_array[j].toLowerCase());
-                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
-                    first_genera_present = genera_array[i];
+                    card_element.find(".genera_identifier").text(genera_array[j]);
+                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j].toLowerCase());
+                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
+                    first_genera_present = genera_array[j].toLowerCase();
                 }
             }
         }
-        // Now that we have set the genera_identifier we need to se the PC options
+        // INIT PC options
         let pcs_available;
-        if (dist_cards_to_init_ids.includes("sample")){
+        if (dist_cards_to_init_ids[i].includes("sample")){
             pcs_available = available_pcs_btwn_samples[first_genera_present];
         }else{
             pcs_available = available_pcs_btwn_profiles[first_genera_present];
         }
 
-        for (let j = 0; j < pcs_available.length; j++){
-            card_element.find(".pc").find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
-        }
-    }
-    for (let i = 0; i < genera_array.length; i++) {
-        // init the genera_indentifier with the first of the genera in the genera_array that we have data for
-        if (btwn_profile_genera_array.includes(genera_array[i].toLowerCase())){
-            $(".genera_identifier_profile").text(genera_array[i]);
-            $(".genera_identifier_profile").attr("data-genera", genera_array[i].toLowerCase());
-            break;
+        // Skip the first PC as we don't want PC1 in the options
+        for (let j = 1; j < pcs_available.length; j++){
+            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
         }
     }
 
@@ -653,7 +646,7 @@ $(document).ready(function () {
                 // get the genera
                 // NB the genera identifier is updated from the click of the genera drop down or
                 // as part of the init.
-                genera = $(dist_plot_id).closest(".card").find(".genera_identifier_sample").attr("data-genera");
+                genera = $(dist_plot_id).closest(".card").find(".genera_identifier").attr("data-genera");
                 sample_array = sample_list_btwn_sample_dist[genera];
                 coords = btwn_sample_genera_coords_data[genera];
                 x_scale = x_btwn_sample;
@@ -667,7 +660,7 @@ $(document).ready(function () {
                 // get the genera
                 // NB the genera identifier is updated from the click of the genera drop down or
                 // as part of the init.
-                genera = $(dist_plot_id).closest(".card").find(".genera_identifier_profile").attr("data-genera");
+                genera = $(dist_plot_id).closest(".card").find(".genera_identifier").attr("data-genera");
                 sample_array = sample_list_btwn_profile_dist[genera];
                 coords = btwn_profile_genera_coords_data[genera];
                 x_scale = x_btwn_profile;
