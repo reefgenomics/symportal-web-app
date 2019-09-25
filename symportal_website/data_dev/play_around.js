@@ -219,7 +219,7 @@ $(document).ready(function () {
     // the property that we are colouring by.
 
 
-    //TODO for the time being we may not need axis objects for the distance plots
+
     //Set up the svg element in which we will call the axis objects
     let xAxis_post_med = svg_post_med.append("g")
     .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
@@ -294,6 +294,11 @@ $(document).ready(function () {
             '</div>';
             return content;
         });
+
+    //Dist plot tool tip
+    var dist_tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
     svg_post_med.call(tip_seqs);
     svg_post_med_modal.call(tip_seqs);
@@ -714,10 +719,18 @@ $(document).ready(function () {
         } );
 
         // Place any new scatter points
+        //TODO we can add more info to the tool tip like absolute and relative abundances of the samples or profiles
         dots.enter().append("circle").attr("class", "dot").attr("r", 3.5).attr("cx", function(d){
             return x_scale(d.x);
         }).attr("cy", d => y_scale(d.y))
-        .style("fill", "rgba(0,0,0,0.5)");
+        .style("fill", "rgba(0,0,0,0.5)")
+        .on("mouseover", function(d) {
+          dist_tooltip.transition().duration(200).style("opacity", .9);
+          dist_tooltip.html(d.sample_name).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
+      })
+      .on("mouseout", function(d) {
+          dist_tooltip.transition().duration(500).style("opacity", 0);
+      });
 
         // Update any changes to points that already exist
         dots.transition().duration(2000).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
