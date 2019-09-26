@@ -63,7 +63,7 @@ nav a {
     content: '';
     height: 60vh;
     width: 100%;
-    background-image: url(../../images/nils_background.jpg);
+    background-image: url(../images/nils_background.jpg);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -152,6 +152,8 @@ nav a {
     grid-gap: 40px;
 }
 
+
+
 .img-rnd {
     border-radius: 50%;
     height:100px;
@@ -202,10 +204,49 @@ color: #333333;
     color: #f4f4f4;
 }
 
+table{font-size: 0.8em;}
 
+#published_articles_table{
+    padding: 0;
+    }
 
+.table_footnotes{
+    font-size: 0.7em;
+    font-weight: bold;
+    margin: 0;}
+
+.light_header{
+   padding: 10px;
+   text-align: center;
+   font-size: 1.4em;
+   margin: 0;
+}
+
+/* We'll use this to over write the rather large padding that the usual continer had that leaves
+too much white space when there are several containers back to back on the white background */
+.middle_container{
+    padding: 1rem 1rem;
+    border-top: 1px solid #e4e6e8;
+}
+
+/* so that we can alternate the row colors I will have a .row_on and .row_off class */
+
+.row_on{
+    background-color: rgba(220, 220, 220, 0.5);
+
+}
+
+.row_off{
+    background-color: #f4f4f4;
+}
+
+.hover_row:hover{
+    /*background-color: rgba(255,255,153,0.2);*/
+    outline: none;
+    border-color: #9ecaed;
+    box-shadow: 0 0 10px #9ecaed;
+}
 /* Footer  */
-
 footer > p {
     margin:0;
     padding:0.3em;
@@ -227,6 +268,9 @@ footer
     padding-bottom:10px;
 }
 
+
+
+/* For when we are working on a mobile*/
 @media (max-width: 560px){
     /* Showcase background */
     #nav_cont{
@@ -285,8 +329,44 @@ footer
         padding: 1rem 1rem;
     
     }
+
+    table{
+    border-collapse: collapse;
+    border-spacing: 10px 30px;
+    }
+
+    table .header_row{
+        display: none;
+    }
+
+    table td{
+        display: flex;
+    }
+
+    table tr{
+        border: 1px solid #e4e6e8;
+
+    }
+
+    table td::before{
+        content: attr(label);
+        font-weight: bold;
+        width: 120px;
+        min-width: 120px;
+    }
+
+    #cite_us_text{
+        text-align: justify;
+    }
+
+    #citation_links{
+        text-align: center;
+    }
     
 }
+
+
+
 @media (max-height: 500px){
     .content .text{
         display: None;

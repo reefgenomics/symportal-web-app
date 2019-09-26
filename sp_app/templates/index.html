@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta property="og:site_name" content="symportal.org">
+    <meta property="og:description" content="a novel analytical framework and platform for coral algal symbiont NGS ITS2 profiling">
+    <meta property="og:image" content="{{ url_for('static', filename='images/preview_img.jpg') }}">
+    <meta property="og:url" content="http://symportal.com/">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    
+    <title>Symportal | home</title>
+</head>
+
+<body>
+    <header class="showcase">
+        <!-- Nav bar in here -->
+        <nav class="nav_content no_blur" id="nav_cont">
+            <div class="left_nav">
+                <a href="https://reefgenomics.kaust.edu.sa/Pages/Home.aspx">Reef Genomics Lab</a>
+            </div>
+            <div class="right_nav">
+                <a href="https://github.com/SymPortal/SymPortal_framework">source code</a><span class="vert_div_smll"></span><a href="https://github.com/SymPortal/SymPortal_framework/wiki/Welcome-to-SymPortal">wiki</a><span class="vert_div_smll"></span><a href="index.html">home</a>
+            </div>
+        </nav>
+
+        <!-- Content has been positioned absolutely -->
+        <div class="content" id="showcase_content">
+            
+            <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" class="logo" alt="reef_drop">
+            <div class="title">SymPortal</div>
+            
+            <br class="clear">
+            <div class="text">a novel analytical framework and platform for coral algal symbiont NGS ITS2 profiling</div>
+        </div>
+        <!-- showcase::After -->
+    </header>
+    
+    
+    <!-- Services -->
+    <section class="services bg-dark">
+        <div class="container grid-3 center">
+            <div class="service_item">
+                <i class="fas fa-users fa-3x"></i>
+                <p class="services_head">Community driven</p>
+                <p class="services_text">Improved resolution with greater use</p>
+            </div>
+            <div class="service_item">
+                <i class="fas fa-database fa-3x"></i>
+                <p class="services_head">Database integrated</p>
+                <p class="services_text">Standardisation-enforced central repository</p>
+            </div>
+            <div class="service_item">
+                <i class="fas fa-fingerprint fa-3x"></i>
+                <p class="services_head">ITS2 type profiling</p>
+                <p class="services_text">Sequence-based putative taxa prediction</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Operations-->
+    <section class="operations bg-light">
+        <div class="container grid-2">
+
+            <!--Submit data -->
+            <div class="center">
+                <img src="{{ url_for('static', filename='images/landing_one.jpg') }}" class="img-rnd" alt="pic01">
+                <h3>Submit data</h3>
+                <p>To submit your data and run it against the remote database, please contact: <a class="email_a" href="mailto:benjamin.hume@kaust.edu.sa?Subject=new submission enquiry">&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#046;&#104;&#117;&#109;&#101;&#064;&#107;&#097;&#117;&#115;&#116;&#046;&#101;&#100;&#117;&#046;&#115;&#097;</a>
+                        </p>
+                <a class="btn" href="{{ url_for('submit_data_learn_more') }}">Learn more</a>
+            </div>
+
+
+            <!--Run locally-->
+            <div class="center">
+                <img src="{{ url_for('static', filename='images/landing_two.jpeg') }}" class="img-rnd" alt="pic02">
+                <h3>Run locally</h3>
+                <p>You can run the SymPortal analysis locally using your own machine and your own database.</p>
+                <a class="btn" href="https://github.com/SymPortal/SymPortal_framework/wiki/Running-SymPortal">SymPortal Local</a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Resources -->
+    <section class="cite_us bg-light">
+        <div class="container middle_container">
+            <h3 class="light_header">Resources</h3>
+            <table id="resources_table">
+                <thead>
+                    <tr class="row_on header_row">
+                        <th>Resource</th>
+                        <th>Description</th>
+                        <th>Upload date</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="hover_row row_off">
+                        <td label="Resource">
+                            DIV_fasta
+                        </td>
+                        <td label="Description">
+                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote that have been used as defining intragenomic variants (DIVs; used in the definition of at least one ITS2 Type Profile).
+                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 3360 sequences from 4 published studies.
+                        </td>
+                        <td label="Upload date">
+                            08 Sept. 2019
+                        </td>
+                        <td label="Link">
+                            <a href=" {{ url_for('static', filename='resources/DIV_seqs_20190908.fasta') }}">
+                                <div style="height:100%;width:100%;">
+                                    Download
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="hover_row row_on">
+                        <td label="Resource">
+                            all_seqs_fasta_post_MED
+                        </td>
+                        <td label="Description">
+                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote after having been through the SymPortal quality control pipeline and undergoing minimum entropy decomposition on a sample by sample basis.
+                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 6126 sequences from 4 published studies.
+                        </td>
+                        <td label="Upload date">
+                            08 Sept. 2019
+                        </td>
+                        <td label="Link">
+                            <a href="{{ url_for('static', filename='resources/all_seqs_post_med_20190908.fasta') }}">
+                                <div style="height:100%;width:100%;">
+                                    Download
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+            <p class="table_footnotes">Interested in a published resource that's not listed? Get in touch!</p>
+        </div>
+
+    </section>
+
+    <!-- Published articles that use SymPortal -->
+    <section class="published_articles bg-light" >
+        <!--<header3></header3>-->
+        <div class="container middle_container">
+            <h3 class="light_header">Published articles using SymPortal</h3>
+            <table id="published_articles_table">
+                <thead>
+                    <tr class="row_on header_row">
+                        <th>Article</th>
+                        <th>Title</th>
+                        <th>Location</th>
+                        <th>#Samples</th>
+                        <th>Additional markers</th>
+                        <th>Run type</th>
+                        <th>Article URL</th>
+                        <th>Seq data URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <!-- Article rows will go in here-->
+                </tbody>
+            </table>
+            <p class="table_footnotes">Do you have an article to add? Do you have additional information about an existing article? Get in touch!</p>
+        </div>
+    </section>
+
+    <!-- Cite Us -->
+    <section class="cite_us bg-light">
+        <div class="container middle_container">
+            <h3 class="light_header">Please cite us</h3>
+            <div style="font-size: 0.8em;" id="cite_us_text">
+                <p>If you use the SymPortal analysis or make use of any of the SymPortal resources above, please cite us:</p>
+                <p>Hume, Benjamin CC, Edward G. Smith, Maren Ziegler, Hugh JM Warrington, John A. Burt, Todd C. LaJeunesse, Joerg Wiedenmann, and Christian R. Voolstra. "SymPortal: A novel analytical framework and platform for coral algal symbiont next‐generation sequencing ITS2 profiling." Molecular ecology resources 19;1063-1080 (2019).</p>
+                <div id="citation_links">
+                    <a href="{{ url_for('static', filename='resources/bibtex_ref.txt') }}">BibTeX</a>
+                    <a href="{{ url_for('static', filename='resources/symportal_endnote_ref.enw') }}">EndNote</a>
+                    <a href="{{ url_for('static', filename='resources/symportal_refman_ref.ris') }}">RefMan</a>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+
+    <footer class="bg-dark">
+        <p>SymPortal: a novel analytical framework and platform for coral algal symbiont next-generation sequencing ITS2 profiling</p>
+        <p>Collaborators: 	<a href="https://reefgenomics.kaust.edu.sa/Pages/Home.aspx">Reef Genomics Lab, KAUST</a>;
+							<a href="https://www.southampton.ac.uk/oes/research/facilities/corals.page">The Coral Reef Laboratory, Univerisity of Southampton</a>;
+							<a href="https://nyuad.nyu.edu/en/research/centers-labs-and-projects/marine-biology-lab.html">Marine Biology Lab, NYU Abu Dhabi</a>;
+							<a href="http://www.personal.psu.edu/tcl3/">The Symbiosis Ecology and Evolution Laboratory, Penn State</a>;</p>
+        <p>Images: <a href="https://rsrc.kaust.edu.sa/Pages/Radecker.aspx">N. Raedecker</a>, <a href="https://rsrc.kaust.edu.sa/Pages/Pogoreutz.aspx">C. Pogoreutz</a>, <a href="https://rsrc.kaust.edu.sa/Pages/Gegner.aspx">H. Gegner</a>. Acknowledgements logo: Alex Mercière.</p>
+        <br>
+        <p>Contact: <a href="mailto:benjamin.hume@kaust.edu.sa?Subject=new submission enquiry">&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#046;&#104;&#117;&#109;&#101;&#064;&#107;&#097;&#117;&#115;&#116;&#046;&#101;&#100;&#117;&#046;&#115;&#097;</a></p>
+    </footer>
+    <script src="{{ url_for('static', filename='published_articles/published_articles.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</body>
+</html>
