@@ -9,3 +9,7 @@ def index():
 @app.route('/submit_data_learn_more')
 def submit_data_learn_more():
     return render_template('submit_data_learn_more.html')
+
+@app.route('/d_test')
+def d_test():
+    return render_template('data_explorer.html', study_to_load='20190824_d_test')

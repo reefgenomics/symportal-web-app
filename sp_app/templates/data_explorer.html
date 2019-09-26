@@ -22,12 +22,11 @@ side of the main dist plot.-->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/css/bootstrap-slider.css">
 
-    <link rel="stylesheet" href="data_explorer.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/data_explorer.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
-
     <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="d3-tip.js"></script>
+    <script src="{{ url_for('static', filename='js/d3-tip.js') }}"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <title>SymPortal DataSet results</title>
 </head>
@@ -39,7 +38,7 @@ side of the main dist plot.-->
     <!--To the left-->
     <ul class="navbar-nav mr-auto">
         <a class="navbar-brand">
-            <img src="images/greyscale_alt1.svg" alt="Logo" style="width:40px;">
+            <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" alt="Logo" style="width:40px;">
         </a>
         <!--This should be the data set header that we are working with-->
         <p class="nav navbar-text">SymPortal Explorer: Restrepo et al. 2019</p>
@@ -776,18 +775,16 @@ side of the main dist plot.-->
     </div>
 
 
-
-
-<script src="html_data/rect_array_preMED_by_sample.js"></script>
-<script src="html_data/rect_array_profile_by_sample.js"></script>
-<script src="html_data/rect_array_postMED_by_sample.js"></script>
-<script src="html_data/distances/samples/breviolum/btwn_smpl_coord_breviolum.js"></script>
-<script src="html_data/distances/profiles/breviolum/btwn_prof_coord_breviolum.js"></script>
+<script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/rect_array_preMED_by_sample.js') }}"></script>
+<script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/rect_array_profile_by_sample.js') }}"></script>
+<script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/rect_array_postMED_by_sample.js') }}"></script>
+<script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/distances/samples/breviolum/btwn_smpl_coord_breviolum.js') }}"></script>
+<script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/distances/profiles/breviolum/btwn_prof_coord_breviolum.js') }}"></script>
 
 <!--TODO to enable the marker clustering we will need to have the library on the server-->
 <!--<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">-->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="data_explorer.js"></script>
+<script src="{{ url_for('static', filename='js/data_explorer.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/bootstrap-slider.js"></script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAkCzzx0s24NKJ3qGS-4xVBwzMGSI4thNA"></script>
