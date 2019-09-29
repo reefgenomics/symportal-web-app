@@ -20,10 +20,31 @@ $(document).ready(function () {
     //TODO make it so that if the data for the elements do not exists they get display set to hidden
     //Get data and set parameters for charting
 
-// Here we set the margin variables and init variables to represent the svg chars
+    // Create Tooltips
+    let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
+        .html(function(d) {
+            let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+            '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
+            '</div>';
+            return content;
+        });
+    let tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
+        .html(function(d) {
+            let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+            '<span style="margin-left: 2.5px;"><b>' + d.prof_name + '</b></span><br>' +
+            '</div>';
+            return content;
+        });
 
 
-
+    // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
+    // We will have a seperate g for each of the samples so that we can plot column by column
+    // The pre-med plot will not get init until later.
+    function add_sample_groups_to_bar_svgs(svg_element, sample_list){
+        sample_list.forEach(function(sample)){
+            svg_element.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
+        }
+    }
 
     // DATA FOR PRE, POST MED and PROFILE
     // POST MED BARS
@@ -43,11 +64,14 @@ $(document).ready(function () {
     let inv_prof_margin = {top: 5, left: 35, bottom: 20, right: 0};
     let x_post_med;
     let y_post_med;
+    let xAxis_post_med;
+    let yAxis_post_med;
     if (typeof getRectDataPostMEDBySample === "function") {
         data_post_med_by_sample = getRectDataPostMEDBySample();
         post_med_bars_exists = true;
         max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
         sample_list_post = getRectDataPostMEDBySampleSampleList();
+        // INIT the width of the chart
         $("#post_med_card").find(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString());
         seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
         seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
@@ -57,35 +81,46 @@ $(document).ready(function () {
 		.padding(0.1);
 		y_post_med = d3.scaleLinear()
         .rangeRound([seq_prof_height - margin.bottom, margin.top]);
+        // Init the axis group
+        xAxis_post_med = svg_post_med.append("g")
+        .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+        .attr("id", "x_axis_post_med");
+        yAxis_post_med = svg_post_med.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_post_med");
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
         for (let i = 0; i < sorting_keys.length; i ++){
             sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
-        // INIT the width of the chart
+        // Add the groups per sample for plotting in
+        add_sample_groups_to_bar_svgs(svg_post_med, sample_list_post);
+        // Call the tool tip
+        svg_post_med.call(tip_seqs);
     }else{
         // Hide the card if the data to populate it doesn't exist
         $("#post_med_card").attr("display", "none");
     }
-
-// Set the x range that will be used for the x val of the bars
 
 
 
 
     //PROFILE BARS
     let svg_profile = d3.select("#chart_profile");
+    let svg_post_med_modal = d3.select("#chart_post_med_modal");
+    let svg_profile_modal = d3.select("#chart_profile_modal");
     let data_profile_by_sample;
+    let sample_list_modal;
     let max_y_val_profile;
     let sample_list_profile;
     let profile_bars_exists = false;
-    let sample_list_modal;
     let profile_init_by_sample_interval = 10;
-    let svg_post_med_modal = d3.select("#chart_post_med_modal");
-    let svg_profile_modal = d3.select("#chart_profile_modal");
     let x_profile;
     let y_profile;
     let y_profile_modal;
+    let xAxis_profile;
+    let xAxis_post_med_modal;
+    let xAxis_profile_modal;
     if (typeof getRectDataProfileBySample === "function") {
         data_profile_by_sample = getRectDataProfileBySample();
         profile_bars_exists = true;
@@ -104,11 +139,39 @@ $(document).ready(function () {
         // Y is inverted for the inverted profile plot
 		y_profile_modal = d3.scaleLinear()
         .rangeRound([inv_prof_margin.top, seq_prof_height - inv_prof_margin.bottom]);
+        // Set up the axes groups
+        xAxis_post_med_modal = svg_post_med_modal.append("g")
+        .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+        .attr("id", "x_axis_post_med_modal");
+        xAxis_profile = svg_profile.append("g")
+        .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+        .attr("id", "x_axis_profile");
+        // inverted profile modal plot is axis is only moved down by top margin
+        xAxis_profile_modal = svg_profile_modal.append("g")
+        .attr("transform", `translate(0,${inv_prof_margin.top})`)
+        .attr("id", "x_axis_profile_modal");
+        yAxis_post_med_modal = svg_post_med_modal.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_post_med_modal");
+        yAxis_profile_modal = svg_profile_modal.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_profile_modal");
+        yAxis_profile = svg_profile.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_profile");
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#profile_card").find(".svg_sort_by");
         for (let i = 0; i < sorting_keys.length; i ++){
             sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
+        // Add the groups per sample for plotting in
+        add_sample_groups_to_bar_svgs(svg_profile, sample_list_profile);
+        add_sample_groups_to_bar_svgs(svg_profile_modal, sample_list_modal);
+        add_sample_groups_to_bar_svgs(svg_post_med_modal, sample_list_modal);
+        // Call tool tips
+        svg_post_med_modal.call(tip_seqs);
+        svg_profile.call(tip_profiles);
+        svg_profile_modal.call(tip_profiles);
     }else{
         // Hide the card if the data to populate it doesn't exist
         $("#profile_card").attr("display", "none");
@@ -128,6 +191,8 @@ $(document).ready(function () {
     let svg_pre_med;
     let x_pre_med;
     let y_pre_med;
+    let xAxis_pre_med;
+    let yAxis_pre_med;
     if (typeof getRectDataPreMEDBySample === "function") {
         data_pre_med_by_sample = getRectDataPreMEDBySample();
         pre_med_bars_exists = true;
@@ -202,6 +267,8 @@ $(document).ready(function () {
     let btwn_sample_genera_array;
     let x_btwn_sample;
     let y_btwn_sample;
+    let xAxis_btwn_sample;
+    let yAxis_btwn_sample;
     // Distance plots heights and widths
     let dist_width = +svg_btwn_sample_dist.attr("width") - margin.left - margin.right;
     let dist_height = +svg_btwn_sample_dist.attr("height") - margin.top - margin.bottom;
@@ -210,6 +277,11 @@ $(document).ready(function () {
     .scaleExtent([.5, 20])  // This control how much you can unzoom (x0.5) and zoom (x20)
     .extent([[0, 0], [dist_width, dist_height]])
     .on("zoom", update_dist_plot_zoom);
+    // Setup the tool tip
+    //Dist plot tool tip
+    let dist_tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
     let sample_list_btwn_sample_dist = {};
     if (typeof getBtwnSampleDistCoordsBC === "function") {
         // use the braycurtis objects
@@ -236,6 +308,13 @@ $(document).ready(function () {
 		y_btwn_sample = d3.scaleLinear()
         .rangeRound([dist_height - margin.bottom, margin.top]);
         init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
+        // setup the group for holding the axes
+        xAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
+        .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+        .attr("id", "x_axis_btwn_sample");
+        yAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
+        .attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_btwn_sample");
         // Init btwn sample sample list
         for (let i = 0; i < btwn_sample_genera_array.length; i++){
             let genera = btwn_sample_genera_array[i];
@@ -270,6 +349,8 @@ $(document).ready(function () {
     let x_btwn_profile;
     let y_btwn_profile;
     let sample_list_btwn_profile_dist = {};
+    let xAxis_btwn_profile;
+    let yAxis_btwn_profile;
     if (typeof getBtwnProfileDistCoordsBC === "function") {
         // use the braycurtis objects
         btwn_profile_genera_coords_data = getBtwnProfileDistCoordsBC();
@@ -295,7 +376,13 @@ $(document).ready(function () {
 		y_btwn_profile = d3.scaleLinear()
         .rangeRound([dist_height - margin.bottom, margin.top]);
         init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
-
+        // The group for holding the axes
+        xAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
+        .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+        .attr("id", "x_axis_btwn_profile");
+        yAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
+        .attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_btwn_profile");
         // Init the btwn_sample profile list
         for (let i = 0; i < btwn_profile_genera_array.length; i++){
             let genera = btwn_profile_genera_array[i];
@@ -359,93 +446,15 @@ $(document).ready(function () {
     // The fill colours of the rect objects are now already in the array of objects
     //TODO we will need to have color scales for the distance plots as these will vary depending on
     // the property that we are colouring by.
+    let seq_color = getSeqColor();
+    let seq_names = Object.keys(seq_color);
+    let seq_colors = seq_names.map(function(seq_name){return seq_color[seq_name]});
+    let sequence_color_scale = d3.scaleOrdinal().domain(seq_names).range(seq_colors);
 
-
-
-    //Set up the svg element in which we will call the axis objects
-    let xAxis_post_med = svg_post_med.append("g")
-    .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-    .attr("id", "x_axis_post_med")
-    let xAxis_post_med_modal = svg_post_med_modal.append("g")
-    .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-    .attr("id", "x_axis_post_med_modal")
-    let xAxis_profile = svg_profile.append("g")
-    .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-    .attr("id", "x_axis_profile")
-    // inverted profile modal plot is axis is only moved down by top margin
-    let xAxis_profile_modal = svg_profile_modal.append("g")
-    .attr("transform", `translate(0,${inv_prof_margin.top})`)
-    .attr("id", "x_axis_profile_modal")
-    let xAxis_pre_med;
-
-    //Dist plot axes
-    let xAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
-    .attr("transform", `translate(0,${dist_height - margin.bottom})`)
-    .attr("id", "x_axis_btwn_sample")
-    let xAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
-    .attr("transform", `translate(0,${dist_height - margin.bottom})`)
-    .attr("id", "x_axis_btwn_profile")
-    
-
-	let yAxis_post_med = svg_post_med.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_post_med");
-    let yAxis_post_med_modal = svg_post_med_modal.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_post_med_modal");
-    let yAxis_profile_modal = svg_profile_modal.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_profile_modal");
-    let yAxis_profile = svg_profile.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_profile");
-    let yAxis_pre_med;
-
-    //Dist plot axes
-    let yAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
-        .attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_btwn_sample");
-    let yAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
-        .attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_btwn_profile");
-
-    // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
-    // We will have a seperate g for each of the samples so that we can plot column by column
-    // The pre-med plot will not get init until later.
-    sample_list_post.forEach(function(sample){
-    // Selectors cannot start with a number so we will add an s
-        svg_post_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
-        svg_post_med_modal.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
-        svg_profile.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
-        svg_profile_modal.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
-    })
-
-    // TODO create the tool tip for the distance plots
-    // Create Tooltips
-    let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
-        .html(function(d) {
-            let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
-            '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
-            '</div>';
-            return content;
-        });
-    let tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
-        .html(function(d) {
-            let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
-            '<span style="margin-left: 2.5px;"><b>' + d.prof_name + '</b></span><br>' +
-            '</div>';
-            return content;
-        });
-
-    //Dist plot tool tip
-    var dist_tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
-
-    svg_post_med.call(tip_seqs);
-    svg_post_med_modal.call(tip_seqs);
-    svg_profile.call(tip_profiles);
-    svg_profile_modal.call(tip_profiles);
+    let prof_color = getProfColor();
+    let prof_names = Object.keys(prof_color);
+    let prof_colors = seq_names.map(function(seq_name){return seq_color[seq_name]});
+    let profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);
 
 
     // INIT the post-MED and profile plots modal and normal.
