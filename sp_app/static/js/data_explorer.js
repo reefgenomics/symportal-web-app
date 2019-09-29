@@ -20,37 +20,90 @@ $(document).ready(function () {
     //TODO make it so that if the data for the elements do not exists they get display set to hidden
     //Get data and set parameters for charting
 
+// Here we set the margin variables and init variables to represent the svg chars
+
+
 
 
     // DATA FOR PRE, POST MED and PROFILE
     // POST MED BARS
     let sorting_keys = Object.keys(getSampleSortedArrays());
 
+    let svg_post_med = d3.select("#chart_post_med");
     let data_post_med_by_sample;
     let max_y_val_post_med;
+    let sample_list_post;
     let post_med_bars_exists = false;
+    let post_med_init_by_sample_interval = 10;
+    //INIT margins, widths and heights for the bar plots
+    let margin = {top: 35, left: 35, bottom: 20, right: 0};
+    let seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
+    let seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
+    // margin used for the inverted profile_modal plot
+    let inv_prof_margin = {top: 5, left: 35, bottom: 20, right: 0};
+    let x_post_med;
+    let y_post_med;
     if (typeof getRectDataPostMEDBySample === "function") {
         data_post_med_by_sample = getRectDataPostMEDBySample();
         post_med_bars_exists = true;
         max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
+        sample_list_post = getRectDataPostMEDBySampleSampleList();
+        $("#post_med_card").find(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString());
+        seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
+        seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
+        // Init x and y scales
+        x_post_med = d3.scaleBand()
+		.range([margin.left, seq_prof_width - margin.right])
+		.padding(0.1);
+		y_post_med = d3.scaleLinear()
+        .rangeRound([seq_prof_height - margin.bottom, margin.top]);
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
         for (let i = 0; i < sorting_keys.length; i ++){
             sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
+        // INIT the width of the chart
     }else{
         // Hide the card if the data to populate it doesn't exist
         $("#post_med_card").attr("display", "none");
     }
 
+// Set the x range that will be used for the x val of the bars
+
+
+
+
     //PROFILE BARS
+    let svg_profile = d3.select("#chart_profile");
     let data_profile_by_sample;
     let max_y_val_profile;
+    let sample_list_profile;
     let profile_bars_exists = false;
+    let sample_list_modal;
+    let profile_init_by_sample_interval = 10;
+    let svg_post_med_modal = d3.select("#chart_post_med_modal");
+    let svg_profile_modal = d3.select("#chart_profile_modal");
+    let x_profile;
+    let y_profile;
+    let y_profile_modal;
     if (typeof getRectDataProfileBySample === "function") {
         data_profile_by_sample = getRectDataProfileBySample();
         profile_bars_exists = true;
         max_y_val_profile = getRectDataProfileBySampleMaxSeq();
+        sample_list_profile = getRectDataProfileBySampleSampleList();
+        sample_list_modal = getRectDataProfileBySampleSampleList();
+        $("#profile_card").find(".seq_prof_chart").attr("width", ((sample_list_profile.length * 13) + 70).toString())
+        // Init the width of the modal chart too if we have profile data
+        $("#seq-prof-modal").find(".seq_prof_chart").attr("width", ((sample_list_modal.length * 13) + 70).toString())
+        // Init x and y scales
+        x_profile = d3.scaleBand()
+		.range([margin.left, seq_prof_width - margin.right])
+		.padding(0.1);
+		y_profile = d3.scaleLinear()
+        .rangeRound([seq_prof_height - margin.bottom, margin.top]);
+        // Y is inverted for the inverted profile plot
+		y_profile_modal = d3.scaleLinear()
+        .rangeRound([inv_prof_margin.top, seq_prof_height - inv_prof_margin.bottom]);
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#profile_card").find(".svg_sort_by");
         for (let i = 0; i < sorting_keys.length; i ++){
@@ -59,16 +112,28 @@ $(document).ready(function () {
     }else{
         // Hide the card if the data to populate it doesn't exist
         $("#profile_card").attr("display", "none");
+        // if the profile data doesn't exist then we don't have need for the modal so we should hide
+        // the modal buttons.
+        $(".viewer_link_seq_prof").attr("display", "none");
     }
+
+
 
     //PRE-MED BARS
     let data_pre_med_by_sample;
     let max_y_val_pre_med;
+    let sample_list_pre;
     let pre_med_bars_exists = false;
+    let pre_med_init_by_sample_interval = 50;
+    let svg_pre_med;
+    let x_pre_med;
+    let y_pre_med;
     if (typeof getRectDataPreMEDBySample === "function") {
         data_pre_med_by_sample = getRectDataPreMEDBySample();
         pre_med_bars_exists = true;
         max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
+        sample_list_pre = getRectDataPreMEDBySampleSampleList();
+        $("#pre_med_card").find(".seq_prof_chart").attr("width", ((sample_list_pre.length * 13) + 70).toString())
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#pre_med_card").find(".svg_sort_by");
         for (let i = 0; i < sorting_keys.length; i ++){
@@ -79,6 +144,8 @@ $(document).ready(function () {
         $("#pre_med_card").attr("display", "none");
     }
 
+
+    //INIT inv profile data for the modal
     //TODO we can work with this for the time being and see how long it takes to process on the
     // large test dataset. If it takes to long then we can switch to the already having the inv values
     // calculated. If it is fast then we no longer need to output the inv values and can save some space
@@ -115,13 +182,35 @@ $(document).ready(function () {
     }
     processProfileInvData(data_profile_inv_by_sample);
 
+
+
+
+
+
+
+
+
+
+
+
     //DATA for btwn sample
+    let svg_btwn_sample_dist = d3.select("#chart_btwn_sample");
     let btwn_sample_data_available = false;
     let btwn_sample_genera_coords_data;
     let btwn_sample_genera_pc_variances;
     let available_pcs_btwn_samples;
     let btwn_sample_genera_array;
-
+    let x_btwn_sample;
+    let y_btwn_sample;
+    // Distance plots heights and widths
+    let dist_width = +svg_btwn_sample_dist.attr("width") - margin.left - margin.right;
+    let dist_height = +svg_btwn_sample_dist.attr("height") - margin.top - margin.bottom;
+    // Set up the zoom object (one for all dist plots)
+    let zoom = d3.zoom()
+    .scaleExtent([.5, 20])  // This control how much you can unzoom (x0.5) and zoom (x20)
+    .extent([[0, 0], [dist_width, dist_height]])
+    .on("zoom", update_dist_plot_zoom);
+    let sample_list_btwn_sample_dist = {};
     if (typeof getBtwnSampleDistCoordsBC === "function") {
         // use the braycurtis objects
         btwn_sample_genera_coords_data = getBtwnSampleDistCoordsBC();
@@ -129,8 +218,6 @@ $(document).ready(function () {
         available_pcs_btwn_samples = getBtwnSampleDistPCAvailableBC();
         btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
         btwn_sample_data_available = true;
-
-        init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
     }else if(typeof getBtwnProfileDistCoordsUF === "function"){
         // use the unifrac objects
         btwn_sample_genera_coords_data = getBtwnSampleDistCoordsUF();
@@ -138,20 +225,51 @@ $(document).ready(function () {
         available_pcs_btwn_samples = getBtwnSampleDistPCAvailableUF();
         btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
         btwn_sample_data_available = true;
-
-        init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
     }else{
         // btwn_sample data not available
         // make display none for the btwn sample card
         $("#between_sample_distances").attr("display", "none");
     }
+    if (btwn_sample_data_available){
+        x_btwn_sample = d3.scaleLinear()
+		.range([margin.left, dist_width - margin.right]);
+		y_btwn_sample = d3.scaleLinear()
+        .rangeRound([dist_height - margin.bottom, margin.top]);
+        init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
+        // Init btwn sample sample list
+        for (let i = 0; i < btwn_sample_genera_array.length; i++){
+            let genera = btwn_sample_genera_array[i];
+            sample_list_btwn_sample_dist[genera] = Object.keys(btwn_sample_genera_coords_data[genera]);
+        }
+        // Add a clip
+        svg_btwn_sample_dist.append("defs").append("clipPath")
+        .attr("id", "sample_clip")
+        .append("rect")
+        .attr("width", dist_width - margin.right - margin.left)
+        .attr("height", dist_height - margin.bottom - margin.top)
+        .attr("x", margin.left)
+        .attr("y", margin.top);
+
+        // This is the group where we will do the drawing and that has the above
+        // clipping mask applied to it
+        let scatter_btwn_sample = svg_btwn_sample_dist.append('g')
+        .attr("clip-path", "url(#sample_clip)")
+
+        // Call zoom
+        svg_btwn_sample_dist.call(zoom);
+    }
+
+
     //DATA for btwn profiles
+    let svg_btwn_profile_dist = d3.select("#chart_btwn_profile");
     let btwn_profile_data_available = false;
     let btwn_profile_genera_coords_data ;
     let btwn_profile_genera_pc_variances;
     let available_pcs_btwn_profiles;
     let btwn_profile_genera_array;
-
+    let x_btwn_profile;
+    let y_btwn_profile;
+    let sample_list_btwn_profile_dist = {};
     if (typeof getBtwnProfileDistCoordsBC === "function") {
         // use the braycurtis objects
         btwn_profile_genera_coords_data = getBtwnProfileDistCoordsBC();
@@ -159,8 +277,6 @@ $(document).ready(function () {
         available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableBC();
         btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
         btwn_profile_data_available = true;
-
-        init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
     }else if(typeof getBtwnProfileDistCoordsUF === "function"){
         // use the unifrac objects
         btwn_profile_genera_coords_data = getBtwnProfileDistCoordsUF();
@@ -168,17 +284,40 @@ $(document).ready(function () {
         available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableUF();
         btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
         btwn_profile_data_available = true;
-
-        init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
     }else{
         // btwn_sample data not available
         // make display none for the btwn sample card
         $("#between_sample_distances").attr("display", "none");
     }
+    if (btwn_profile_data_available){
+        x_btwn_profile = d3.scaleLinear()
+		.range([margin.left, dist_width - margin.right]);
+		y_btwn_profile = d3.scaleLinear()
+        .rangeRound([dist_height - margin.bottom, margin.top]);
+        init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
 
-    let max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
-    let max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
-    let max_y_val_profile = getRectDataProfileBySampleMaxSeq();
+        // Init the btwn_sample profile list
+        for (let i = 0; i < btwn_profile_genera_array.length; i++){
+            let genera = btwn_profile_genera_array[i];
+            sample_list_btwn_profile_dist[genera] = Object.keys(btwn_profile_genera_coords_data[genera]);
+        }
+        // Add a clip
+        svg_btwn_profile_dist.append("defs").append("clipPath")
+        .attr("id", "profile_clip")
+        .append("rect")
+        .attr("width", dist_width - margin.right - margin.left)
+        .attr("height", dist_height - margin.bottom - margin.top)
+        .attr("x", margin.left)
+        .attr("y", margin.top);
+
+        // This is the group where we will do the drawing and that has the above
+        // clipping mask applied to it
+        scatter_btwn_profile = svg_btwn_profile_dist.append('g')
+        .attr("clip-path", "url(#profile_clip)")
+
+        svg_btwn_profile_dist.call(zoom);
+    }
+
 
     // Init the text value of the genera_identifier in each of the distance plots
     // INIT the genera drop down
@@ -213,201 +352,8 @@ $(document).ready(function () {
     }
 
 
-//    let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
-//    let dist_cards_to_init_ids = ["#between_sample_distances", "#between_profile_distances"]
-//    for (let i = 0; i < dist_cards_to_init_ids.length; i++) {
-//
-//        let card_element = $(dist_cards_to_init_ids[i]);
-//        let first_genera_present;
-//        for (let j = 0; j < genera_array.length; j++) {
-//            // init the genera_indentifier with the first of the genera in the genera_array that we have data for
-//            // We only want to do this for the first genera that we find so we check whether the data-genera attribute
-//            // already has been set or not.
-//            if (btwn_sample_genera_array.includes(genera_array[j].toLowerCase())){
-//                let attr = card_element.find(".genera_identifier").attr("data-genera");
-//                if (typeof attr !== typeof undefined && attr !== false) {
-//                    // then already set. just add genera link
-//                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
-//                }else{
-//                    // then genera_identifier not set
-//                    card_element.find(".genera_identifier").text(genera_array[j]);
-//                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j].toLowerCase());
-//                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
-//                    first_genera_present = genera_array[j].toLowerCase();
-//                }
-//            }
-//        }
-//        // INIT PC options
-//        let pcs_available;
-//        if (dist_cards_to_init_ids[i].includes("sample")){
-//            pcs_available = available_pcs_btwn_samples[first_genera_present];
-//        }else{
-//            pcs_available = available_pcs_btwn_profiles[first_genera_present];
-//        }
-//
-//        // Skip the first PC as we don't want PC1 in the options
-//        for (let j = 1; j < pcs_available.length; j++){
-//            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
-//        }
-//    }
-
-//    // Eventually this will look at the contents of the directory to
-//    // see which genera or clades there are data for and put these into an
-//    // array or object. For the time being I will just hard code it in.
-//    let btwn_sample_genera_coords_data = {'breviolum': GetBtwnSmplPCCoordsBreviolum()};
-//    let btwn_sample_genera_pc_variances = {'breviolum': GetBtwnSmplPCVarBreviolum()};
-//
-//    let btwn_profile_genera_coords_data = {'breviolum': GetBtwnProfPCCoordsBreviolum()};
-//    let btwn_profile_genera_pc_variances = {'breviolum': GetBtwnProfPCVarBreviolum()};
-//
-//    let btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
-//    let btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
-//
-//    // INIT the genera drop downs for the btween sample and between profile dist cards
-//
-//
-//    // Get PC that are available for each of the genera to populate the dropdown menus
-//    let available_pcs_btwn_samples = {};
-//    for (let i = 0; i < btwn_sample_genera_array.length; i++){
-//        available_pcs_btwn_samples[btwn_sample_genera_array[i]] = Object.keys(btwn_sample_genera_pc_variances[btwn_sample_genera_array[i]])
-//    }
-//
-//    // Get PC that are available for each of the genera to populate the dropdown menus
-//    let available_pcs_btwn_profiles = {};
-//    for (let i = 0; i < btwn_profile_genera_array.length; i++){
-//        available_pcs_btwn_profiles[btwn_sample_genera_array[i]] = Object.keys(btwn_profile_genera_pc_variances[btwn_sample_genera_array[i]])
-//    }
-
-
-
-
-
-    let sample_list_post = getRectDataPostMEDBySampleSampleList();
-    let sample_list_pre = getRectDataPreMEDBySampleSampleList();
-    let sample_list_profile = getRectDataProfileBySampleSampleList();
-    let sample_list_modal = getRectDataProfileBySampleSampleList();
-
-    // We will do this dynamically for real but for the time being I will hard code
-    let sample_list_btwn_sample_dist = {};
-    for (let i = 0; i < btwn_sample_genera_array.length; i++){
-        let genera = btwn_sample_genera_array[i];
-        sample_list_btwn_sample_dist[genera] = Object.keys(btwn_sample_genera_coords_data[genera]);
-    }
-    
-    let sample_list_btwn_profile_dist = {};
-    for (let i = 0; i < btwn_profile_genera_array.length; i++){
-        let genera = btwn_profile_genera_array[i];
-        sample_list_btwn_profile_dist[genera] = Object.keys(btwn_profile_genera_coords_data[genera]);
-    }
-
-
-
-    // Set the width of the svg html charts according to number of samples
-    // we will work with 13 px per sample + 70 for the margins
-    $(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString())
-
-    // Speed at which the sample by sample plotting will be done initially
-    let post_med_init_by_sample_interval = 10
-    let pre_med_init_by_sample_interval = 50
-    let profile_init_by_sample_interval = 10
-
-    //This initial chart function will take care of all of the svg elements that are not going to change during
-    // an update. i.e. when we are changing from relative to absolute data
-    // We init the profile, post-MED, dist and modal plots in full but hold off on the pre-MED
-    // The pre-MED takes a lot of time and will only be loaded if its collapsed DIV is opened
-    // We will however init the lets that will be used later on for the pre-MED plot so that
-    // They are available within the initiating functions.
-
-    // Here we set the margin variables and init variables to represent the svg chars
-    let svg_post_med = d3.select("#chart_post_med");
-	let svg_post_med_modal = d3.select("#chart_post_med_modal");
-    let svg_profile = d3.select("#chart_profile");
-    let svg_profile_modal = d3.select("#chart_profile_modal");
-    let svg_pre_med;
-
-    // INIT for the distance plots needs some extra work for the zooming and panning functions
-    let svg_btwn_sample_dist = d3.select("#chart_btwn_sample");
-    let svg_btwn_profile_dist = d3.select("#chart_btwn_profile");
-
-    let margin = {top: 35, left: 35, bottom: 20, right: 0},
-    seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right,
-    seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
-    // Alt margin used for the inverted profile_modal plot
-    let inv_prof_margin = {top: 5, left: 35, bottom: 20, right: 0};
-    // Distance plots heights and widths
-    let dist_width = +svg_btwn_sample_dist.attr("width") - margin.left - margin.right,
-    dist_height = +svg_btwn_sample_dist.attr("height") - margin.top - margin.bottom;
-
-    // Add a clip
-    let clip_btwn_sample = svg_btwn_sample_dist.append("defs").append("clipPath")
-      .attr("id", "sample_clip")
-      .append("rect")
-      .attr("width", dist_width - margin.right - margin.left)
-      .attr("height", dist_height - margin.bottom - margin.top)
-      .attr("x", margin.left)
-      .attr("y", margin.top);
-
-    // This is the group where we will do the drawing and that has the above
-    // clipping mask applied to it
-    let scatter_btwn_sample = svg_btwn_sample_dist.append('g')
-    .attr("clip-path", "url(#sample_clip)")
-
-    // Add a clip
-    let clip_btwn_profile = svg_btwn_profile_dist.append("defs").append("clipPath")
-      .attr("id", "profile_clip")
-      .append("rect")
-      .attr("width", dist_width - margin.right - margin.left)
-      .attr("height", dist_height - margin.bottom - margin.top)
-      .attr("x", margin.left)
-      .attr("y", margin.top);
-
-    // This is the group where we will do the drawing and that has the above
-    // clipping mask applied to it
-    let scatter_btwn_profile = svg_btwn_profile_dist.append('g')
-    .attr("clip-path", "url(#profile_clip)")
-
-    // Set up the zoom object (one for all dist plots)
-    let zoom = d3.zoom()
-    .scaleExtent([.5, 20])  // This control how much you can unzoom (x0.5) and zoom (x20)
-    .extent([[0, 0], [dist_width, dist_height]])
-    .on("zoom", update_dist_plot_zoom);
-
-    svg_btwn_sample_dist.call(zoom);
-    svg_btwn_profile_dist.call(zoom);
-
-    // Set the x range that will be used for the x val of the bars
-	let x_post_med = d3.scaleBand()
-		.range([margin.left, seq_prof_width - margin.right])
-		.padding(0.1);
-    let x_profile = d3.scaleBand()
-		.range([margin.left, seq_prof_width - margin.right])
-		.padding(0.1);
-    let x_pre_med;
-    // x ranges for distance plots
-    let x_btwn_sample = d3.scaleLinear()
-		.range([margin.left, dist_width - margin.right]);
-    let x_btwn_profile = d3.scaleLinear()
-		.range([margin.left, dist_width - margin.right]);
-
-
-    // Set the y range
-	let y_post_med = d3.scaleLinear()
-        .rangeRound([seq_prof_height - margin.bottom, margin.top])
-    // Y is inverted for the inverted profile plot
-    let y_profile_modal = d3.scaleLinear()
-        .rangeRound([inv_prof_margin.top, seq_prof_height - inv_prof_margin.bottom])
-    let y_profile = d3.scaleLinear()
-        .rangeRound([seq_prof_height - margin.bottom, margin.top])
-    let y_pre_med;
-    // y range for dist plots
-    let y_btwn_sample = d3.scaleLinear()
-        .rangeRound([dist_height - margin.bottom, margin.top])
-    let y_btwn_profile = d3.scaleLinear()
-        .rangeRound([dist_height - margin.bottom, margin.top])
-
-
     // Set the colour scale
-    // We can set both the range and domain of this as these are inletiable between absolute and relative
+    // We can set both the range and domain of this as these are invariable between absolute and relative
     // data types
     //TODO synchronise the colour scales between the pre- and post-med seqs.
     // The fill colours of the rect objects are now already in the array of objects
