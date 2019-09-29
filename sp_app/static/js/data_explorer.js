@@ -23,38 +23,60 @@ $(document).ready(function () {
 
 
     // DATA FOR PRE, POST MED and PROFILE
+    // POST MED BARS
     let sorting_keys = Object.keys(getSampleSortedArrays());
+
+    let data_post_med_by_sample;
+    let max_y_val_post_med;
+    let post_med_bars_exists = false;
     if (typeof getRectDataPostMEDBySample === "function") {
-        let data_post_med_by_sample = getRectDataPostMEDBySample();
+        data_post_med_by_sample = getRectDataPostMEDBySample();
+        post_med_bars_exists = true;
+        max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
-        sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         for (let i = 0; i < sorting_keys.length; i ++){
-            // Hide the card if the data to populate it doesn't exist
-            $("#post_med_card").attr("display", "none");
+            sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
+    }else{
+        // Hide the card if the data to populate it doesn't exist
+        $("#post_med_card").attr("display", "none");
     }
 
+    //PROFILE BARS
+    let data_profile_by_sample;
+    let max_y_val_profile;
+    let profile_bars_exists = false;
     if (typeof getRectDataProfileBySample === "function") {
-        let data_profile_by_sample = getRectDataProfileBySample();
+        data_profile_by_sample = getRectDataProfileBySample();
+        profile_bars_exists = true;
+        max_y_val_profile = getRectDataProfileBySampleMaxSeq();
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#profile_card").find(".svg_sort_by");
-        sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         for (let i = 0; i < sorting_keys.length; i ++){
-            // Hide the card if the data to populate it doesn't exist
-            $("#profile_card").attr("display", "none");
+            sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
+    }else{
+        // Hide the card if the data to populate it doesn't exist
+        $("#profile_card").attr("display", "none");
     }
 
+    //PRE-MED BARS
+    let data_pre_med_by_sample;
+    let max_y_val_pre_med;
+    let pre_med_bars_exists = false;
     if (typeof getRectDataPreMEDBySample === "function") {
-        let data_pre_med_by_sample = getRectDataPreMEDBySample();
+        data_pre_med_by_sample = getRectDataPreMEDBySample();
+        pre_med_bars_exists = true;
+        max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#pre_med_card").find(".svg_sort_by");
-        sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         for (let i = 0; i < sorting_keys.length; i ++){
-            // Hide the card if the data to populate it doesn't exist
-            $("#pre_med_card").attr("display", "none");
+            sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
+    }else{
+        // Hide the card if the data to populate it doesn't exist
+        $("#pre_med_card").attr("display", "none");
     }
 
     //TODO we can work with this for the time being and see how long it takes to process on the
@@ -99,6 +121,7 @@ $(document).ready(function () {
     let btwn_sample_genera_pc_variances;
     let available_pcs_btwn_samples;
     let btwn_sample_genera_array;
+
     if (typeof getBtwnSampleDistCoordsBC === "function") {
         // use the braycurtis objects
         btwn_sample_genera_coords_data = getBtwnSampleDistCoordsBC();
@@ -106,6 +129,7 @@ $(document).ready(function () {
         available_pcs_btwn_samples = getBtwnSampleDistPCAvailableBC();
         btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
         btwn_sample_data_available = true;
+
         init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
     }else if(typeof getBtwnProfileDistCoordsUF === "function"){
         // use the unifrac objects
@@ -114,6 +138,7 @@ $(document).ready(function () {
         available_pcs_btwn_samples = getBtwnSampleDistPCAvailableUF();
         btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
         btwn_sample_data_available = true;
+
         init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
     }else{
         // btwn_sample data not available
@@ -126,6 +151,7 @@ $(document).ready(function () {
     let btwn_profile_genera_pc_variances;
     let available_pcs_btwn_profiles;
     let btwn_profile_genera_array;
+
     if (typeof getBtwnProfileDistCoordsBC === "function") {
         // use the braycurtis objects
         btwn_profile_genera_coords_data = getBtwnProfileDistCoordsBC();
@@ -133,6 +159,7 @@ $(document).ready(function () {
         available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableBC();
         btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
         btwn_profile_data_available = true;
+
         init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
     }else if(typeof getBtwnProfileDistCoordsUF === "function"){
         // use the unifrac objects
@@ -141,12 +168,17 @@ $(document).ready(function () {
         available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableUF();
         btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
         btwn_profile_data_available = true;
+
         init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
     }else{
         // btwn_sample data not available
         // make display none for the btwn sample card
         $("#between_sample_distances").attr("display", "none");
     }
+
+    let max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
+    let max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
+    let max_y_val_profile = getRectDataProfileBySampleMaxSeq();
 
     // Init the text value of the genera_identifier in each of the distance plots
     // INIT the genera drop down
@@ -247,9 +279,7 @@ $(document).ready(function () {
 //    }
 
 
-    let max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
-    let max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
-    let max_y_val_profile = getRectDataProfileBySampleMaxSeq();
+
 
 
     let sample_list_post = getRectDataPostMEDBySampleSampleList();
@@ -288,7 +318,7 @@ $(document).ready(function () {
     // We will however init the lets that will be used later on for the pre-MED plot so that
     // They are available within the initiating functions.
 
-    // Here we set the margin letibles and init letiables to represent the svg chars
+    // Here we set the margin variables and init variables to represent the svg chars
     let svg_post_med = d3.select("#chart_post_med");
 	let svg_post_med_modal = d3.select("#chart_post_med_modal");
     let svg_profile = d3.select("#chart_profile");
