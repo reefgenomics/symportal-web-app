@@ -7,17 +7,59 @@
 
 $(document).ready(function () {
 
-
+    //INIT title
+    $("#study_title").html(getStudyMetaInfo()['title';])
+    //INIT authors
+    $("#authors").html(getStudyMetaInfo()['author_list';])
+    //INIT affiliations
+    $("#affiliations").html(getStudyMetaInfo()['affiliations';])
     //INIT sliders for distance plots
     $("#sample_mask_slider").slider({});
     $("#profile_mask_slider").slider({});
 
+    //TODO make it so that if the data for the elements do not exists they get display set to hidden
     //Get data and set parameters for charting
-    // DATA FOR PRE, POST MED and PROFILE
-    let data_post_med_by_sample = getRectDataPostMEDBySample();
-    let data_pre_med_by_sample = getRectDataPreMEDBySample();
-    let data_profile_by_sample = getRectDataProfileBySample();
 
+
+
+    // DATA FOR PRE, POST MED and PROFILE
+    let sorting_keys = Object.keys(getSampleSortedArrays());
+    if (typeof getRectDataPostMEDBySample === "function") {
+        let data_post_med_by_sample = getRectDataPostMEDBySample();
+        // INIT the drop down with the sample sorting categories we have available
+        let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
+        sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+        for (let i = 0; i < sorting_keys.length; i ++){
+            // Hide the card if the data to populate it doesn't exist
+            $("#post_med_card").attr("display", "none");
+        }
+    }
+
+    if (typeof getRectDataProfileBySample === "function") {
+        let data_profile_by_sample = getRectDataProfileBySample();
+        // INIT the drop down with the sample sorting categories we have available
+        let sort_dropdown_to_populate = $("#profile_card").find(".svg_sort_by");
+        sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+        for (let i = 0; i < sorting_keys.length; i ++){
+            // Hide the card if the data to populate it doesn't exist
+            $("#profile_card").attr("display", "none");
+        }
+    }
+
+    if (typeof getRectDataPreMEDBySample === "function") {
+        let data_pre_med_by_sample = getRectDataPreMEDBySample();
+        // INIT the drop down with the sample sorting categories we have available
+        let sort_dropdown_to_populate = $("#pre_med_card").find(".svg_sort_by");
+        sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+        for (let i = 0; i < sorting_keys.length; i ++){
+            // Hide the card if the data to populate it doesn't exist
+            $("#pre_med_card").attr("display", "none");
+        }
+    }
+
+    //TODO we can work with this for the time being and see how long it takes to process on the
+    // large test dataset. If it takes to long then we can switch to the already having the inv values
+    // calculated. If it is fast then we no longer need to output the inv values and can save some space
     // DATA for profile inverted
     // Because this dataset is going to be used in the inverted modal plot we need to
     // remove the cummulative y values that have been added to the above
@@ -52,32 +94,157 @@ $(document).ready(function () {
     processProfileInvData(data_profile_inv_by_sample);
 
     //DATA for btwn sample
-    // Eventually this will look at the contents of the directory to
-    // see which genera or clades there are data for and put these into an
-    // array or object. For the time being I will just hard code it in.
-    let btwn_sample_genera_coords_data = {'breviolum': GetBtwnSmplPCCoordsBreviolum()};
-    let btwn_sample_genera_pc_variances = {'breviolum': GetBtwnSmplPCVarBreviolum()};
-
-    let btwn_profile_genera_coords_data = {'breviolum': GetBtwnProfPCCoordsBreviolum()};
-    let btwn_profile_genera_pc_variances = {'breviolum': GetBtwnProfPCVarBreviolum()};
-
-    let btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
-    let btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
-
-    // INIT the genera drop downs for the btween sample and between profile dist cards
-
-
-    // Get PC that are available for each of the genera to populate the dropdown menus
-    let available_pcs_btwn_samples = {};
-    for (let i = 0; i < btwn_sample_genera_array.length; i++){
-        available_pcs_btwn_samples[btwn_sample_genera_array[i]] = Object.keys(btwn_sample_genera_pc_variances[btwn_sample_genera_array[i]])
+    let btwn_sample_data_available = false;
+    let btwn_sample_genera_coords_data;
+    let btwn_sample_genera_pc_variances;
+    let available_pcs_btwn_samples;
+    let btwn_sample_genera_array;
+    if (typeof getBtwnSampleDistCoordsBC === "function") {
+        // use the braycurtis objects
+        btwn_sample_genera_coords_data = getBtwnSampleDistCoordsBC();
+        btwn_sample_genera_pc_variances = getBtwnSampleDistPCVariancesBC();
+        available_pcs_btwn_samples = getBtwnSampleDistPCAvailableBC();
+        btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
+        btwn_sample_data_available = true;
+        init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
+    }else if(typeof getBtwnProfileDistCoordsUF === "function"){
+        // use the unifrac objects
+        btwn_sample_genera_coords_data = getBtwnSampleDistCoordsUF();
+        btwn_sample_genera_pc_variances = getBtwnSampleDistPCVariancesUF();
+        available_pcs_btwn_samples = getBtwnSampleDistPCAvailableUF();
+        btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
+        btwn_sample_data_available = true;
+        init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
+    }else{
+        // btwn_sample data not available
+        // make display none for the btwn sample card
+        $("#between_sample_distances").attr("display", "none");
+    }
+    //DATA for btwn profiles
+    let btwn_profile_data_available = false;
+    let btwn_profile_genera_coords_data ;
+    let btwn_profile_genera_pc_variances;
+    let available_pcs_btwn_profiles;
+    let btwn_profile_genera_array;
+    if (typeof getBtwnProfileDistCoordsBC === "function") {
+        // use the braycurtis objects
+        btwn_profile_genera_coords_data = getBtwnProfileDistCoordsBC();
+        btwn_profile_genera_pc_variances = getBtwnProfileDistPCVariancesBC();
+        available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableBC();
+        btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
+        btwn_profile_data_available = true;
+        init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
+    }else if(typeof getBtwnProfileDistCoordsUF === "function"){
+        // use the unifrac objects
+        btwn_profile_genera_coords_data = getBtwnProfileDistCoordsUF();
+        btwn_profile_genera_pc_variances = getBtwnProfileDistPCVariancesUF();
+        available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableUF();
+        btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
+        btwn_profile_data_available = true;
+        init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
+    }else{
+        // btwn_sample data not available
+        // make display none for the btwn sample card
+        $("#between_sample_distances").attr("display", "none");
     }
 
-    // Get PC that are available for each of the genera to populate the dropdown menus
-    let available_pcs_btwn_profiles = {};
-    for (let i = 0; i < btwn_profile_genera_array.length; i++){
-        available_pcs_btwn_profiles[btwn_sample_genera_array[i]] = Object.keys(btwn_profile_genera_pc_variances[btwn_sample_genera_array[i]])
+    // Init the text value of the genera_identifier in each of the distance plots
+    // INIT the genera drop down
+    // INIT the PC drop down
+    function init_genera_pc_dropdown_dist_plots(card_id, genera_present, pcs_available){
+        let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
+        let card_element = $(card_id);
+        let first_genera_present;
+        for (let j = 0; j < genera_array.length; j++) {
+            // init the genera_indentifier with the first of the genera in the genera_array that we have data for
+            // We only want to do this for the first genera that we find so we check whether the data-genera attribute
+            // already has been set or not.
+            if (genera_present.includes(genera_array[j].toLowerCase())){
+                let attr = card_element.find(".genera_identifier").attr("data-genera");
+                if (typeof attr !== typeof undefined && attr !== false) {
+                    // then already set. just add genera link
+                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
+                }else{
+                    // then genera_identifier not set
+                    card_element.find(".genera_identifier").text(genera_array[j]);
+                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j].toLowerCase());
+                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
+                    first_genera_present = genera_array[j].toLowerCase();
+                }
+            }
+        }
+        let pcs_available_genera = pcs_available[first_genera_present];
+        // Skip the first PC as we don't want PC1 in the options
+        for (let j = 1; j < pcs_available.length; j++){
+            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
+        }
     }
+
+
+//    let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
+//    let dist_cards_to_init_ids = ["#between_sample_distances", "#between_profile_distances"]
+//    for (let i = 0; i < dist_cards_to_init_ids.length; i++) {
+//
+//        let card_element = $(dist_cards_to_init_ids[i]);
+//        let first_genera_present;
+//        for (let j = 0; j < genera_array.length; j++) {
+//            // init the genera_indentifier with the first of the genera in the genera_array that we have data for
+//            // We only want to do this for the first genera that we find so we check whether the data-genera attribute
+//            // already has been set or not.
+//            if (btwn_sample_genera_array.includes(genera_array[j].toLowerCase())){
+//                let attr = card_element.find(".genera_identifier").attr("data-genera");
+//                if (typeof attr !== typeof undefined && attr !== false) {
+//                    // then already set. just add genera link
+//                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
+//                }else{
+//                    // then genera_identifier not set
+//                    card_element.find(".genera_identifier").text(genera_array[j]);
+//                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j].toLowerCase());
+//                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
+//                    first_genera_present = genera_array[j].toLowerCase();
+//                }
+//            }
+//        }
+//        // INIT PC options
+//        let pcs_available;
+//        if (dist_cards_to_init_ids[i].includes("sample")){
+//            pcs_available = available_pcs_btwn_samples[first_genera_present];
+//        }else{
+//            pcs_available = available_pcs_btwn_profiles[first_genera_present];
+//        }
+//
+//        // Skip the first PC as we don't want PC1 in the options
+//        for (let j = 1; j < pcs_available.length; j++){
+//            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
+//        }
+//    }
+
+//    // Eventually this will look at the contents of the directory to
+//    // see which genera or clades there are data for and put these into an
+//    // array or object. For the time being I will just hard code it in.
+//    let btwn_sample_genera_coords_data = {'breviolum': GetBtwnSmplPCCoordsBreviolum()};
+//    let btwn_sample_genera_pc_variances = {'breviolum': GetBtwnSmplPCVarBreviolum()};
+//
+//    let btwn_profile_genera_coords_data = {'breviolum': GetBtwnProfPCCoordsBreviolum()};
+//    let btwn_profile_genera_pc_variances = {'breviolum': GetBtwnProfPCVarBreviolum()};
+//
+//    let btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
+//    let btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
+//
+//    // INIT the genera drop downs for the btween sample and between profile dist cards
+//
+//
+//    // Get PC that are available for each of the genera to populate the dropdown menus
+//    let available_pcs_btwn_samples = {};
+//    for (let i = 0; i < btwn_sample_genera_array.length; i++){
+//        available_pcs_btwn_samples[btwn_sample_genera_array[i]] = Object.keys(btwn_sample_genera_pc_variances[btwn_sample_genera_array[i]])
+//    }
+//
+//    // Get PC that are available for each of the genera to populate the dropdown menus
+//    let available_pcs_btwn_profiles = {};
+//    for (let i = 0; i < btwn_profile_genera_array.length; i++){
+//        available_pcs_btwn_profiles[btwn_sample_genera_array[i]] = Object.keys(btwn_profile_genera_pc_variances[btwn_sample_genera_array[i]])
+//    }
 
 
     let max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
@@ -103,45 +270,7 @@ $(document).ready(function () {
         sample_list_btwn_profile_dist[genera] = Object.keys(btwn_profile_genera_coords_data[genera]);
     }
 
-    // Init the text value of the genera_identifier in each of the distance plots
-    // INIT the genera drop down
-    // INIT the PC drop down
-    let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
-    let dist_cards_to_init_ids = ["#between_sample_distances", "#between_profile_distances"]
-    for (let i = 0; i < dist_cards_to_init_ids.length; i++) {
-        let card_element = $(dist_cards_to_init_ids[i]);
-        let first_genera_present;
-        for (let j = 0; j < genera_array.length; j++) {
-            // init the genera_indentifier with the first of the genera in the genera_array that we have data for
-            // We only want to do this for the first genera that we find so we check whether the data-genera attribute
-            // already has been set or not.
-            if (btwn_sample_genera_array.includes(genera_array[j].toLowerCase())){
-                let attr = card_element.find(".genera_identifier").attr("data-genera");
-                if (typeof attr !== typeof undefined && attr !== false) {
-                    // then already set. just add genera link
-                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
-                }else{
-                    // then genera_identifier not set
-                    card_element.find(".genera_identifier").text(genera_array[j]);
-                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j].toLowerCase());
-                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
-                    first_genera_present = genera_array[j].toLowerCase();
-                }
-            }
-        }
-        // INIT PC options
-        let pcs_available;
-        if (dist_cards_to_init_ids[i].includes("sample")){
-            pcs_available = available_pcs_btwn_samples[first_genera_present];
-        }else{
-            pcs_available = available_pcs_btwn_profiles[first_genera_present];
-        }
 
-        // Skip the first PC as we don't want PC1 in the options
-        for (let j = 1; j < pcs_available.length; j++){
-            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
-        }
-    }
 
     // Set the width of the svg html charts according to number of samples
     // we will work with 13 px per sample + 70 for the margins
