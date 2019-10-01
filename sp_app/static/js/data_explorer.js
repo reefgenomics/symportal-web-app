@@ -5,6 +5,7 @@
 
 
 
+
 $(document).ready(function () {
 
     //INIT title
@@ -505,7 +506,7 @@ $(document).ready(function () {
         update_axis_domains_by_sample(data_type, pre_post_profile)
         // then plot the bars sample by sample
         cum_time = 0
-        for(let i = 0; i < sample_list_post.length; i++){
+        for(let i = 0; i < sample_list.length; i++){
              setTimeout(update_by_sample, i * init_sample_interval, sample_list[i],
              data_type, init_sample_interval, pre_post_profile);
              cum_time += init_sample_interval;
@@ -614,7 +615,7 @@ $(document).ready(function () {
             // In theory because we're working on a sample by sample basis now we should be able to work with just the
             // the seq name as key. But for the time being we'll keep the key as it is.
             if (pre_post_profile == "profile" || pre_post_profile == "profile-modal"){
-                return d.prof_name;
+                return d.profile_name;
             }else{
                 return d.seq_name;
             }
@@ -642,7 +643,7 @@ $(document).ready(function () {
             }).attr("fill", function(d){
                 return col_scale(d.profile_name);
             }).delay(function(d,i){return(i*delay)});
-        }else if (pre_post_profile == "post"){
+        }else if (pre_post_profile == "profile"){
             bars.transition().duration(speed).attr("x", function(d){
                 return x(col_sample);
             }).attr("y", function(d){
@@ -650,7 +651,7 @@ $(document).ready(function () {
             }).attr("width", x.bandwidth()).attr("height", function(d){
                 return Math.max(y(0) - y(+d["height_" + abbr]), 1);
             }).attr("fill", function(d){
-                return col_scale(d.seq_name);
+                return col_scale(d.profile_name);
             }).delay(function(d,i){return(i*delay)});
         }else{
             bars.transition().duration(speed).attr("x", function(d){
@@ -965,8 +966,6 @@ $(document).ready(function () {
 
     }
 
-    //TODO we will need to work out how we can get the information for which plot is triggering the zoom
-    //for the time being we will just hard code it to try to get the btwn sample working
     function update_dist_plot_zoom(){
         let newX;
         let newY;
@@ -1103,9 +1102,10 @@ $(document).ready(function () {
     // Listening for the bar chart sorting button clicks
     $(".svg_sort_by a").click(function(){
         let current_text = $(this).closest(".btn-group").find(".btn").text();
-
-        if (current_text !== $(this).text()){
-            $(this).closest(".btn-group").find(".btn").text($(this).text());
+        let selected_text = $(this).text()
+        // Only proceed if the button text has changed
+        if (current_text !== selected_text){
+            $(this).closest(".btn-group").find(".btn").text(selected_text);
 
             let data_type;
             let pre_post_profile;
@@ -1124,7 +1124,8 @@ $(document).ready(function () {
             // In place of getting a new sample order for real we will simply
             // reverse the current one
             if (pre_post_profile == "post-profile"){
-                sample_list_modal = sample_list_modal.reverse();
+                // Then this is the modal being re-sorted
+                sample_list_modal = sorted_sample_uid_arrays[selected_text];
                 // Update post modal
                 update_bar_plot_by_sample(data_type, "post-modal",
                 sample_list_modal, post_med_init_by_sample_interval);
@@ -1132,24 +1133,25 @@ $(document).ready(function () {
                 update_bar_plot_by_sample(data_type, "profile-modal",
                 sample_list_modal, profile_init_by_sample_interval);
             }else{
+                // Then this is not the modal being re-sorted
                 switch (pre_post_profile){
                     case "post":
-                        sample_list_post = sample_list_post.reverse();
+                        sample_list_post = sorted_sample_uid_arrays[selected_text];
                         sample_list = sample_list_post;
                         init_speed = post_med_init_by_sample_interval;
                         break;
                     case "pre":
-                        sample_list_pre = sample_list_pre.reverse();
+                        sample_list_pre = sorted_sample_uid_arrays[selected_text];
                         sample_list = sample_list_pre;
                         init_speed = pre_med_init_by_sample_interval;
                         break;
                     case "profile":
-                        sample_list_profile = sample_list_profile.reverse();
+                        sample_list_profile = sorted_sample_uid_arrays[selected_text];
                         sample_list = sample_list_profile;
                         init_speed = profile_init_by_sample_interval;
                         break;
                 }
-                update_bar_plot_by_sample(data_type, pre_post_profile, sample_list_pre, pre_med_init_by_sample_interval)
+                update_bar_plot_by_sample(data_type, pre_post_profile, sample_list, pre_med_init_by_sample_interval)
 
             }
         }
