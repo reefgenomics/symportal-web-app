@@ -12,4 +12,4 @@ def submit_data_learn_more():
 
 @app.route('/d_test')
 def d_test():
-    return render_template('data_explorer.html', study_to_load='20190824_d_test')
+    return render_template('data_explorer.html', study_to_load='20171017_tullia')

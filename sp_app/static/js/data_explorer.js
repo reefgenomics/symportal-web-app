@@ -8,15 +8,15 @@
 $(document).ready(function () {
 
     //INIT title
-    $("#study_title").html(getStudyMetaInfo()['title';])
+    $("#study_title").html(getStudyMetaInfo()['title']);
     //INIT authors
-    $("#authors").html(getStudyMetaInfo()['author_list';])
+    $("#authors").html(getStudyMetaInfo()['author_list']);
     //INIT affiliations
-    $("#affiliations").html(getStudyMetaInfo()['affiliations';])
+    $("#affiliations").html(getStudyMetaInfo()['affiliations']);
     //INIT sliders for distance plots
     $("#sample_mask_slider").slider({});
     $("#profile_mask_slider").slider({});
-
+    console.log('we got here');
     //TODO make it so that if the data for the elements do not exists they get display set to hidden
     //Get data and set parameters for charting
 
@@ -31,7 +31,7 @@ $(document).ready(function () {
     let tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
         .html(function(d) {
             let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
-            '<span style="margin-left: 2.5px;"><b>' + d.prof_name + '</b></span><br>' +
+            '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
             '</div>';
             return content;
         });
@@ -41,14 +41,15 @@ $(document).ready(function () {
     // We will have a seperate g for each of the samples so that we can plot column by column
     // The pre-med plot will not get init until later.
     function add_sample_groups_to_bar_svgs(svg_element, sample_list){
-        sample_list.forEach(function(sample)){
-            svg_element.append("g").attr("class", "s" + sample.replace(/\./g, "_"));
-        }
+        sample_list.forEach(function(sample){
+            svg_element.append("g").attr("class", "s" + sample);
+        })
     }
 
     // DATA FOR PRE, POST MED and PROFILE
     // POST MED BARS
     let sorting_keys = Object.keys(getSampleSortedArrays());
+    let sorted_sample_uid_arrays = getSampleSortedArrays();
 
     let svg_post_med = d3.select("#chart_post_med");
     let data_post_med_by_sample;
@@ -70,7 +71,11 @@ $(document).ready(function () {
         data_post_med_by_sample = getRectDataPostMEDBySample();
         post_med_bars_exists = true;
         max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
-        sample_list_post = getRectDataPostMEDBySampleSampleList();
+        if (sorting_keys.includes('profile_based')){
+            sample_list_post = sorted_sample_uid_arrays['profile_based'];
+        }else{
+            sample_list_post = sorted_sample_uid_arrays['similarity'];
+        }
         // INIT the width of the chart
         $("#post_med_card").find(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString());
         seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
@@ -104,7 +109,8 @@ $(document).ready(function () {
 
 
 
-
+    // Get list of profile uids sorted by local abund order
+    let profile_uid_order = getProfileUIDSortedLocalAbund()
     //PROFILE BARS
     let svg_profile = d3.select("#chart_profile");
     let svg_post_med_modal = d3.select("#chart_post_med_modal");
@@ -125,8 +131,13 @@ $(document).ready(function () {
         data_profile_by_sample = getRectDataProfileBySample();
         profile_bars_exists = true;
         max_y_val_profile = getRectDataProfileBySampleMaxSeq();
-        sample_list_profile = getRectDataProfileBySampleSampleList();
-        sample_list_modal = getRectDataProfileBySampleSampleList();
+        if (sorting_keys.includes('profile_based')){
+            sample_list_profile = sorted_sample_uid_arrays['profile_based'];
+            sample_list_modal = sorted_sample_uid_arrays['profile_based'];
+        }else{
+            sample_list_profile = sorted_sample_uid_arrays['similarity'];
+            sample_list_modal = sorted_sample_uid_arrays['similarity'];
+        }
         $("#profile_card").find(".seq_prof_chart").attr("width", ((sample_list_profile.length * 13) + 70).toString())
         // Init the width of the modal chart too if we have profile data
         $("#seq-prof-modal").find(".seq_prof_chart").attr("width", ((sample_list_modal.length * 13) + 70).toString())
@@ -197,8 +208,14 @@ $(document).ready(function () {
         data_pre_med_by_sample = getRectDataPreMEDBySample();
         pre_med_bars_exists = true;
         max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
-        sample_list_pre = getRectDataPreMEDBySampleSampleList();
-        $("#pre_med_card").find(".seq_prof_chart").attr("width", ((sample_list_pre.length * 13) + 70).toString())
+        // TODO we can remove this map in future as I have fixed this in SP
+        if (sorting_keys.includes('profile_based')){
+            sample_list_pre = sorted_sample_uid_arrays['profile_based'];
+        }else{
+            sample_list_pre = sorted_sample_uid_arrays['similarity'];
+        }
+        sample_list_pre = Object.keys(getSampleMetaInfo()).map(Number);
+        $("#pre_med_card").find(".seq_prof_chart").attr("width", ((sample_list_pre.length * 13) + 70).toString());
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#pre_med_card").find(".svg_sort_by");
         for (let i = 0; i < sorting_keys.length; i ++){
@@ -225,11 +242,8 @@ $(document).ready(function () {
             if (data[dkey].length == 0){
                 return;
             }
-            // First sort the list so that we are working in order
-            // of either y_rel or y_abs in ascending order
-            data[dkey].sort((a, b) => (a["y_rel"] < b["y_rel"]) ? 1 : -1);
 
-            // Now that the data is sorted, go through each element removing the cummulative y
+            // Go through each element removing the cummulative y
             // we can do this by setting the y to 0 for the first element and then
             // for each next element we can set it to the y of the element that is n-1
             new_y_rel = 0;
@@ -283,6 +297,7 @@ $(document).ready(function () {
     .attr("class", "tooltip")
     .style("opacity", 0);
     let sample_list_btwn_sample_dist = {};
+    let scatter_btwn_sample;
     if (typeof getBtwnSampleDistCoordsBC === "function") {
         // use the braycurtis objects
         btwn_sample_genera_coords_data = getBtwnSampleDistCoordsBC();
@@ -331,7 +346,7 @@ $(document).ready(function () {
 
         // This is the group where we will do the drawing and that has the above
         // clipping mask applied to it
-        let scatter_btwn_sample = svg_btwn_sample_dist.append('g')
+        scatter_btwn_sample = svg_btwn_sample_dist.append('g')
         .attr("clip-path", "url(#sample_clip)")
 
         // Call zoom
@@ -351,6 +366,7 @@ $(document).ready(function () {
     let sample_list_btwn_profile_dist = {};
     let xAxis_btwn_profile;
     let yAxis_btwn_profile;
+    let scatter_btwn_profile;
     if (typeof getBtwnProfileDistCoordsBC === "function") {
         // use the braycurtis objects
         btwn_profile_genera_coords_data = getBtwnProfileDistCoordsBC();
@@ -417,24 +433,24 @@ $(document).ready(function () {
             // init the genera_indentifier with the first of the genera in the genera_array that we have data for
             // We only want to do this for the first genera that we find so we check whether the data-genera attribute
             // already has been set or not.
-            if (genera_present.includes(genera_array[j].toLowerCase())){
+            if (genera_present.includes(genera_array[j])){
                 let attr = card_element.find(".genera_identifier").attr("data-genera");
                 if (typeof attr !== typeof undefined && attr !== false) {
                     // then already set. just add genera link
-                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[i]}</a>`);
+                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
                 }else{
                     // then genera_identifier not set
                     card_element.find(".genera_identifier").text(genera_array[j]);
-                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j].toLowerCase());
+                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j]);
                     card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
-                    first_genera_present = genera_array[j].toLowerCase();
+                    first_genera_present = genera_array[j];
                 }
             }
         }
         let pcs_available_genera = pcs_available[first_genera_present];
         // Skip the first PC as we don't want PC1 in the options
-        for (let j = 1; j < pcs_available.length; j++){
-            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`)
+        for (let j = 1; j < pcs_available_genera.length; j++){
+            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available_genera[j]}</a>`)
         }
     }
 
@@ -559,10 +575,12 @@ $(document).ready(function () {
         let data_by_sample;
         let delay = 0.1;
         let sample_list;
+        let col_scale;
         if (pre_post_profile.includes("post")){
             data_by_sample = data_post_med_by_sample;
             x = x_post_med;
             y = y_post_med;
+            col_scale = sequence_color_scale;
             if (pre_post_profile == "post-modal"){
                 svg = svg_post_med_modal;
                 sample_list = sample_list_modal;
@@ -582,21 +600,23 @@ $(document).ready(function () {
             x = x_profile;
             y = y_profile;
             sample_list = sample_list_profile;
+            col_scale = profile_color_scale;
         }else if (pre_post_profile == "profile-modal"){
             svg = svg_profile_modal;
             data_by_sample = data_profile_inv_by_sample;
             x = x_profile;
             y = y_profile_modal;
             sample_list = sample_list_modal;
+            col_scale = profile_color_scale;
         }
 
-        let bars = svg.select("g.s" + col_sample.replace(/\./g, "_")).selectAll("rect").data(data_by_sample[col_sample], function(d){
+        let bars = svg.select("g.s" + col_sample).selectAll("rect").data(data_by_sample[col_sample], function(d){
             // In theory because we're working on a sample by sample basis now we should be able to work with just the
             // the seq name as key. But for the time being we'll keep the key as it is.
             if (pre_post_profile == "profile" || pre_post_profile == "profile-modal"){
-                return d.prof_name + d.sample;
+                return d.prof_name;
             }else{
-                return d.seq_name + d.sample;
+                return d.seq_name;
             }
 
         });
@@ -614,23 +634,33 @@ $(document).ready(function () {
 
         if (pre_post_profile == "profile-modal"){
             bars.transition().duration(speed).attr("x", function(d){
-                return x(d.sample);
+                return x(col_sample);
             }).attr("y", function(d){
-                return y(d["y_" + abbr]);
+                return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(d["height_" + abbr]), 1);
+                return Math.max(y(+d["height_" + abbr]), 1);
             }).attr("fill", function(d){
-                return d.fill;
+                return col_scale(d.profile_name);
+            }).delay(function(d,i){return(i*delay)});
+        }else if (pre_post_profile == "post"){
+            bars.transition().duration(speed).attr("x", function(d){
+                return x(col_sample);
+            }).attr("y", function(d){
+                return y(+d["y_" + abbr]);
+            }).attr("width", x.bandwidth()).attr("height", function(d){
+                return Math.max(y(0) - y(+d["height_" + abbr]), 1);
+            }).attr("fill", function(d){
+                return col_scale(d.seq_name);
             }).delay(function(d,i){return(i*delay)});
         }else{
             bars.transition().duration(speed).attr("x", function(d){
-                return x(d.sample);
+                return x(col_sample);
             }).attr("y", function(d){
-                return y(d["y_" + abbr]);
+                return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(0) - y(d["height_" + abbr]), 1);
+                return Math.max(y(0) - y(+d["height_" + abbr]), 1);
             }).attr("fill", function(d){
-                return d.fill;
+                return col_scale(d.seq_name);
             }).delay(function(d,i){return(i*delay)});
         }
 
@@ -642,7 +672,7 @@ $(document).ready(function () {
         if (pre_post_profile == "profile"){
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(d.sample);
+                return x(col_sample);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
@@ -652,16 +682,16 @@ $(document).ready(function () {
                 tip_profiles.hide(d);
                 d3.select(this).attr("style", null);
             }).transition().duration(1000).attr("y", function(d){
-                return y(d["y_" + abbr]);
+                return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(0) - y(d["height_" + abbr]), 1);}
+                return Math.max(y(0) - y(+d["height_" + abbr]), 1);}
             ).attr("fill", function(d){
-                return d.fill;
+                return col_scale(d.profile_name);
             });
         }else if(pre_post_profile == "profile-modal"){
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(d.sample);
+                return x(col_sample);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
@@ -671,16 +701,16 @@ $(document).ready(function () {
                 tip_profiles.hide(d);
                 d3.select(this).attr("style", null);
             }).transition().duration(1000).attr("y", function(d){
-                return y(d["y_" + abbr]);
+                return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(d["height_" + abbr]), 1);
+                return Math.max(y(+d["height_" + abbr]), 1);
             }).attr("fill", function(d){
-                return d.fill;
+                return col_scale(d.profile_name);
             });
         }else{
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(d.sample);
+                return x(col_sample);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_seqs.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
@@ -689,11 +719,11 @@ $(document).ready(function () {
                 tip_seqs.hide(d);
                 d3.select(this).attr("style", null);
             }).transition().duration(1000).attr("y", function(d){
-                return y(d["y_" + abbr]);
+                return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(0) - y(d["height_" + abbr]), 1);}
+                return Math.max(y(0) - y(+d["height_" + abbr]), 1);}
             ).attr("fill", function(d){
-                return d.fill;
+                return col_scale(d.seq_name);
             });
         }
     }
@@ -779,6 +809,7 @@ $(document).ready(function () {
         let pc_variances;
         let first_pc_variance;
         let second_pc_variance;
+        let pcs_available;
         let sample_array;
         let second_pc;
         let genera;
@@ -799,12 +830,14 @@ $(document).ready(function () {
                 svg = svg_btwn_sample_dist;
                 scatter = scatter_btwn_sample;
                 pc_variances = btwn_sample_genera_pc_variances;
+
                 x_axis_id = "#x_axis_btwn_sample";
                 y_axis_id = "#y_axis_btwn_sample";
                 // get the genera
                 // NB the genera identifier is updated from the click of the genera drop down or
                 // as part of the init.
                 genera = $(dist_plot_id).closest(".card").find(".genera_identifier").attr("data-genera");
+                pcs_available = available_pcs_btwn_samples[genera];
                 sample_array = sample_list_btwn_sample_dist[genera];
                 coords = btwn_sample_genera_coords_data[genera];
                 x_scale = x_btwn_sample;
@@ -820,6 +853,7 @@ $(document).ready(function () {
                 // NB the genera identifier is updated from the click of the genera drop down or
                 // as part of the init.
                 genera = $(dist_plot_id).closest(".card").find(".genera_identifier").attr("data-genera");
+                pcs_available = available_pcs_btwn_profiles[genera];
                 sample_array = sample_list_btwn_profile_dist[genera];
                 coords = btwn_profile_genera_coords_data[genera];
                 x_scale = x_btwn_profile;
@@ -831,23 +865,23 @@ $(document).ready(function () {
         let pc_selector_text = $(dist_plot_id).closest(".card-body").find(".pc_selector").attr("data-pc");
         if ( pc_selector_text == "PC:"){second_pc="PC2";}else{second_pc=pc_selector_text;}
 
-        first_pc_variance = pc_variances[genera]["PC1"];
-        second_pc_variance = pc_variances[genera][second_pc];
+        first_pc_variance = pc_variances[genera][pcs_available.indexOf("PC1")];
+        second_pc_variance = pc_variances[genera][pcs_available.indexOf(second_pc)];
 
         // Populate the data array that will be used for plotting
         for (let i = 0; i < sample_array.length; i++){
             let sample = sample_array[i]
             data.push({
                 sample_name:sample,
-                x : coords[sample]["PC1"],
-                y : coords[sample][second_pc]
+                x : +coords[sample]["PC1"],
+                y : +coords[sample][second_pc]
             })
         }
 
-        let min_x = d3.min(data, d => d.x);
-        let max_x = d3.max(data, d => d.x);
-        let min_y = d3.min(data, d => d.y);
-        let max_y = d3.max(data, d => d.y);
+        let min_x = d3.min(data, d => +d.x);
+        let max_x = d3.max(data, d => +d.x);
+        let min_y = d3.min(data, d => +d.y);
+        let max_y = d3.max(data, d => +d.y);
 
         // A buffer so that the points don't fall exactly on the axis lines
         let x_buffer = (max_x - min_x) * 0.05;
@@ -1056,7 +1090,7 @@ $(document).ready(function () {
             //Add a g to the svgs that we will use for the bars
             //We will have a seperate g for each of the samples so that we can hopefully plot column by column
              sample_list_pre.forEach(function(sample){
-                svg_pre_med.append("g").attr("class", "s" + sample.replace(/\./g, "_"))
+                svg_pre_med.append("g").attr("class", "s" + sample)
              });
 
             update_bar_plot_by_sample(data_type, "pre", sample_list_pre, pre_med_init_by_sample_interval)
