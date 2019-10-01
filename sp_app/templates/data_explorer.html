@@ -127,7 +127,7 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
         <!-- SEQ-PROF-modal -->
         <!--TODO we need to adjust the modal height so that it is all on one
         view screen on a reasonably sized window.-->
-        <div class="modal fade" id="seq-prof-modal">
+        <div class="modal fade" id="seq-prof-modal" style="height: 95vh;">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <!-- Modal body -->
@@ -143,10 +143,7 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
                                            Sort by:
                                         </button>
                                         <div class="dropdown-menu svg_sort_by" data-data-type="post-profile" style="padding:2px 4px;font-size:0.7rem;">
-                                            <a class="dropdown-item" >sequencing depth</a>
-                                            <a class="dropdown-item" >sequencing similarity</a>
-                                            <a class="dropdown-item" >host</a>
-                                            <a class="dropdown-item" >location</a>
+                                            <!--Set at init-->
                                         </div>
                                     </div>
                                 </div>
@@ -154,8 +151,8 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
                         </div>
 
                         <div class="p-1 overflow-auto text-center">
-                            <svg id="chart_post_med_modal" class="chart seq_prof_chart" width="650" height="400"></svg>
-                            <svg id="chart_profile_modal" class="chart seq_prof_chart" width="650" height="400"></svg>
+                            <svg id="chart_post_med_modal" class="chart seq_prof_chart"  ></svg>
+                            <svg id="chart_profile_modal" class="chart seq_prof_chart"  ></svg>
                         </div>
                     </div>
                     <!-- Modal footer -->
@@ -266,7 +263,7 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
         </div>
 
         <!--PRE MED SVG HOLDER-->
-        <div class="card mb-3" id="pre_med_card">
+        <div class="card mb-3" id="pre_med_card" style="display:None;">
             <!--CARD HEADER-->
             <div class="card-header" data-toggle="collapse" data-target="#pre_med_svg_collapse">
                 Pre-MED ITS2 sequences <span style="font-size:0.5rem;">(rendering the pre-MED seqs may take a little time)</span>

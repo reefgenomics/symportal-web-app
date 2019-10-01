@@ -37,6 +37,9 @@ $(document).ready(function () {
             return content;
         });
 
+    // Get the sample and profile meta info
+    let profile_meta_info = getProfileMetaInfo();
+    let sample_meta_info = getSampleMetaInfo();
 
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
     // We will have a seperate g for each of the samples so that we can plot column by column
@@ -60,8 +63,9 @@ $(document).ready(function () {
     let post_med_init_by_sample_interval = 10;
     //INIT margins, widths and heights for the bar plots
     let margin = {top: 35, left: 35, bottom: 20, right: 0};
-    let seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
-    let seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
+    let seq_prof_width;
+    let seq_prof_height;
+    let seq_prof_height_modal;
     // margin used for the inverted profile_modal plot
     let inv_prof_margin = {top: 5, left: 35, bottom: 20, right: 0};
     let x_post_med;
@@ -77,7 +81,7 @@ $(document).ready(function () {
         }else{
             sample_list_post = sorted_sample_uid_arrays['similarity'];
         }
-        // INIT the width of the chart
+        // INIT the width and height of the chart
         $("#post_med_card").find(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString());
         seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
         seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
@@ -139,42 +143,60 @@ $(document).ready(function () {
             sample_list_profile = sorted_sample_uid_arrays['similarity'];
             sample_list_modal = sorted_sample_uid_arrays['similarity'];
         }
-        $("#profile_card").find(".seq_prof_chart").attr("width", ((sample_list_profile.length * 13) + 70).toString())
+        $("#profile_card").find(".seq_prof_chart").attr("width", ((sample_list_profile.length * 13) + 70).toString());
         // Init the width of the modal chart too if we have profile data
-        $("#seq-prof-modal").find(".seq_prof_chart").attr("width", ((sample_list_modal.length * 13) + 70).toString())
+        $("#seq-prof-modal").find(".seq_prof_chart").attr("width", ((sample_list_modal.length * 13) + 70).toString());
+        // Need to manually calculate the pixels for height as we rely on returning these pixels for the scales
+        // Viewport height
+        let vp_height = window.innerHeight;
+        // 30% of this
+        let height_for_modal_svg = 0.35 * vp_height
+        $("#seq-prof-modal").find(".seq_prof_chart").attr("height", height_for_modal_svg);
+        seq_prof_height_modal = +svg_post_med_modal.attr("height") - margin.top - margin.bottom;
         // Init x and y scales
         x_profile = d3.scaleBand()
+		.range([margin.left, seq_prof_width - margin.right])
+		.padding(0.1);
+		x_modal = d3.scaleBand()
 		.range([margin.left, seq_prof_width - margin.right])
 		.padding(0.1);
 		y_profile = d3.scaleLinear()
         .rangeRound([seq_prof_height - margin.bottom, margin.top]);
         // Y is inverted for the inverted profile plot
+		y_post_modal = d3.scaleLinear()
+        .rangeRound([seq_prof_height_modal - margin.bottom, margin.top]);
 		y_profile_modal = d3.scaleLinear()
-        .rangeRound([inv_prof_margin.top, seq_prof_height - inv_prof_margin.bottom]);
+        .rangeRound([inv_prof_margin.top, seq_prof_height_modal - inv_prof_margin.bottom]);
         // Set up the axes groups
-        xAxis_post_med_modal = svg_post_med_modal.append("g")
-        .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-        .attr("id", "x_axis_post_med_modal");
+        // Profile
         xAxis_profile = svg_profile.append("g")
         .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
         .attr("id", "x_axis_profile");
+        yAxis_profile = svg_profile.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_profile");
+        // Post-MED modal
+        xAxis_post_med_modal = svg_post_med_modal.append("g")
+        .attr("transform", `translate(0,${seq_prof_height_modal - margin.bottom})`)
+        .attr("id", "x_axis_post_med_modal");
+        yAxis_post_med_modal = svg_post_med_modal.append("g")
+		.attr("transform", `translate(${margin.left},0)`)
+        .attr("id", "y_axis_post_med_modal");
+        // Profile modal
         // inverted profile modal plot is axis is only moved down by top margin
         xAxis_profile_modal = svg_profile_modal.append("g")
         .attr("transform", `translate(0,${inv_prof_margin.top})`)
         .attr("id", "x_axis_profile_modal");
-        yAxis_post_med_modal = svg_post_med_modal.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_post_med_modal");
         yAxis_profile_modal = svg_profile_modal.append("g")
 		.attr("transform", `translate(${margin.left},0)`)
         .attr("id", "y_axis_profile_modal");
-        yAxis_profile = svg_profile.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_profile");
+
         // INIT the drop down with the sample sorting categories we have available
-        let sort_dropdown_to_populate = $("#profile_card").find(".svg_sort_by");
+        let sort_dropdown_to_populate_profile = $("#profile_card").find(".svg_sort_by");
+        let sort_dropdown_to_populate_modal = $("#seq-prof-modal").find(".svg_sort_by");
         for (let i = 0; i < sorting_keys.length; i ++){
-            sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+            sort_dropdown_to_populate_profile.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+            sort_dropdown_to_populate_modal.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
         // Add the groups per sample for plotting in
         add_sample_groups_to_bar_svgs(svg_profile, sample_list_profile);
@@ -215,7 +237,11 @@ $(document).ready(function () {
         }else{
             sample_list_pre = sorted_sample_uid_arrays['similarity'];
         }
-        sample_list_pre = Object.keys(getSampleMetaInfo()).map(Number);
+        if (sorting_keys.includes('profile_based')){
+            sample_list_pre = sorted_sample_uid_arrays['profile_based'];
+        }else{
+            sample_list_pre = sorted_sample_uid_arrays['similarity'];
+        }
         $("#pre_med_card").find(".seq_prof_chart").attr("width", ((sample_list_pre.length * 13) + 70).toString());
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#pre_med_card").find(".svg_sort_by");
@@ -536,27 +562,37 @@ $(document).ready(function () {
             y = y_post_med;
             x = x_post_med;
             max_y = max_y_val_post_med;
-            sample_list = sample_list_post;
+            sample_list = sample_list_post.map(function(sample_uid){
+                return sample_meta_info[sample_uid]["sample_name"];
+            });
         }else if (pre_post_profile == "post-modal"){
-            y = y_post_med;
-            x = x_post_med;
+            y = y_post_modal;
+            x = x_modal;
             max_y = max_y_val_post_med;
-            sample_list = sample_list_modal;
+            sample_list = sample_list_modal.map(function(sample_uid){
+                return sample_meta_info[sample_uid]["sample_name"];
+            });
         }else if (pre_post_profile == "pre"){
             y = y_pre_med;
             x = x_pre_med;
             max_y = max_y_val_pre_med;
-            sample_list = sample_list_pre;
+            sample_list = sample_list_pre.map(function(sample_uid){
+                return sample_meta_info[sample_uid]["sample_name"];
+            });
         }else if (pre_post_profile == "profile"){
             y = y_profile;
             x = x_profile;
             max_y = max_y_val_profile;
-            sample_list = sample_list_profile;
+            sample_list = sample_list_profile.map(function(sample_uid){
+                return sample_meta_info[sample_uid]["sample_name"];
+            });
         }else if (pre_post_profile == "profile-modal"){
             y = y_profile_modal;
             x = x_profile;
             max_y = max_y_val_profile;
-            sample_list = sample_list_modal;
+            sample_list = sample_list_modal.map(function(sample_uid){
+                return sample_meta_info[sample_uid]["sample_name"];
+            });
         }
 
         if (data_type == "absolute"){
@@ -575,39 +611,36 @@ $(document).ready(function () {
         let svg;
         let data_by_sample;
         let delay = 0.1;
-        let sample_list;
         let col_scale;
-        if (pre_post_profile.includes("post")){
+        let x_key = sample_meta_info[col_sample]["sample_name"];
+        if (pre_post_profile == "post-modal"){
             data_by_sample = data_post_med_by_sample;
+            svg = svg_post_med_modal;
+            x = x_modal;
+            y = y_post_modal;
+            col_scale = sequence_color_scale;
+        }else if (pre_post_profile == "post"){
+            data_by_sample = data_post_med_by_sample;
+            svg = svg_post_med;
             x = x_post_med;
             y = y_post_med;
             col_scale = sequence_color_scale;
-            if (pre_post_profile == "post-modal"){
-                svg = svg_post_med_modal;
-                sample_list = sample_list_modal;
-            }else{
-                svg = svg_post_med;
-                sample_list = sample_list_post;
-            }
         }else if (pre_post_profile == "pre"){
             svg = svg_pre_med;
             data_by_sample = data_pre_med_by_sample;
             x = x_pre_med;
             y = y_pre_med;
-            sample_list = sample_list_pre;
         }else if (pre_post_profile == "profile"){
             svg = svg_profile;
             data_by_sample = data_profile_by_sample;
             x = x_profile;
             y = y_profile;
-            sample_list = sample_list_profile;
             col_scale = profile_color_scale;
         }else if (pre_post_profile == "profile-modal"){
             svg = svg_profile_modal;
             data_by_sample = data_profile_inv_by_sample;
             x = x_profile;
             y = y_profile_modal;
-            sample_list = sample_list_modal;
             col_scale = profile_color_scale;
         }
 
@@ -635,7 +668,7 @@ $(document).ready(function () {
 
         if (pre_post_profile == "profile-modal"){
             bars.transition().duration(speed).attr("x", function(d){
-                return x(col_sample);
+                return x(x_key);
             }).attr("y", function(d){
                 return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
@@ -645,7 +678,7 @@ $(document).ready(function () {
             }).delay(function(d,i){return(i*delay)});
         }else if (pre_post_profile == "profile"){
             bars.transition().duration(speed).attr("x", function(d){
-                return x(col_sample);
+                return x(x_key);
             }).attr("y", function(d){
                 return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
@@ -655,7 +688,7 @@ $(document).ready(function () {
             }).delay(function(d,i){return(i*delay)});
         }else{
             bars.transition().duration(speed).attr("x", function(d){
-                return x(col_sample);
+                return x(x_key);
             }).attr("y", function(d){
                 return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
@@ -673,11 +706,11 @@ $(document).ready(function () {
         if (pre_post_profile == "profile"){
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(col_sample);
+                return x(x_key);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                $(this).closest(".card").find(".meta_profile_name").text(d["prof_name"]);
+                $(this).closest(".card").find(".meta_profile_name").text(d["profile_name"]);
             })
             .on('mouseout', function(d){
                 tip_profiles.hide(d);
@@ -692,11 +725,11 @@ $(document).ready(function () {
         }else if(pre_post_profile == "profile-modal"){
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(col_sample);
+                return x(x_key);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                $(this).closest(".card").find(".meta_profile_name").text(d["prof_name"]);
+                $(this).closest(".card").find(".meta_profile_name").text(d["profile_name"]);
             })
             .on('mouseout', function(d){
                 tip_profiles.hide(d);
@@ -711,7 +744,7 @@ $(document).ready(function () {
         }else{
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(col_sample);
+                return x(x_key);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_seqs.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
@@ -737,8 +770,8 @@ $(document).ready(function () {
             y_axis_id = "#y_axis_post_med";
             x_axis_id = "#x_axis_post_med";
         }else if (pre_post_profile == "post-modal"){
-            y = y_post_med;
-            x = x_post_med;
+            y = y_post_modal;
+            x = x_modal;
             y_axis_id = "#y_axis_post_med_modal";
             x_axis_id = "#x_axis_post_med_modal";
         }else if (pre_post_profile == "pre"){
