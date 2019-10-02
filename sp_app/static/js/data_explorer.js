@@ -41,6 +41,42 @@ $(document).ready(function () {
     let profile_meta_info = getProfileMetaInfo();
     let sample_meta_info = getSampleMetaInfo();
 
+    // Sample name to uid object for doing the sample meta info
+    // TODO we will need the same thing for the profiles once we get to doing the profile info
+    sample_name_to_uid_dict = (function(){
+        let temp_dict = {};
+        Object.keys(sample_meta_info).forEach(function(sample_uid){
+            temp_dict[sample_meta_info[sample_uid]["sample_name"]] = +sample_uid;
+        })
+        return temp_dict;
+    })()
+
+    let sample_meta_annotation_to_key = {"sample":"sample_name", "UID":"uid", "taxa":"taxa_string", "lat":"lat",
+    "lon":"lon", "collection_date":"collection_date", "depth":"collection_depth",
+    "clade_relative_abund":"clade_prop_string", "clade_absolute_abund":"clade_abs_abund_string",
+    "raw_contigs":"raw_contigs", "post_qc_absolute":"post_taxa_id_absolute_symbiodinium_seqs",
+    "post_qc_unique":"post_taxa_id_unique_symbiodinium_seqs", "post_med_absolute":"post_med_absolute",
+    "post_med_unique":"post_med_unique", "non_Symbiodiniaceae_absolute":"post_taxa_id_absolute_non_symbiodinium_seqs",
+    "non_Symbiodiniaceae_unique":"post_taxa_id_unique_non_symbiodinium_seqs"};
+    let sample_meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
+    let sample_meta_info_annotation_order_array_secondary = ["collection_date", "depth",
+    "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
+    "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"];
+
+    //populate the sample_meta_info_holders
+    function populateSampleMetaInfoHolders(){
+        for (let i =0; i < sample_meta_info_annotation_order_array_primary.length; i ++){
+            let annotation = sample_meta_info_annotation_order_array_primary[i]
+            $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+        }
+        for (let i =0; i < sample_meta_info_annotation_order_array_secondary.length; i ++){
+            let annotation = sample_meta_info_annotation_order_array_secondary[i]
+            $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+        }
+    }
+
+    populateSampleMetaInfoHolders();
+
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
     // We will have a seperate g for each of the samples so that we can plot column by column
     // The pre-med plot will not get init until later.
@@ -562,37 +598,27 @@ $(document).ready(function () {
             y = y_post_med;
             x = x_post_med;
             max_y = max_y_val_post_med;
-            sample_list = sample_list_post.map(function(sample_uid){
-                return sample_meta_info[sample_uid]["sample_name"];
-            });
+            sample_list = sample_list_post;
         }else if (pre_post_profile == "post-modal"){
             y = y_post_modal;
             x = x_modal;
             max_y = max_y_val_post_med;
-            sample_list = sample_list_modal.map(function(sample_uid){
-                return sample_meta_info[sample_uid]["sample_name"];
-            });
+            sample_list = sample_list_modal;
         }else if (pre_post_profile == "pre"){
             y = y_pre_med;
             x = x_pre_med;
             max_y = max_y_val_pre_med;
-            sample_list = sample_list_pre.map(function(sample_uid){
-                return sample_meta_info[sample_uid]["sample_name"];
-            });
+            sample_list = sample_list_pre;
         }else if (pre_post_profile == "profile"){
             y = y_profile;
             x = x_profile;
             max_y = max_y_val_profile;
-            sample_list = sample_list_profile.map(function(sample_uid){
-                return sample_meta_info[sample_uid]["sample_name"];
-            });
+            sample_list = sample_list_profile;
         }else if (pre_post_profile == "profile-modal"){
             y = y_profile_modal;
             x = x_profile;
             max_y = max_y_val_profile;
-            sample_list = sample_list_modal.map(function(sample_uid){
-                return sample_meta_info[sample_uid]["sample_name"];
-            });
+            sample_list = sample_list_modal;
         }
 
         if (data_type == "absolute"){
@@ -668,7 +694,7 @@ $(document).ready(function () {
 
         if (pre_post_profile == "profile-modal"){
             bars.transition().duration(speed).attr("x", function(d){
-                return x(x_key);
+                return x(col_sample);
             }).attr("y", function(d){
                 return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
@@ -678,7 +704,7 @@ $(document).ready(function () {
             }).delay(function(d,i){return(i*delay)});
         }else if (pre_post_profile == "profile"){
             bars.transition().duration(speed).attr("x", function(d){
-                return x(x_key);
+                return x(col_sample);
             }).attr("y", function(d){
                 return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
@@ -688,7 +714,7 @@ $(document).ready(function () {
             }).delay(function(d,i){return(i*delay)});
         }else{
             bars.transition().duration(speed).attr("x", function(d){
-                return x(x_key);
+                return x(col_sample);
             }).attr("y", function(d){
                 return y(+d["y_" + abbr]);
             }).attr("width", x.bandwidth()).attr("height", function(d){
@@ -706,11 +732,11 @@ $(document).ready(function () {
         if (pre_post_profile == "profile"){
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(x_key);
+                return x(col_sample);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                $(this).closest(".card").find(".meta_profile_name").text(d["profile_name"]);
+                $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
             })
             .on('mouseout', function(d){
                 tip_profiles.hide(d);
@@ -725,11 +751,11 @@ $(document).ready(function () {
         }else if(pre_post_profile == "profile-modal"){
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(x_key);
+                return x(col_sample);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                $(this).closest(".card").find(".meta_profile_name").text(d["profile_name"]);
+                $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
             })
             .on('mouseout', function(d){
                 tip_profiles.hide(d);
@@ -744,7 +770,7 @@ $(document).ready(function () {
         }else{
             bars.enter().append("rect")
             .attr("x", function(d){
-                return x(x_key);
+                return x(col_sample);
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_seqs.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
@@ -807,7 +833,7 @@ $(document).ready(function () {
             // Axis with the centered labels
             // Has callback to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                    .call(d3.axisBottom(x).tickSizeOuter(0)).selectAll("text")
+                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["sample_name"]).tickSizeOuter(0)).selectAll("text")
                     .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                     .style("text-anchor", "start").style("text-anchor", "start")
                     .on("end", centerAlignXLabels);
@@ -815,7 +841,7 @@ $(document).ready(function () {
             // The regular axis with ticks and text below
             // no call back to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                    .call(d3.axisBottom(x).tickSizeOuter(0)).selectAll("text")
+                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["sample_name"]).tickSizeOuter(0)).selectAll("text")
                     .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                     .style("text-anchor", "start").style("text-anchor", "start");
         }
@@ -826,8 +852,11 @@ $(document).ready(function () {
             let ticks = d3.select(x_axis_id).selectAll(".tick")._groups[0].forEach(function(d1){
                 d3.select(d1).on("mouseover", function(){
                     d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
-                    let sample_name = this.__data__;
-                    $(this).closest(".card").find(".meta_sample_name").text(sample_name);
+                    let sample_uid = this.__data__;
+                    let sample_data_series = sample_meta_info[sample_uid];
+                    $(this).closest(".plot_item").find(".sample_meta_item").each(function(){
+                        $(this).text(sample_data_series[$(this).attr("data-key")]);
+                    })
                 }).on("mouseout", function(){
                     d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
                 })
@@ -1208,6 +1237,18 @@ $(document).ready(function () {
             update_dist_plot(chart_id);
         }
     });
+
+    // Listening for the click of a more v button to show secondary sample meta info
+    $(".secondary_sample_meta_info_collapser").click(function(){
+        // Change the text of the button div
+        if ($(this).attr("data-status") == "more"){
+            $(this).text('less ^');
+            $(this).attr("data-status", "less");
+        }else if($(this).attr("data-status") == "less"){
+            $(this).text('more v');
+            $(this).attr("data-status", "more");
+        }
+    })
 
     //INIT MAP
     function initMap() {

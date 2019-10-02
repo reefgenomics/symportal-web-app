@@ -36,6 +36,11 @@
 
 }
 
+.secondary_sample_meta_info_collapser:hover{
+    cursor:pointer;
+    color: #0056B3;
+}
+
 /*.navbar{
     -webkit-box-shadow: 0 4px 3px -3px #999;
     -moz-box-shadow: 0 4px 3px -3px #999;
