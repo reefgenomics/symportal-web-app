@@ -49,8 +49,18 @@ $(document).ready(function () {
             temp_dict[sample_meta_info[sample_uid]["sample_name"]] = +sample_uid;
         })
         return temp_dict;
-    })()
+    })();
 
+    profile_name_to_uid_dict = (function(){
+        let temp_dict = {};
+        Object.keys(profile_meta_info).forEach(function(profile_uid){
+            temp_dict[profile_meta_info[profile_uid]["name"]] = +profile_uid;
+        })
+        return temp_dict;
+    })();
+
+    // Sequence meta info
+    let available_sample_meta_info = Object.keys(sample_meta_info[Object.keys(sample_meta_info)[0]]);
     let sample_meta_annotation_to_key = {"sample":"sample_name", "UID":"uid", "taxa":"taxa_string", "lat":"lat",
     "lon":"lon", "collection_date":"collection_date", "depth":"collection_depth",
     "clade_relative_abund":"clade_prop_string", "clade_absolute_abund":"clade_abs_abund_string",
@@ -63,19 +73,44 @@ $(document).ready(function () {
     "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
     "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"];
 
+    // Profile meta info
+    let available_profile_meta_info = Object.keys(profile_meta_info);
+    let profile_meta_annotation_to_key = {"profile":"name", "UID":"uid", "genera":"genera", "maj_seq":"maj_its2_seq",
+    "associated species":"assoc_species", "local_abund":"local_abund", "db_abund":"db_abund", "seq_uids":"seq_uids",
+    "seq_abund_string":"seq_abund_string"};
+    let profile_meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
+    let profile_meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
+    "seq_uids", "seq_abund_string"];
+
     //populate the sample_meta_info_holders
-    function populateSampleMetaInfoHolders(){
+    (function populateSampleMetaInfoHolders(){
         for (let i =0; i < sample_meta_info_annotation_order_array_primary.length; i ++){
-            let annotation = sample_meta_info_annotation_order_array_primary[i]
-            $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+            let annotation = sample_meta_info_annotation_order_array_primary[i];
+            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])){
+                $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+            }
         }
         for (let i =0; i < sample_meta_info_annotation_order_array_secondary.length; i ++){
-            let annotation = sample_meta_info_annotation_order_array_secondary[i]
-            $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+            let annotation = sample_meta_info_annotation_order_array_secondary[i];
+            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])){
+                $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+            }
         }
-    }
+    })();
 
-    populateSampleMetaInfoHolders();
+    //populate the profile_meta_info_holders
+    (function populateProfileMetaInfoHolders(){
+        for (let i =0; i < profile_meta_info_annotation_order_array_primary.length; i ++){
+            let annotation = profile_meta_info_annotation_order_array_primary[i];
+            $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
+        }
+        for (let i =0; i < profile_meta_info_annotation_order_array_secondary.length; i ++){
+            let annotation = profile_meta_info_annotation_order_array_secondary[i];
+            $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
+        }
+    })();
+
+
 
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
     // We will have a seperate g for each of the samples so that we can plot column by column
@@ -736,6 +771,11 @@ $(document).ready(function () {
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
+                let profile_data_series = profile_meta_info[profile_uid.toString()];
+                $(this).closest(".plot_item").find(".profile_meta_item").each(function(){
+                        $(this).text(profile_data_series[$(this).attr("data-key")]);
+                    });
                 $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
             })
             .on('mouseout', function(d){
@@ -755,6 +795,11 @@ $(document).ready(function () {
             }).attr("y", y(0)).on('mouseover', function(d){
                 tip_profiles.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
+                let profile_data_series = profile_meta_info[profile_uid.toString()];
+                $(this).closest(".plot_item").find(".profile_meta_item").each(function(){
+                        $(this).text(profile_data_series[$(this).attr("data-key")]);
+                    });
                 $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
             })
             .on('mouseout', function(d){

@@ -11,6 +11,9 @@ side of the main dist plot.
 Implement zoom for the modal bar plots so that people can zoom in on sequences.
 
 Have a clade toggle for the sequence bar data so that it can be viewed as clade designations rather than individuals
+
+Have a dropdown that will allow the x axis labels to be changed from sample names, to uids to available
+items like locations
 -->
 
 
@@ -169,19 +172,18 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
                                 </div>
                             </div>
                         </div>
-                        <div class="pt-2">
-                            <span style="font-weight:bold;">Profile:</span>
-                            <span class="meta_profile_name">--</span>
-                            <span style="font-weight:bold;">UID:</span>
-                            <span class="meta_profile_uid">--</span>
-                            <span style="font-weight:bold;">Host</span>
-                            <span class="meta_profile_host">--</span>
-                            <span style="font-weight:bold;">Depth:</span>
-                            <span class="meta_profile_depth">--</span>
-                            <span style="font-weight:bold;">Lat:</span>
-                            <span class="meta_profile_lat">--</span>
-                            <span style="font-weight:bold;">Lon:</span>
-                            <span class="meta_profile_lon">--</span>
+                        <div class="pb-2 profile_meta_info_holder">
+                            <div class="d-flex">
+                                <div class="d-flex flex-wrap mr-auto primary_profile_meta">
+                                </div>
+                                <div class="secondary_sample_meta_info_collapser" data-toggle="collapse" data-target="#modal_secondary_profile_meta" data-status="more" style="width:40px">more v</div>
+                            </div>
+
+                            <div class="collapse" id="modal_secondary_profile_meta">
+                                <div class="d-flex flex-wrap secondary_profile_meta" >
+
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -207,11 +209,7 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
                                    Sort by:
                                 </button>
                                 <div class="dropdown-menu svg_sort_by" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;">
-                                    <!--populate at INIT if post-MED data available-->
-                                    <!--<a class="dropdown-item" >sequencing depth</a>-->
-                                    <!--<a class="dropdown-item" >sequencing similarity</a>-->
-                                    <!--<a class="dropdown-item" >host</a>-->
-                                    <!--<a class="dropdown-item" >location</a>-->
+
                                 </div>
                             </div>
                         </div>
@@ -239,19 +237,18 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
                         </div>
                     </div>
                 </div>
-                <div class="pt-2">
-                    <span style="font-weight:bold;">Profile:</span>
-                    <span class="meta_profile_name">--</span>
-                    <span style="font-weight:bold;">UID:</span>
-                    <span class="meta_profile_uid">--</span>
-                    <span style="font-weight:bold;">Host</span>
-                    <span class="meta_profile_host">--</span>
-                    <span style="font-weight:bold;">Depth:</span>
-                    <span class="meta_profile_depth">--</span>
-                    <span style="font-weight:bold;">Lat:</span>
-                    <span class="meta_profile_lat">--</span>
-                    <span style="font-weight:bold;">Lon:</span>
-                    <span class="meta_profile_lon">--</span>
+                <div class="pb-2 profile_meta_info_holder">
+                    <div class="d-flex">
+                        <div class="d-flex flex-wrap mr-auto primary_profile_meta">
+                        </div>
+                        <div class="secondary_sample_meta_info_collapser" data-toggle="collapse" data-target="#profile_secondary_profile_meta" data-status="more" style="width:40px">more v</div>
+                    </div>
+
+                    <div class="collapse" id="profile_secondary_profile_meta">
+                        <div class="d-flex flex-wrap secondary_profile_meta" >
+
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -501,7 +498,7 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
             </div>
 
             <!--FOOTER-->
-            <div class="card-footer sample_meta_info_holder" style="font-size:0.5rem;">
+            <div class="card-footer" style="font-size:0.5rem;">
                 <span style="font-weight:bold;">Profile:</span>
                     <span class="meta_profile_name">--</span>
                     <span style="font-weight:bold;">UID:</span>
