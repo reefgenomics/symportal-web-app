@@ -46,7 +46,7 @@ $(document).ready(function () {
     sample_name_to_uid_dict = (function(){
         let temp_dict = {};
         Object.keys(sample_meta_info).forEach(function(sample_uid){
-            temp_dict[sample_meta_info[sample_uid]["sample_name"]] = +sample_uid;
+            temp_dict[sample_meta_info[sample_uid]["name"]] = +sample_uid;
         })
         return temp_dict;
     })();
@@ -61,7 +61,7 @@ $(document).ready(function () {
 
     // Sequence meta info
     let available_sample_meta_info = Object.keys(sample_meta_info[Object.keys(sample_meta_info)[0]]);
-    let sample_meta_annotation_to_key = {"sample":"sample_name", "UID":"uid", "taxa":"taxa_string", "lat":"lat",
+    let sample_meta_annotation_to_key = {"sample":"name", "UID":"uid", "taxa":"taxa_string", "lat":"lat",
     "lon":"lon", "collection_date":"collection_date", "depth":"collection_depth",
     "clade_relative_abund":"clade_prop_string", "clade_absolute_abund":"clade_abs_abund_string",
     "raw_contigs":"raw_contigs", "post_qc_absolute":"post_taxa_id_absolute_symbiodinium_seqs",
@@ -540,6 +540,8 @@ $(document).ready(function () {
                     // then genera_identifier not set
                     card_element.find(".genera_identifier").text(genera_array[j]);
                     card_element.find(".genera_identifier").attr("data-genera", genera_array[j]);
+                    card_element.find(".genera_select_button").text(genera_array[j]);
+                    card_element.find(".genera_select_button").attr("data-genera", genera_array[j]);
                     card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
                     first_genera_present = genera_array[j];
                 }
@@ -673,7 +675,7 @@ $(document).ready(function () {
         let data_by_sample;
         let delay = 0.1;
         let col_scale;
-        let x_key = sample_meta_info[col_sample]["sample_name"];
+        let x_key = sample_meta_info[col_sample]["name"];
         if (pre_post_profile == "post-modal"){
             data_by_sample = data_post_med_by_sample;
             svg = svg_post_med_modal;
@@ -878,7 +880,7 @@ $(document).ready(function () {
             // Axis with the centered labels
             // Has callback to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["sample_name"]).tickSizeOuter(0)).selectAll("text")
+                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
                     .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                     .style("text-anchor", "start").style("text-anchor", "start")
                     .on("end", centerAlignXLabels);
@@ -886,7 +888,7 @@ $(document).ready(function () {
             // The regular axis with ticks and text below
             // no call back to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["sample_name"]).tickSizeOuter(0)).selectAll("text")
+                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
                     .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                     .style("text-anchor", "start").style("text-anchor", "start");
         }
@@ -926,6 +928,9 @@ $(document).ready(function () {
         let data = [];
         let x_axis_id;
         let y_axis_id;
+        let meta_look_up_dict;
+        let uid_to_name_dict;
+        let meta_item_type; // ".sample_meta_item" or ".profile_meta_item"
 
         //TODO this will need updating to include the profile distances and the modals
         // but to save dev time we will try to get the scatter working with just this one first
@@ -950,6 +955,9 @@ $(document).ready(function () {
                 coords = btwn_sample_genera_coords_data[genera];
                 x_scale = x_btwn_sample;
                 y_scale = y_btwn_sample;
+                meta_look_up_dict = sample_meta_info;
+                uid_to_name_dict = sample_name_to_uid_dict;
+                meta_item_type = ".sample_meta_item"
                 break;
             case "#chart_btwn_profile":
                 svg = svg_btwn_profile_dist;
@@ -966,6 +974,9 @@ $(document).ready(function () {
                 coords = btwn_profile_genera_coords_data[genera];
                 x_scale = x_btwn_profile;
                 y_scale = y_btwn_profile;
+                meta_look_up_dict = profile_meta_info;
+                uid_to_name_dict = profile_name_to_uid_dict;
+                meta_item_type = ".profile_meta_item"
                 break;
         }
 
@@ -980,7 +991,7 @@ $(document).ready(function () {
         for (let i = 0; i < sample_array.length; i++){
             let sample = sample_array[i]
             data.push({
-                sample_name:sample,
+                sample:sample,
                 x : +coords[sample]["PC1"],
                 y : +coords[sample][second_pc]
             })
@@ -1008,9 +1019,11 @@ $(document).ready(function () {
         .duration(1000)
         .call(d3.axisLeft(y_scale).ticks(0));
 
+
+        // We need to process the profile and sample dist plots diffently because they should have different
         // Here do the plotting of the scatter
         let dots = scatter.selectAll("circle").data(data, function(d) {
-            return d.sample_name;
+            return d.sample;
         } );
 
         // Place any new scatter points
@@ -1020,8 +1033,13 @@ $(document).ready(function () {
         }).attr("cy", d => y_scale(d.y))
         .style("fill", "rgba(0,0,0,0.5)")
         .on("mouseover", function(d) {
-          dist_tooltip.transition().duration(200).style("opacity", .9);
-          dist_tooltip.html(d.sample_name).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
+            dist_tooltip.transition().duration(200).style("opacity", .9);
+            dist_tooltip.html(meta_look_up_dict[d.sample]["name"]).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
+            // First we need to get the genera/clade
+            let data_series = meta_look_up_dict[d.sample.toString()];
+            $(this).closest(".plot_item").find(meta_item_type).each(function(){
+                $(this).text(data_series[$(this).attr("data-key")]);
+            });
           })
           .on("mouseout", function(d) {
               dist_tooltip.transition().duration(500).style("opacity", 0);
@@ -1284,7 +1302,7 @@ $(document).ready(function () {
     });
 
     // Listening for the click of a more v button to show secondary sample meta info
-    $(".secondary_sample_meta_info_collapser").click(function(){
+    $(".secondary_meta_info_collapser").click(function(){
         // Change the text of the button div
         if ($(this).attr("data-status") == "more"){
             $(this).text('less ^');
