@@ -369,6 +369,78 @@ $(document).ready(function () {
 
 
 
+    // INIT the color by drop down for the btwn sample and the btwn profile dist plots
+    let btwn_sample_color_categories = ["host", "location", "post_med_seqs_abs", "post_med_seqs_unique", "no_color"];
+    // We don't want to allow sorting by host or location if we don't have data for these. We can check to see if
+    // there is data for these by looking to see if there are sorting arrays for them.
+    if (!(sorting_keys.includes("taxa_string"))){
+        btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("host"),1);
+    }
+    if (!(sorting_keys.includes("lat_lon"))){
+        btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("location"),1);
+    }
+    let btwn_sample_c_cat_key = {"host":"taxa_string", "location":"lat_lon", "post_med_seqs_abs":"post_med_absolute", "post_med_seqs_unique":"post_med_unique"};
+    let color_dropdown_to_populate = $("#between_sample_distances").find(".color_select");
+        for (let i = 0; i < btwn_sample_color_categories.length; i ++){
+            color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_sample_color_categories[i]}>${btwn_sample_color_categories[i]}</a>`);
+        }
+
+    // Create the color scales for the above parameters
+    // We will need quantitative scales for the post_med_seqs_abs, post_med_seqs_unique
+    // This will be the same sort of scale as we use for the axes of the dist and the y of the bar
+    // For the host and location we will need to use something different.
+    // For each we will need to have either the list of categorical variables (i.e. the taxa strings or lat long)
+    // Or we will need the max and min of the quantitative values
+    // go cat by cat
+    let host_c_scale;
+    let location_c_scale;
+    let post_med_c_scale;
+    let pre_med_c_scale;
+
+    function make_categorical_color_scale(cat_name){
+        let key_name = btwn_sample_c_cat_key[cat_name];
+        //need to get the list of taxa string
+        let cats_array = [];
+        Object.keys(sample_meta_info).forEach(function(k){
+            let cat;
+            if (cat_name == "location"){
+                cat = sample_meta_info[k]["lat"] + ';' + sample_meta_info[k]["lat"];
+            }else{
+                cat = sample_meta_info[k][key_name];
+            }
+
+            if (!(cats_array.includes(cat))){
+                cats_array.push(cat);
+            }
+        });
+        // here we have a unique list of the 'host' values
+        // now create the colour scale for it
+        return c_var = d3.scaleOrdinal().domain(cats_array).range(d3.schemeSet3);
+    }
+
+    function make_quantitative_color_scale(cat_name){
+        let key_name = btwn_sample_c_cat_key[cat_name];
+        //need to get the list of taxa string
+        let values = [];
+        Object.keys(sample_meta_info).forEach(function(k){
+            values.push(sample_meta_info[k][key_name]);
+        });
+        let max_val = Math.max(values);
+        let min_val = Math.min(values);
+        // here we have a unique list of the 'host' values
+        // now create the colour scale for it
+        return c_var = d3.scaleLinear().domain([min_val,max_val]).range(["blue", "red"]);
+    }
+
+    if (btwn_sample_color_categories.includes("host")){
+        host_c_scale = make_categorical_color_scale("host");
+    }
+    if (btwn_sample_color_categories.includes("location")){
+        location_c_scale = make_categorical_color_scale("location");
+    }
+    post_med_c_scale = make_quantitative_color_scale("post_med_seqs_abs");
+    pre_med_c_scale = make_quantitative_color_scale("post_med_seqs_unique");
+
 
     //DATA for btwn sample
     let svg_btwn_sample_dist = d3.select("#chart_btwn_sample");
@@ -931,6 +1003,8 @@ $(document).ready(function () {
         let meta_look_up_dict;
         let uid_to_name_dict;
         let meta_item_type; // ".sample_meta_item" or ".profile_meta_item"
+        let c_scale = false;
+        let c_property; // the property that we need to look up in the meta info
 
         //TODO this will need updating to include the profile distances and the modals
         // but to save dev time we will try to get the scatter working with just this one first
@@ -958,6 +1032,26 @@ $(document).ready(function () {
                 meta_look_up_dict = sample_meta_info;
                 uid_to_name_dict = sample_name_to_uid_dict;
                 meta_item_type = ".sample_meta_item"
+                // Get the correct btwn sample c_scale to be used. We get this from the
+                let col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
+                switch(col_key){
+                    case "host":
+                        c_scale = host_c_scale;
+                        c_property = btwn_sample_c_cat_key["host"];
+                        break;
+                    case "location":
+                        c_scale = location_c_scale;
+                        c_property = btwn_sample_c_cat_key["location"];
+                        break;
+                    case "post_med_seqs_abs":
+                        c_scale = post_med_c_scale;
+                        c_property = btwn_sample_c_cat_key["post_med_seqs_abs"];
+                        break;
+                    case "pre_med_seqs_abs":
+                        c_scale = pre_med_c_scale;
+                        c_property = btwn_sample_c_cat_key["pre_med_seqs_abs"];
+                        break;
+                }
                 break;
             case "#chart_btwn_profile":
                 svg = svg_btwn_profile_dist;
@@ -979,6 +1073,7 @@ $(document).ready(function () {
                 meta_item_type = ".profile_meta_item"
                 break;
         }
+
 
         // get the second PC from the PC selector
         let pc_selector_text = $(dist_plot_id).closest(".card-body").find(".pc_selector").attr("data-pc");
@@ -1030,8 +1125,14 @@ $(document).ready(function () {
         //TODO we can add more info to the tool tip like absolute and relative abundances of the samples or profiles
         dots.enter().append("circle").attr("class", "dot").attr("r", 3.5).attr("cx", function(d){
             return x_scale(d.x);
-        }).attr("cy", d => y_scale(d.y))
-        .style("fill", "rgba(0,0,0,0.5)")
+        }).attr("cy", d => y_scale(d.y))//"rgba(0,0,0,0.5)"
+        .style("fill", function(){
+            if(c_scale){
+                return c_scale[meta_look_up_dict[d.sample][c_property]];
+            }else{
+                return "rgba(0,0,0,0.5)";
+            }
+            })
         .on("mouseover", function(d) {
             dist_tooltip.transition().duration(200).style("opacity", .9);
             dist_tooltip.html(meta_look_up_dict[d.sample]["name"]).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
@@ -1318,6 +1419,24 @@ $(document).ready(function () {
 
             genera_button.closest('.plot_item').find(".genera_identifier").text(selected_genera);
             genera_button.closest('.plot_item').find(".genera_identifier").attr("data-genera", selected_genera);
+
+            update_dist_plot(chart_id);
+        }
+    });
+
+    //Listening for the color dropdown button change
+    $(".color_select a").click(function(){
+        let color_button = $(this).closest(".btn-group").find(".btn")
+        let current_color = color_button.attr("data-color");
+        let selected_color = $(this).attr("data-color")
+
+        if (current_color !== selected_color){
+            color_button.text(selected_color);
+            color_button.attr("data-color", selected_color);
+
+            // We need to get the chart is
+            // TODO eventually we will want to link this into the modal as well so that it mirrors the non-modal
+            chart_id = '#' + color_button.closest('.card').find('.chart').attr("id");
 
             update_dist_plot(chart_id);
         }
