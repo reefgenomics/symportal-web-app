@@ -535,14 +535,14 @@ $(document).ready(function () {
                 let attr = card_element.find(".genera_identifier").attr("data-genera");
                 if (typeof attr !== typeof undefined && attr !== false) {
                     // then already set. just add genera link
-                    card_element.find(".genera_select").append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
+                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;" data-genera="${genera_array[j]}">${genera_array[j]}</a>`);
                 }else{
                     // then genera_identifier not set
                     card_element.find(".genera_identifier").text(genera_array[j]);
                     card_element.find(".genera_identifier").attr("data-genera", genera_array[j]);
                     card_element.find(".genera_select_button").text(genera_array[j]);
                     card_element.find(".genera_select_button").attr("data-genera", genera_array[j]);
-                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;">${genera_array[j]}</a>`);
+                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;" data-genera="${genera_array[j]}">${genera_array[j]}</a>`);
                     first_genera_present = genera_array[j];
                 }
             }
@@ -550,7 +550,7 @@ $(document).ready(function () {
         let pcs_available_genera = pcs_available[first_genera_present];
         // Skip the first PC as we don't want PC1 in the options
         for (let j = 1; j < pcs_available_genera.length; j++){
-            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available_genera[j]}</a>`)
+            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available_genera[j]}">${pcs_available_genera[j]}</a>`)
         }
     }
 
@@ -1078,7 +1078,7 @@ $(document).ready(function () {
         let x_axis_selection = $(dist_plot_id).find(".y_axis_title")
         if (x_axis_selection.length){
             // Then the y axis title exists. Change the text of this axis
-            x_axis_selection.text(`${second_pc} - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
+            x_axis_selection.text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
         }else{
             // yaxis doesn't exist. make from scratch
             svg.append("text").attr("class", "y_axis_title")
@@ -1296,6 +1296,28 @@ $(document).ready(function () {
             // We need to get the chart is
             // TODO eventually we will want to link this into the modal as well so that it mirrors the non-modal
             chart_id = '#' + pc_button.closest('.card').find('.chart').attr("id");
+
+            update_dist_plot(chart_id);
+        }
+    });
+
+    // Listening for the Genera dropdown button change
+    $(".genera_select a").click(function(){
+        let genera_button = $(this).closest(".btn-group").find(".btn")
+        let current_genera = genera_button.attr("data-genera");
+        let selected_genera = $(this).attr("data-genera")
+
+
+        if (current_genera !== selected_genera){
+            genera_button.text(selected_genera);
+            genera_button.attr("data-genera", selected_genera);
+
+            // We need to get the chart is
+            // TODO eventually we will want to link this into the modal as well so that it mirrors the non-modal
+            chart_id = '#' + genera_button.closest('.card').find('.chart').attr("id");
+
+            genera_button.closest('.plot_item').find(".genera_identifier").text(selected_genera);
+            genera_button.closest('.plot_item').find(".genera_identifier").attr("data-genera", selected_genera);
 
             update_dist_plot(chart_id);
         }
