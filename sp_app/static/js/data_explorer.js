@@ -368,9 +368,10 @@ $(document).ready(function () {
 
 
 
-
+    // Distance colors
     // INIT the color by drop down for the btwn sample and the btwn profile dist plots
     let btwn_sample_color_categories = ["host", "location", "post_med_seqs_absolute", "post_med_seqs_unique", "no_color"];
+    let btwn_profile_color_categories = ["profile_identity", "local_abundance", "db_abundance"]
     // We don't want to allow sorting by host or location if we don't have data for these. We can check to see if
     // there is data for these by looking to see if there are sorting arrays for them.
     if (!(sorting_keys.includes("taxa_string"))){
@@ -380,10 +381,17 @@ $(document).ready(function () {
         btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("location"),1);
     }
     let btwn_sample_c_cat_key = {"host":"taxa_string", "location":"lat_lon", "post_med_seqs_absolute":"post_med_absolute", "post_med_seqs_unique":"post_med_unique"};
+    let btwn_profile_c_cat_key = {"local_abundance":"local_abund", "db_abundance":"db_abund"};
+
     let color_dropdown_to_populate = $("#between_sample_distances").find(".color_select");
-        for (let i = 0; i < btwn_sample_color_categories.length; i ++){
-            color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_sample_color_categories[i]}>${btwn_sample_color_categories[i]}</a>`);
-        }
+    for (let i = 0; i < btwn_sample_color_categories.length; i ++){
+        color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_sample_color_categories[i]}>${btwn_sample_color_categories[i]}</a>`);
+    }
+
+    color_dropdown_to_populate = $("#between_profile_distances").find(".color_select");
+    for (let i = 0; i < btwn_profile_color_categories.length; i ++){
+        color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_profile_color_categories[i]}>${btwn_profile_color_categories[i]}</a>`);
+    }
 
     // Create the color scales for the above parameters
     // We will need quantitative scales for the post_med_seqs_absolute, post_med_seqs_unique
@@ -396,8 +404,11 @@ $(document).ready(function () {
     let location_c_scale;
     let post_med_absolute_c_scale;
     let post_med_unique_c_scale;
+    let profile_local_abund_c_scale;
+    let profile_db_abund_c_scale;
+    let profile_idenity_c_scale;
 
-    function make_categorical_color_scale(cat_name){
+    function make_categorical_color_scale_btwn_sample(cat_name){
         let key_name = btwn_sample_c_cat_key[cat_name];
         //need to get the list of taxa string
         let cats_array = [];
@@ -418,7 +429,7 @@ $(document).ready(function () {
         return c_var = d3.scaleOrdinal().domain(cats_array).range(d3.schemeSet3);
     }
 
-    function make_quantitative_color_scale(cat_name){
+    function make_quantitative_color_scale_btwn_sample(cat_name){
         let key_name = btwn_sample_c_cat_key[cat_name];
         //need to get the list of taxa string
         let values = [];
@@ -429,18 +440,34 @@ $(document).ready(function () {
         let min_val = Math.min(...values);
         // here we have a unique list of the 'host' values
         // now create the colour scale for it
-        return c_var = d3.scaleLinear().domain([min_val,max_val]).range(["blue", "red"]);
+        return d3.scaleLinear().domain([min_val,max_val]).range(["blue", "red"]);
+    }
+
+    function make_quantitative_color_scale_btwn_profile(cat_name){
+        let key_name = btwn_profile_c_cat_key[cat_name];
+        //need to get the list of taxa string
+        let values = [];
+        Object.keys(profile_meta_info).forEach(function(k){
+            values.push(profile_meta_info[k][key_name]);
+        });
+        let max_val = Math.max(...values);
+        let min_val = Math.min(...values);
+        // here we have a unique list of the 'host' values
+        // now create the colour scale for it
+        return d3.scaleLinear().domain([min_val,max_val]).range(["blue", "red"]);
     }
 
     if (btwn_sample_color_categories.includes("host")){
-        host_c_scale = make_categorical_color_scale("host");
+        host_c_scale = make_categorical_color_scale_btwn_sample("host");
     }
     if (btwn_sample_color_categories.includes("location")){
-        location_c_scale = make_categorical_color_scale("location");
+        location_c_scale = make_categorical_color_scale_btwn_sample("location");
     }
-    post_med_absolute_c_scale = make_quantitative_color_scale("post_med_seqs_absolute");
-    post_med_unique_c_scale = make_quantitative_color_scale("post_med_seqs_unique");
-
+    post_med_absolute_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_absolute");
+    post_med_unique_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_unique");
+    profile_local_abund_c_scale = make_quantitative_color_scale_btwn_profile("local_abundance");
+    profile_db_abund_c_scale = make_quantitative_color_scale_btwn_profile("db_abundance");
+    profile_idenity_c_scale = d3.scaleOrdinal().domain(Object.keys(profile_meta_info)).range(Object.keys(profile_meta_info).map(k => profile_meta_info[k]["color"]));
 
     //DATA for btwn sample
     let svg_btwn_sample_dist = d3.select("#chart_btwn_sample");
@@ -1005,6 +1032,7 @@ $(document).ready(function () {
         let meta_item_type; // ".sample_meta_item" or ".profile_meta_item"
         let c_scale = false;
         let c_property; // the property that we need to look up in the meta info
+        let col_key; //The property that will be used to define the colour scale
 
         //TODO this will need updating to include the profile distances and the modals
         // but to save dev time we will try to get the scatter working with just this one first
@@ -1033,7 +1061,7 @@ $(document).ready(function () {
                 uid_to_name_dict = sample_name_to_uid_dict;
                 meta_item_type = ".sample_meta_item"
                 // Get the correct btwn sample c_scale to be used. We get this from the
-                let col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
+                col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
                 switch(col_key){
                     case "host":
                         c_scale = host_c_scale;
@@ -1071,6 +1099,22 @@ $(document).ready(function () {
                 meta_look_up_dict = profile_meta_info;
                 uid_to_name_dict = profile_name_to_uid_dict;
                 meta_item_type = ".profile_meta_item"
+                // Get the correct btwn profile c_scale to be used. We get this from the
+                col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
+                switch(col_key){
+                    case "local_abundance":
+                        c_scale = profile_local_abund_c_scale;
+                        c_property = btwn_profile_c_cat_key["local_abundance"];
+                        break;
+                    case "db_abundance":
+                        c_scale = profile_db_abund_c_scale;
+                        c_property = btwn_profile_c_cat_key["db_abundance"];
+                        break;
+                    case "profile_identity":
+                        c_scale = profile_idenity_c_scale;
+                        c_property = "profile_identity";
+                        break;
+                }
                 break;
         }
 
@@ -1128,7 +1172,14 @@ $(document).ready(function () {
         }).attr("cy", d => y_scale(d.y))//"rgba(0,0,0,0.5)"
         .style("fill", function(d){
             if(c_scale){
-                return c_scale[meta_look_up_dict[d.sample][c_property]];
+                if (c_property == "lat_lon"){
+                    let lat_lon_str = meta_look_up_dict[d.sample]["lat"] + ';' + meta_look_up_dict[d.sample]["lon"];
+                    return c_scale(lat_lon_str);
+                }else if (c_property == "profile_identity"){
+                    return c_scale(d.sample);
+                }else{
+                    return c_scale(meta_look_up_dict[d.sample][c_property]);
+                }
             }else{
                 return "rgba(0,0,0,0.5)";
             }
@@ -1153,6 +1204,8 @@ $(document).ready(function () {
                 if (c_property == "lat_lon"){
                     let lat_lon_str = meta_look_up_dict[d.sample]["lat"] + ';' + meta_look_up_dict[d.sample]["lon"];
                     return c_scale(lat_lon_str);
+                }else if (c_property == "profile_identity"){
+                    return c_scale(d.sample);
                 }else{
                     return c_scale(meta_look_up_dict[d.sample][c_property]);
                 }
