@@ -370,7 +370,7 @@ $(document).ready(function () {
 
 
     // INIT the color by drop down for the btwn sample and the btwn profile dist plots
-    let btwn_sample_color_categories = ["host", "location", "post_med_seqs_abs", "post_med_seqs_unique", "no_color"];
+    let btwn_sample_color_categories = ["host", "location", "post_med_seqs_absolute", "post_med_seqs_unique", "no_color"];
     // We don't want to allow sorting by host or location if we don't have data for these. We can check to see if
     // there is data for these by looking to see if there are sorting arrays for them.
     if (!(sorting_keys.includes("taxa_string"))){
@@ -379,14 +379,14 @@ $(document).ready(function () {
     if (!(sorting_keys.includes("lat_lon"))){
         btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("location"),1);
     }
-    let btwn_sample_c_cat_key = {"host":"taxa_string", "location":"lat_lon", "post_med_seqs_abs":"post_med_absolute", "post_med_seqs_unique":"post_med_unique"};
+    let btwn_sample_c_cat_key = {"host":"taxa_string", "location":"lat_lon", "post_med_seqs_absolute":"post_med_absolute", "post_med_seqs_unique":"post_med_unique"};
     let color_dropdown_to_populate = $("#between_sample_distances").find(".color_select");
         for (let i = 0; i < btwn_sample_color_categories.length; i ++){
             color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_sample_color_categories[i]}>${btwn_sample_color_categories[i]}</a>`);
         }
 
     // Create the color scales for the above parameters
-    // We will need quantitative scales for the post_med_seqs_abs, post_med_seqs_unique
+    // We will need quantitative scales for the post_med_seqs_absolute, post_med_seqs_unique
     // This will be the same sort of scale as we use for the axes of the dist and the y of the bar
     // For the host and location we will need to use something different.
     // For each we will need to have either the list of categorical variables (i.e. the taxa strings or lat long)
@@ -394,8 +394,8 @@ $(document).ready(function () {
     // go cat by cat
     let host_c_scale;
     let location_c_scale;
-    let post_med_c_scale;
-    let pre_med_c_scale;
+    let post_med_absolute_c_scale;
+    let post_med_unique_c_scale;
 
     function make_categorical_color_scale(cat_name){
         let key_name = btwn_sample_c_cat_key[cat_name];
@@ -425,8 +425,8 @@ $(document).ready(function () {
         Object.keys(sample_meta_info).forEach(function(k){
             values.push(sample_meta_info[k][key_name]);
         });
-        let max_val = Math.max(values);
-        let min_val = Math.min(values);
+        let max_val = Math.max(...values);
+        let min_val = Math.min(...values);
         // here we have a unique list of the 'host' values
         // now create the colour scale for it
         return c_var = d3.scaleLinear().domain([min_val,max_val]).range(["blue", "red"]);
@@ -438,8 +438,8 @@ $(document).ready(function () {
     if (btwn_sample_color_categories.includes("location")){
         location_c_scale = make_categorical_color_scale("location");
     }
-    post_med_c_scale = make_quantitative_color_scale("post_med_seqs_abs");
-    pre_med_c_scale = make_quantitative_color_scale("post_med_seqs_unique");
+    post_med_absolute_c_scale = make_quantitative_color_scale("post_med_seqs_absolute");
+    post_med_unique_c_scale = make_quantitative_color_scale("post_med_seqs_unique");
 
 
     //DATA for btwn sample
@@ -1043,13 +1043,13 @@ $(document).ready(function () {
                         c_scale = location_c_scale;
                         c_property = btwn_sample_c_cat_key["location"];
                         break;
-                    case "post_med_seqs_abs":
-                        c_scale = post_med_c_scale;
-                        c_property = btwn_sample_c_cat_key["post_med_seqs_abs"];
+                    case "post_med_seqs_absolute":
+                        c_scale = post_med_absolute_c_scale;
+                        c_property = btwn_sample_c_cat_key["post_med_seqs_absolute"];
                         break;
-                    case "pre_med_seqs_abs":
-                        c_scale = pre_med_c_scale;
-                        c_property = btwn_sample_c_cat_key["pre_med_seqs_abs"];
+                    case "post_med_seqs_unique":
+                        c_scale = post_med_unique_c_scale;
+                        c_property = btwn_sample_c_cat_key["post_med_seqs_unique"];
                         break;
                 }
                 break;
@@ -1126,7 +1126,7 @@ $(document).ready(function () {
         dots.enter().append("circle").attr("class", "dot").attr("r", 3.5).attr("cx", function(d){
             return x_scale(d.x);
         }).attr("cy", d => y_scale(d.y))//"rgba(0,0,0,0.5)"
-        .style("fill", function(){
+        .style("fill", function(d){
             if(c_scale){
                 return c_scale[meta_look_up_dict[d.sample][c_property]];
             }else{
@@ -1147,8 +1147,19 @@ $(document).ready(function () {
           });
 
         // Update any changes to points that already exist
-        dots.transition().duration(2000).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
-        .style("fill", "rgba(0,0,0,0.5)");
+        dots.transition().duration(1000).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
+        .style("fill", function(d){
+            if(c_scale){
+                if (c_property == "lat_lon"){
+                    let lat_lon_str = meta_look_up_dict[d.sample]["lat"] + ';' + meta_look_up_dict[d.sample]["lon"];
+                    return c_scale(lat_lon_str);
+                }else{
+                    return c_scale(meta_look_up_dict[d.sample][c_property]);
+                }
+            }else{
+                return "rgba(0,0,0,0.5)";
+            }
+            });
 
         // Remove points
         dots.exit().remove()
