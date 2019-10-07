@@ -41,8 +41,28 @@
     color: #0056B3;
 }
 
-/*.navbar{
-    -webkit-box-shadow: 0 4px 3px -3px #999;
-    -moz-box-shadow: 0 4px 3px -3px #999;
-    box-shadow: 0 4px 3px -3px #999;
-}*/
+.data_property,.data_value{
+    width:100%;
+    text-overflow:ellipsis;
+    overflow:hidden;
+    white-space:nowrap;
+    font-size:0.7rem;
+}
+
+.data_property:hover,.data_value:hover{
+    
+    overflow:visible;
+    white-space:normal;
+    
+}
+
+.data_property{
+    font-weight: bold;
+    text-align: right;
+    padding-right: 2px;
+}
+
+.data_value{
+    padding-left:2px;
+}
+

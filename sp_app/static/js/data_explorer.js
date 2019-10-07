@@ -17,10 +17,44 @@ $(document).ready(function () {
     //INIT sliders for distance plots
     $("#sample_mask_slider").slider({});
     $("#profile_mask_slider").slider({});
-    console.log('we got here');
     //TODO make it so that if the data for the elements do not exists they get display set to hidden
     //Get data and set parameters for charting
 
+    //populate the associated data set metainformation
+    let data_set_meta_info = getDataSetMetaData();
+    let data_set_meta_info_properties_array = [
+        "num_datasets", "names(s)", "UID(s)", "num_samples", "time_stamp(s)" ,"average_sequencing_depth", 
+        "average_Sym_sequences_absolute", "average_Sym_sequences_unique"
+    ];
+    let data_set_meta_info_prop_to_key_dict = {
+        "num_datasets":"num_associated_data_sets", "names(s)":"ds_names", "UID(s)":"ds_uids",
+        "num_samples":"num_samples", "time_stamp(s)":"ds_time_stamps", 
+        "average_sequencing_depth":"seq_depth_av", "average_Sym_sequences_absolute":"sym_seqs_absolute_av", 
+        "average_Sym_sequences_unique":"sym_seqs_unique_av"
+    };
+
+    let data_set_meta_info_holder = $("#dataset_info_collapse");
+    for (let i = 0; i < data_set_meta_info_properties_array.length; i++){
+        data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_set_meta_info_properties_array[i] + ':'}</div>`);
+        data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_set_meta_info[data_set_meta_info_prop_to_key_dict[data_set_meta_info_properties_array[i]]]}</div>`);
+    }
+
+    //populate the data analysis meta information
+    let data_analysis_meta_info = getDataAnalysisMetaInfo();
+    let data_analysis_meta_info_properties_array = [
+        "name", "UID", "time_stamp", "samples_in_output", "sample_in_analysis", 
+        "unique_profiles_local", "profile_instances_local", "unique_profiles_analysis", "profile_instances_analysis"
+    ];
+    let data_analysis_meta_info_prop_to_key_dict = {
+        "name":"name", "UID":"uid", "time_stamp":"time_stamp", "samples_in_output":"samples_in_output", 
+        "sample_in_analysis":"samples_in_analysis", "unique_profiles_local":"unique_profile_local", 
+        "profile_instances_local":"instance_profile_local", "unique_profiles_analysis":"unique_profile_analysis", 
+        "profile_instances_analysis":"instances_profile_analysis"}
+    let data_analysis_meta_info_holder = $("#analysis_info_collapse");
+    for (let i = 0; i < data_analysis_meta_info_properties_array.length; i++){
+        data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_analysis_meta_info_properties_array[i] + ':'}</div>`);
+        data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_analysis_meta_info[data_analysis_meta_info_prop_to_key_dict[data_analysis_meta_info_properties_array[i]]]}</div>`);
+    }
     // Create Tooltips
     let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
         .html(function(d) {
@@ -185,8 +219,7 @@ $(document).ready(function () {
 
 
 
-    // Get list of profile uids sorted by local abund order
-    let profile_uid_order = getProfileUIDSortedLocalAbund()
+    
     //PROFILE BARS
     let svg_profile = d3.select("#chart_profile");
     let svg_post_med_modal = d3.select("#chart_post_med_modal");
@@ -1289,7 +1322,6 @@ $(document).ready(function () {
 	// RELATIVE to ABSOLUTE switch
 	// When we change the modal or regular version we want these changes relected in the other.
     $(".dtype-btn").click(function(){
-        console.log($(this).text());
         //If the button is of class btn light then it is not selected and this click should fire
         // the change in datatype event for the relevant svg
         if($(this).hasClass("btn-light")){

@@ -1,6 +1,17 @@
 <!--TODO list:
-Implement distance info viewers
-Then also have a network window for when the sample is clicked on (this can be later)
+Remove the filtering sliders for the time being. Filtering can be integrated at a later date.
+Get rid of the modal for the distance plots. This can be integrated at a later date.
+Do the sample labels. For the main plots, we need to have a dynamic bottom margin that is adjusted
+according to name size, or we abbreviate the names when they are above a certain size.
+For the modal, we should likely have a maximum size of name and try to adjust to the center.
+For the time being perhaps just having a maximum size is the easiest way forwards and we 
+can integrate the centering at a later date. 
+PRIORITIES:
+    Get the map working correctly.
+    Get the Dataset and Analysis information outut
+    Link in the resources for download.
+    Use the sample proportions to add to the tool tip on the betwn sample plots
+
 -->
 
 <!--IDEAS:
@@ -14,6 +25,8 @@ Have a clade toggle for the sequence bar data so that it can be viewed as clade 
 
 Have a dropdown that will allow the x axis labels to be changed from sample names, to uids to available
 items like locations
+
+Have a network window for when the sample is clicked on (this can be later)
 -->
 
 
@@ -67,7 +80,7 @@ items like locations
         <!--Title of the paper-->
         <h5 class="display-4" id='study_title' style="font-size:2rem;">This is going to the tile to a paper lets put in the one of Alejandros in here for the time being</h5>
         <!--Authors of the paper-->
-        <div class="d-flex p-3" style="color:#777">
+        <div class="d-flex flex-column p-3" style="color:#777">
             <P id="authors">Author 1, Author2, Bamino. d. Hector, Senor Pulap. and Osacar Trunkey and more and more and more anad more and amorena dndfndn amoer</P>
             <P id="affiliations">Author 1, Author2, Bamino. d. Hector, Senor Pulap. and Osacar Trunkey and more and more and more anad more and amorena dndfndn amoer</P>
         </div>
@@ -580,116 +593,26 @@ items like locations
         <!--CARDS-->
         <div class="card mb-3">
             <div class="card-header" data-toggle="collapse" data-target="#dataset_info_collapse">
-                Dataset
+                Associated Datasets
             </div>
 
-            <div class="card-body collapse show" id="dataset_info_collapse" style="font-size:0.8rem;">
-                <div class="row " >
-                    <dt class="col-sm-6">
-                        <span class="float-right">Dataset Name:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        restrepo_20190918
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Dataset UID:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        343
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">First recieved:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        13 September, 2019
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right" style="width:100%;text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">SymPortal Version (loading):</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        V0.3.13
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">SymPortal version (analysis):</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        V0.3.13
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Datasheet:</span>
-                    </dt>
-                    <dd class="col-sm-6" style="width:100%;text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">
-                        <a href="#home">datasheet_20190918.xlsx</a>
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Number of samples:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        604
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Sequencing accesion:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        <a href="#home">PBA647382</a>
-                    </dd>
-                    <!--TODO can have popup on the anlysis that will show stats for that-->
-                    <dt class="col-sm-6">
-                        <span class="float-right">Analysis UID:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        604
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Analysis name:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        DBV_20190809
-                    </dd>
+            <div class="card-body collapse show" id="dataset_info_collapse">
+                <div class="row">
+                    
                 </div>
-                <div class="d-flex justify-content-end">
-                    <a href="#home">json dump</a>
-                </div>
+                
             </div>
-
+            
         </div>
         <div class="card mb-3">
             <div class="card-header" data-toggle="collapse" data-target="#analysis_info_collapse">
                 Analysis
             </div>
-            <div class="card-body collapse" id="analysis_info_collapse" style="font-size:0.8rem;">
-                <div class="row" >
-                    <dt class="col-sm-6">
-                        <span class="float-right">Analysis UID:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        604
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Analysis name:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        DBV_20190809
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">SymPortal version (analysis):</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        V0.3.13
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Number of profiles:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        23
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Datasheet:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        <a href="#home">datasheet_20190918.xlsx</a>
-                    </dd>
+            <div class="card-body collapse" id="analysis_info_collapse">
+                <div class="row">
+                    
                 </div>
+                
             </div>
         </div>
         <div class="card mb-3">
