@@ -15,6 +15,8 @@ PRIORITIES:
 -->
 
 <!--IDEAS:
+For the meta info of the associated datasets and analysis have a description of the property come up when you hover
+
 In the sample and profile viewers (modals) make them extra large and allow to select (using shift key) two
 of the samples or profiles and then have the respective networks for those above one another or either
 side of the main dist plot.
@@ -621,36 +623,7 @@ Have a network window for when the sample is clicked on (this can be later)
             </div>
             <div class="card-body collapse" id="resource_download_info_collapse" style="font-size:0.8rem;">
                 <div class="row" >
-                    <dt class="col-sm-6">
-                        <span class="float-right">Pre-MED seq count table:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Post-MED seq count table::</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">ITS2 type profile count table:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Between sample distances:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
-                    </dd>
-                    <dt class="col-sm-6">
-                        <span class="float-right">Between profile distances:</span>
-                    </dt>
-                    <dd class="col-sm-6">
-                        <a href="#home">12.2334234.234245345.longlonglonglong.asdf.name.txt</a>
-                    </dd>
+                    
                 </div>
             <div class="d-flex justify-content-end">
                 <a href="#home">Download all</a>
@@ -665,6 +638,9 @@ Have a network window for when the sample is clicked on (this can be later)
     </div>
     </div>
 
+<script type="text/javascript">
+    let study_to_load = "{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/') }}";
+</script>
 <script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/study_data.js') }}"></script>
 <script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/study_meta_info.js') }}"></script>
 

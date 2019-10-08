@@ -8,6 +8,8 @@
 
 $(document).ready(function () {
 
+    //TEST to see if we can grab the study_to_load variable
+    console.log(study_to_load);
     //INIT title
     $("#study_title").html(getStudyMetaInfo()['title']);
     //INIT authors
@@ -49,12 +51,58 @@ $(document).ready(function () {
         "name":"name", "UID":"uid", "time_stamp":"time_stamp", "samples_in_output":"samples_in_output", 
         "sample_in_analysis":"samples_in_analysis", "unique_profiles_local":"unique_profile_local", 
         "profile_instances_local":"instance_profile_local", "unique_profiles_analysis":"unique_profile_analysis", 
-        "profile_instances_analysis":"instances_profile_analysis"}
+        "profile_instances_analysis":"instances_profile_analysis"};
     let data_analysis_meta_info_holder = $("#analysis_info_collapse");
     for (let i = 0; i < data_analysis_meta_info_properties_array.length; i++){
         data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_analysis_meta_info_properties_array[i] + ':'}</div>`);
         data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_analysis_meta_info[data_analysis_meta_info_prop_to_key_dict[data_analysis_meta_info_properties_array[i]]]}</div>`);
+    };
+
+    //TODO populate the downloads section
+    let data_file_paths = getDataFilePaths();
+    let data_file_paths_keys = Object.keys(data_file_paths);
+    let clade_array = ['A','B','C','D','E','F','G','H','I'];
+    let dist_type_array = ['unifrac', 'braycurtis'];
+    let sample_profile_array = ['sample', 'profile'];
+    let file_type_array = [
+        "post_med_absolute_abund_meta_count", "post_med_absolute_abund_only_count", 
+        "post_med_absolute_meta_only_count", "post_med_relative_abund_meta_count",
+        "post_med_relative_abund_only_count", "post_med_relative_meta_only_count",
+        "post_med_fasta", "post_med_additional_info", "pre_med_absolute_count", 
+        "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count", 
+        "profile_absolute_abund_only_count", "profile_absolute_meta_only_count", 
+        "profile_relative_abund_meta_count", "profile_relative_abund_only_count", 
+        "profile_relative_meta_only_count", "profile_additional_info_file"];
+    
+    // First populate the files that are in the above file type array
+    for (let i = 0; i < file_type_array.length; i++){
+        // Go in order of the file_type_array being sure to check if the file in question
+        // is found in the output of this study
+        if ( data_file_paths_keys.includes(file_type_array[i])){
+            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_type_array[i] + ':'}</div>`);
+            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[file_type_array[i]]}" download>${data_file_paths[file_type_array[i]]}</a></div>`);
+        }
+    };
+    
+    // Then we will iterate through the possible distance files that may exist and populate those
+    // First go by clade, then sample/profile, then dist type
+    for (let i =0; i < clade_array.length; i++){
+        for (let j = 0; j<sample_profile_array.length; j++){
+            for (let k=0; k<dist_type_array.length; k++){
+                let f_name_dist = "btwn_" + sample_profile_array[j]+"_"+dist_type_array[k]+"_"+clade_array[i]+"_dist";
+                if (data_file_paths_keys.includes(f_name_dist)){
+                    $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_dist + ':'}</div>`);
+                    $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[f_name_dist]}" download>${data_file_paths[f_name_dist]}</a></div>`);
+                }
+                let f_name_pcoa = "btwn_" + sample_profile_array[j]+"_"+dist_type_array[k]+"_"+clade_array[i]+"_pcoa";
+                if (data_file_paths_keys.includes(f_name_pcoa)){
+                    $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_pcoa + ':'}</div>`);
+                    $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[f_name_pcoa]}" download>${data_file_paths[f_name_pcoa]}</a></div>`);
+                }
+            }
+        }
     }
+    
     // Create Tooltips
     let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
         .html(function(d) {
