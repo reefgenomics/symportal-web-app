@@ -394,7 +394,6 @@ $(document).ready(function () {
         data_pre_med_by_sample = getRectDataPreMEDBySample();
         pre_med_bars_exists = true;
         max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
-        // TODO we can remove this map in future as I have fixed this in SP
         if (sorting_keys.includes('profile_based')){
             sample_list_pre = sorted_sample_uid_arrays['profile_based'];
         }else{
@@ -1609,92 +1608,107 @@ $(document).ready(function () {
         }
     })
 
-    //INIT MAP
-    function initMap() {
+    //INIT MAP if lat_lon data available
+    // TODO we will want a list of the unique sites
+    // We will also want a dict of site to samples uid array
+    if (sorting_keys.includes('lat_lon')){
+        let unique_site_set = new Set();
+        let sample_meta_info_keys = Object.keys(sample_meta_info);
+        // Create and init the site to sample uid dict. we will use this similar to a python defualtdict(list)
+        let site_to_sample_uid_dict = {};
+        // Keep track of the largest and smallest lat and long so that we can work out an average to center the map on
+        let max_lat = -90; let min_lat=+90; let max_lon=-180; let min_lon = +180;
 
-        let location = new google.maps.LatLng(22.193730, 38.957069);
-
-        let mapCanvas = document.getElementById('map');
-        let mapOptions = {
-            center: location,
-            zoom: 10,
-            panControl: false,
-            mapTypeId: google.maps.MapTypeId.SATELLITE
+        for (let i = 0; i < sample_meta_info_keys.length; i ++){
+            let sample_obj = sample_meta_info[sample_meta_info_keys[i]];
+            let numeric_lat = +sample_obj['lat'];
+            let numeric_lon = +sample_obj['lon'];
+            if (numeric_lat > max_lat){max_lat = numeric_lat;}
+            if(numeric_lat < min_lat){min_lat = numeric_lat;}
+            if (numeric_lon > max_lon){max_lon = numeric_lon;}
+            if(numeric_lon < min_lon){min_lon = numeric_lon;}
+            let lat_lon_str = sample_obj['lat'].toString() + ';'  + sample_obj['lon'].toString();
+            unique_site_set.add(lat_lon_str);
+            // if lat_lon already in the dict then simply add the sample uid to the list
+            // else create a new list and add the sample uid to this list
+            if (Object.keys(site_to_sample_uid_dict).includes(lat_lon_str)){
+                site_to_sample_uid_dict[lat_lon_str].push(sample_meta_info_keys[i]);
+            }else{
+                site_to_sample_uid_dict[lat_lon_str] = [sample_meta_info_keys[i]];
+            }
         }
-        let map = new google.maps.Map(mapCanvas, mapOptions);
+        // Here we have the unique site set and site to sample uid dict populated and we can now move on to populating the map
+        
+        function initMap() {
+            
+            // Calculate the position for the center of the map
+            let center_lat = max_lat - ((max_lat - min_lat)/2);
+            let center_lon = max_lon - ((max_lon - min_lon)/2);
+            let center_location = new google.maps.LatLng(center_lat, center_lon);
+            // Init the map
+            let mapCanvas = document.getElementById('map');
+            let mapOptions = {
+                center: center_location,
+                // We will need to work out how to set this zoom initially
+                zoom: 5,
+                panControl: false,
+                mapTypeId: google.maps.MapTypeId.SATELLITE
+            }
+            let map = new google.maps.Map(mapCanvas, mapOptions);
 
-
-        let contentString = '<div >' +
-            '<span style="font-weight:bold;">lat:</span> 32.18876, <span style="font-weight:bold;">lon:</span> 98.7985, <span style="font-weight:bold;">site_name:</span> --, <span style="font-weight:bold;">num_samples:</span> 42'+
-        '</div>'+
-        '<table class="table table-hover table-sm" style="font-size:0.5rem;">'+
-            '<thead>'+
-                '<tr>'+
-                    '<th>sample_name</th>'+
-                    '<th>host_taxa</th>'+
-                    '<th>depth</th>'+
-                '</tr>'+
-            '</thead>'+
-            '<tbody>'+
-            '<tr>'+
-                '<td>Xj.wer.28392</td>'+
-                '<td>P. lobata</td>'+
-                '<td>2-8m</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td>Xj.wer.28392</td>'+
-                '<td>P. lobata</td>'+
-                '<td>2-8m</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td>Xj.wer.28392</td>'+
-                '<td>P. lobata</td>'+
-                '<td>2-8m</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td>Xj.wer.28392</td>'+
-                '<td>P. lobata</td>'+
-                '<td>2-8m</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td>Xj.wer.28392</td>'+
-                '<td>P. lobata</td>'+
-                '<td>2-8m</td>'+
-            '</tr>'+
-            '<tr>'+
-                '<td>Xj.wer.28392</td>'+
-                '<td>P. lobata</td>'+
-                '<td>2-8m</td>'+
-            '</tr>'+
-            '</tbody>'+
-        '</table>';
-
-        let marker_data = [{'lat': 22.235196, 'lng': 39.006563, 'label': "reef_1"}, {'lat': 22.190266, 'lng': 38.978879, 'label': "reef_2"}]
-
-        let infowindow = new google.maps.InfoWindow({
-          content: contentString
-        });
-
-        marker_data.forEach(function(data){
-            let marker =  new google.maps.Marker({
-            position: {lat: data['lat'], lng: data['lng']},
-            map:map
+            // Here we need to cyle through the unique lat long positions.
+            // Create a marker
+            // And then create an info window for each of the markers with dynamic content
+            unique_site_set.forEach(function(site_loc_str){
+                let lat_numeric = +site_loc_str.split(';')[0];
+                let lon_numeric = +site_loc_str.split(';')[1];
+                let marker =  new google.maps.Marker({
+                    position: {lat: lat_numeric, lng: lon_numeric},
+                    map:map
+                    });
+                
+                marker.addListener('click', function() {
+                    //TODO create the content that will be displayed here
+                    let $content_object = $("<div></div>", {"class":"map_info_window"});
+                    //Add the spans that will hold the meta info
+                    let $meta_div = $('<div></div>');
+                    $meta_div.appendTo($content_object);
+                    $meta_div.append(`<span class="iwindowprop">lat: </span><span class="iwindowval">${lat_numeric}</span>`) // lat
+                    $meta_div.append(`<span class="iwindowprop">lon: </span><span class="iwindowval">${lon_numeric}</span>`) // lat
+                    $meta_div.append(`<span class="iwindowprop">site_name: </span><span class="iwindowval">--</span>`) // site_name TODO
+                    $meta_div.append(`<span class="iwindowprop">num_samples: </span><span class="iwindowval">${site_to_sample_uid_dict[site_loc_str].length}</span>`) // num_samples
+                    // Then the table that will hold data for each sample
+                    let $table_div = $('<div></div>'); $table_div.appendTo($content_object);
+                    
+                    let $table = $('<table></table>', {"class":"table table-hover table-sm", "style":"font-size:0.5rem;"}); $table.appendTo($table_div);
+                    
+                    let $thead = $('<thead></thead>'); $thead.appendTo($table);
+                    let $tr = $('<tr></tr>'); $tr.appendTo($thead);
+                    $tr.append('<th>sample_name</th>'); $tr.append('<th>host_taxa</th>'); $tr.append('<th>depth</th>');
+                    let $tbody = $('<tbody></tbody>'); $tbody.appendTo($table);
+                    
+                    // Add a tr and cells for every sample of at the location
+                    for (let j = 0; j < site_to_sample_uid_dict[site_loc_str].length; j++){
+                        let sample_uid = site_to_sample_uid_dict[site_loc_str][j];
+                        $tr = $('<tr></tr>'); $tr.appendTo($tbody);
+                        $tr.append(`<td>${sample_meta_info[sample_uid]["name"]}</td>`);
+                        // The full taxa string is really too long here so get the last element that isn't NoData
+                        let tax_str = sample_meta_info[sample_uid]["taxa_string"];
+                        let short_tax = getShortTaxStr(tax_str);
+                        $tr.append(`<td>${short_tax}</td>`);
+                        $tr.append(`<td>${sample_meta_info[sample_uid]["collection_depth"]}</td>`);
+                    }
+                    // Here we should have the info window content built and stored in the variable $content_object
+                    // Now put the info window together
+                    let infowindow = new google.maps.InfoWindow();
+                    infowindow.setContent($content_object[0]);
+                    infowindow.open(map, this);
+                });
             });
-
-            marker.addListener('click', function() {
-                infowindow.open(map, marker);
-            });
-        });
-//        let first_marker = new google.maps.Marker({position: {lat: 22.235196, lng: 39.006563}, map:map, label:"reef_two"})
-//        let second_marker = new google.maps.Marker({position: {lat: 22.190266, lng: 38.978879}, map:map, label:"Thuwal"})
-
-//        let markerCluster = new MarkerClusterer(map, map_markers,
-//            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
-
+        }
+        google.maps.event.addDomListener(window, 'load', initMap);
     }
-
-    google.maps.event.addDomListener(window, 'load', initMap);
-
+    
 
     function centerAlignXLabels(){
         // This function aims to move the text labels down slightly
@@ -1720,6 +1734,27 @@ $(document).ready(function () {
             }
 
         });
+    }
+
+    function getShortTaxStr(fullTaxStr){
+        let tax_elements = fullTaxStr.split(';');
+        tax_elements.reverse();
+        let shortTax = "NoData";
+        for (let i = 0; i < tax_elements.length; i++){
+            if (tax_elements[i] != "NoData"){
+                // If we have a species name then report the first letter of the genera too
+                if (i == 0){
+                    if (tax_elements[1] != "NoData"){
+                        shortTax = tax_elements[0] + '. ' + tax_elements[0];
+                        break;
+                    }else{ // If we don't have the genera then just report the species name
+                        shortTax = tax_elements[0];
+                        break;
+                    }
+                }else{shortTax=tax_elements[i];break;}
+            }
+        }
+        return shortTax;
     }
 
 });
