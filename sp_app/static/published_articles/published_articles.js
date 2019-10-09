@@ -25,8 +25,8 @@ return [
     "title":"Night-time temperature reprieves enhance the thermal tolerance of a symbiotic Cnidarian",
     "location":"Red Sea", "num_samples":"--", "additional_markers":"--",
     "run_type":"local",
-    "article_url":"https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.4662",
-    "seq_data_url":"https://www.ncbi.nlm.nih.gov/bioproject/PRJNA477732", "published":"true"},
+    "article_url":"https://www.frontiersin.org/articles/10.3389/fmars.2019.00453/full",
+    "seq_data_url":"--", "published":"true"},
 
     {"article_name":"Terraneo et al. 2019",
     "title":"Environmental latitudinal gradients and host‐specificity shape Symbiodiniaceae distribution in Red Sea Porites corals",
