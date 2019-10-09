@@ -72,3 +72,7 @@
 .iwindowval{
     padding-right:4px;
 }
+
+.map_info_window{
+    font-size:0.5rem;
+}

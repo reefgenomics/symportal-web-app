@@ -19,10 +19,6 @@ $(document).ready(function () {
     }
     init_publication_details();
     
-    //INIT sliders for distance plots
-    $("#sample_mask_slider").slider({});
-    $("#profile_mask_slider").slider({});
-    
     function populate_the_associated_data_set_meta_information(){
         //populate the associated data set meta information
         let data_set_meta_info = getDataSetMetaData();
@@ -771,17 +767,13 @@ $(document).ready(function () {
             data_type = 'relative';
         }
 
+    // We have to init the modal plots once the modal has been opened (see listener below)
+    // So that we can get the size of the label text and adjust the text accordingly.
     // POST-MED INIT
     update_bar_plot_by_sample(data_type, "post", sample_list_post, post_med_init_by_sample_interval);
 
-    // POST-MED-MODAL INIT
-    update_bar_plot_by_sample(data_type, "post-modal", sample_list_modal, post_med_init_by_sample_interval);
-
     // PROFILES INIT
     update_bar_plot_by_sample(data_type, "profile", sample_list_profile, profile_init_by_sample_interval);
-
-    // PROFILES-MODAL INIT
-    update_bar_plot_by_sample(data_type, "profile-modal", sample_list_modal, profile_init_by_sample_interval);
 
     // BTWN SAMPLE INIT
     update_dist_plot("#chart_btwn_sample");
@@ -1025,6 +1017,17 @@ $(document).ready(function () {
         }
     }
 
+    var ellipse_axis_labels = function() {
+        var self = d3.select(this),
+          textLength = self.node().getComputedTextLength(),
+          text = self.text();
+        while (textLength > (70) && text.length > 0) {
+          text = text.slice(0, -1);
+          self.text(text + '...');
+          textLength = self.node().getComputedTextLength();
+        }
+      };
+
     function call_axes(speed, pre_post_profile){
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
         if (pre_post_profile == "post"){
@@ -1072,15 +1075,15 @@ $(document).ready(function () {
             d3.selectAll(x_axis_id).transition().duration(speed)
                     .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
                     .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-                    .style("text-anchor", "start").style("text-anchor", "start")
-                    .on("end", centerAlignXLabels);
+                    .style("text-anchor", "start")
+                    .on("end", ellipse_axis_labels);
         }else{
             // The regular axis with ticks and text below
             // no call back to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
                     .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
                     .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-                    .style("text-anchor", "start").style("text-anchor", "start");
+                    .style("text-anchor", "start").on("end", ellipse_axis_labels);
         }
 
         // Listener to highlight sample names on mouse over.
@@ -1375,6 +1378,15 @@ $(document).ready(function () {
         // update circle position
         scatter.selectAll("circle").attr('cx', function(d) {return newX(d.x)}).attr('cy', function(d) {return newY(d.y)});
     }
+
+
+    //Listening for opening of seq-profile modal
+    $("#seq-prof-modal").on("shown.bs.modal", function(e){
+        // POST-MED-MODAL INIT
+        update_bar_plot_by_sample(data_type, "post-modal", sample_list_modal, post_med_init_by_sample_interval);
+        // PROFILES-MODAL INIT
+        update_bar_plot_by_sample(data_type, "profile-modal", sample_list_modal, profile_init_by_sample_interval);
+    })
 
 	// LISTENERS RELATED TO CHARTING
 	// RELATIVE to ABSOLUTE switch
