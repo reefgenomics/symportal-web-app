@@ -14,8 +14,6 @@ $(document).ready(function () {
         $("#study_title").html(getStudyMetaInfo()['title']);
         //INIT authors
         $("#authors").html(getStudyMetaInfo()['author_list']);
-        //INIT affiliations
-        $("#affiliations").html(getStudyMetaInfo()['affiliations']);
     }
     init_publication_details();
     
@@ -123,6 +121,7 @@ $(document).ready(function () {
             let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
             '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
             '</div>';
+            console.log(d);
             return content;
         });
 
@@ -176,7 +175,12 @@ $(document).ready(function () {
         for (let i =0; i < sample_meta_info_annotation_order_array_primary.length; i ++){
             let annotation = sample_meta_info_annotation_order_array_primary[i];
             if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])){
-                $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+                // We want to put taxa on its own line because it is so big and the other two paris on the same line
+                if (annotation == "taxa"){
+                    $(".primary_sample_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+                }else{
+                    $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+                }
             }
         }
         for (let i =0; i < sample_meta_info_annotation_order_array_secondary.length; i ++){
@@ -579,7 +583,7 @@ $(document).ready(function () {
     //Dist plot tool tip
     let dist_tooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
-    .style("opacity", 0);
+    .style("visibility", "hidden");
     let sample_list_btwn_sample_dist = {};
     let scatter_btwn_sample;
     if (typeof getBtwnSampleDistCoordsBC === "function") {
@@ -1279,16 +1283,34 @@ $(document).ready(function () {
             }
             })
         .on("mouseover", function(d) {
-            dist_tooltip.transition().duration(200).style("opacity", .9);
-            dist_tooltip.html(meta_look_up_dict[d.sample]["name"]).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
-            // First we need to get the genera/clade
+            // Display the tool tip on the dist plot point
+            dist_tooltip.transition().duration(200).style("visibility", "visible");
+            // First we need to look at what the drop down currently says.
             let data_series = meta_look_up_dict[d.sample.toString()];
+            let current_color = $(this).closest(".plot_item").find('.color_select_button').attr("data-color");
+            let content_key;
+            let additional_content;
+            let content;
+            if (current_color != 'profile_identity'){
+                // Then we can display additional info in the div
+                content_key = btwn_profile_c_cat_key[current_color];
+                additional_content = data_series[content_key];
+                content = `<div>${data_series["name"]}</div><div style="font-size:0.5rem;"><span style="font-weight:bold;">${current_color}: </span><span>${additional_content}</span></div>`
+            }else{
+                //Then we just display the profile name
+                content = `${data_series["name"]}`
+            }
+            // dist_tooltip.html(meta_look_up_dict[d.sample]["name"]).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
+            dist_tooltip.html(content).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
+            // Apply the information in the profile meta info area
+            // First we need to get the genera/clade
+            
             $(this).closest(".plot_item").find(meta_item_type).each(function(){
                 $(this).text(data_series[$(this).attr("data-key")]);
             });
           })
           .on("mouseout", function(d) {
-              dist_tooltip.transition().duration(500).style("opacity", 0);
+              dist_tooltip.transition().duration(500).style("visibility", "hidden");
           });
 
         // Update any changes to points that already exist
@@ -1630,11 +1652,14 @@ $(document).ready(function () {
         let site_to_sample_uid_dict = {};
         // Keep track of the largest and smallest lat and long so that we can work out an average to center the map on
         let max_lat = -90; let min_lat=+90; let max_lon=-180; let min_lon = +180;
-
+        
+        // Need to take into account that samples with bad or no lat lon details will have been set to the 
+        // default value of 999
         for (let i = 0; i < sample_meta_info_keys.length; i ++){
             let sample_obj = sample_meta_info[sample_meta_info_keys[i]];
             let numeric_lat = +sample_obj['lat'];
             let numeric_lon = +sample_obj['lon'];
+            if (numeric_lat == 999 || numeric_lon == 999){continue;}
             if (numeric_lat > max_lat){max_lat = numeric_lat;}
             if(numeric_lat < min_lat){min_lat = numeric_lat;}
             if (numeric_lon > max_lon){max_lon = numeric_lon;}
@@ -1653,10 +1678,17 @@ $(document).ready(function () {
         
         function initMap() {
             
+            
             // Calculate the position for the center of the map
-            let center_lat = max_lat - ((max_lat - min_lat)/2);
-            let center_lon = max_lon - ((max_lon - min_lon)/2);
-            let center_location = new google.maps.LatLng(center_lat, center_lon);
+            let center_location;
+            if (unique_site_set.size < 2){
+                center_location = new google.maps.LatLng(max_lat, max_lon);
+            }else{
+                let center_lat = max_lat - ((max_lat - min_lat)/2);
+                let center_lon = max_lon - ((max_lon - min_lon)/2);
+                center_location = new google.maps.LatLng(center_lat, center_lon);
+            }
+            
             // Init the map
             let mapCanvas = document.getElementById('map');
             let mapOptions = {
@@ -1757,7 +1789,7 @@ $(document).ready(function () {
                 // If we have a species name then report the first letter of the genera too
                 if (i == 0){
                     if (tax_elements[1] != "NoData"){
-                        shortTax = tax_elements[0] + '. ' + tax_elements[0];
+                        shortTax = tax_elements[1][0] + '. ' + tax_elements[0];
                         break;
                     }else{ // If we don't have the genera then just report the species name
                         shortTax = tax_elements[0];
