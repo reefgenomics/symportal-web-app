@@ -8,96 +8,107 @@
 
 $(document).ready(function () {
 
-    
-    function init_publication_details(){
+
+    function init_publication_details() {
         //INIT title
         $("#study_title").html(getStudyMetaInfo()['title']);
         //INIT authors
         $("#authors").html(getStudyMetaInfo()['author_list']);
     }
     init_publication_details();
-    
-    function populate_the_associated_data_set_meta_information(){
+
+    function populate_the_associated_data_set_meta_information() {
         //populate the associated data set meta information
         let data_set_meta_info = getDataSetMetaData();
         let data_set_meta_info_properties_array = [
-            "num_datasets", "names(s)", "UID(s)", "num_samples", "time_stamp(s)" ,"average_sequencing_depth", 
+            "num_datasets", "names(s)", "UID(s)", "num_samples", "time_stamp(s)", "average_sequencing_depth",
             "average_Sym_sequences_absolute", "average_Sym_sequences_unique"
         ];
         let data_set_meta_info_prop_to_key_dict = {
-            "num_datasets":"num_associated_data_sets", "names(s)":"ds_names", "UID(s)":"ds_uids",
-            "num_samples":"num_samples", "time_stamp(s)":"ds_time_stamps", 
-            "average_sequencing_depth":"seq_depth_av", "average_Sym_sequences_absolute":"sym_seqs_absolute_av", 
-            "average_Sym_sequences_unique":"sym_seqs_unique_av"
+            "num_datasets": "num_associated_data_sets",
+            "names(s)": "ds_names",
+            "UID(s)": "ds_uids",
+            "num_samples": "num_samples",
+            "time_stamp(s)": "ds_time_stamps",
+            "average_sequencing_depth": "seq_depth_av",
+            "average_Sym_sequences_absolute": "sym_seqs_absolute_av",
+            "average_Sym_sequences_unique": "sym_seqs_unique_av"
         };
 
         let data_set_meta_info_holder = $("#dataset_info_collapse");
-        for (let i = 0; i < data_set_meta_info_properties_array.length; i++){
+        for (let i = 0; i < data_set_meta_info_properties_array.length; i++) {
             data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_set_meta_info_properties_array[i] + ':'}</div>`);
             data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_set_meta_info[data_set_meta_info_prop_to_key_dict[data_set_meta_info_properties_array[i]]]}</div>`);
         }
     }
     populate_the_associated_data_set_meta_information();
 
-    function populate_the_data_analysis_meta_information(){
+    function populate_the_data_analysis_meta_information() {
         //populate the data analysis meta information
         let data_analysis_meta_info = getDataAnalysisMetaInfo();
         let data_analysis_meta_info_properties_array = [
-            "name", "UID", "time_stamp", "samples_in_output", "sample_in_analysis", 
+            "name", "UID", "time_stamp", "samples_in_output", "sample_in_analysis",
             "unique_profiles_local", "profile_instances_local", "unique_profiles_analysis", "profile_instances_analysis"
         ];
         let data_analysis_meta_info_prop_to_key_dict = {
-            "name":"name", "UID":"uid", "time_stamp":"time_stamp", "samples_in_output":"samples_in_output", 
-            "sample_in_analysis":"samples_in_analysis", "unique_profiles_local":"unique_profile_local", 
-            "profile_instances_local":"instance_profile_local", "unique_profiles_analysis":"unique_profile_analysis", 
-            "profile_instances_analysis":"instances_profile_analysis"};
+            "name": "name",
+            "UID": "uid",
+            "time_stamp": "time_stamp",
+            "samples_in_output": "samples_in_output",
+            "sample_in_analysis": "samples_in_analysis",
+            "unique_profiles_local": "unique_profile_local",
+            "profile_instances_local": "instance_profile_local",
+            "unique_profiles_analysis": "unique_profile_analysis",
+            "profile_instances_analysis": "instances_profile_analysis"
+        };
         let data_analysis_meta_info_holder = $("#analysis_info_collapse");
-        for (let i = 0; i < data_analysis_meta_info_properties_array.length; i++){
+        for (let i = 0; i < data_analysis_meta_info_properties_array.length; i++) {
             data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_analysis_meta_info_properties_array[i] + ':'}</div>`);
             data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_analysis_meta_info[data_analysis_meta_info_prop_to_key_dict[data_analysis_meta_info_properties_array[i]]]}</div>`);
         }
     }
     populate_the_data_analysis_meta_information();
 
-    function populate_the_downloads_section(){
+    function populate_the_downloads_section() {
         //TODO populate the downloads section
         let data_file_paths = getDataFilePaths();
         let data_file_paths_keys = Object.keys(data_file_paths);
-        let clade_array = ['A','B','C','D','E','F','G','H','I'];
+        let clade_array = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
         let dist_type_array = ['unifrac', 'braycurtis'];
         let sample_profile_array = ['sample', 'profile'];
         let file_type_array = [
-            "post_med_absolute_abund_meta_count", "post_med_absolute_abund_only_count", 
+            "post_med_absolute_abund_meta_count", "post_med_absolute_abund_only_count",
             "post_med_absolute_meta_only_count", "post_med_relative_abund_meta_count",
             "post_med_relative_abund_only_count", "post_med_relative_meta_only_count",
-            "post_med_fasta", "post_med_additional_info", "pre_med_absolute_count", 
-            "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count", 
-            "profile_absolute_abund_only_count", "profile_absolute_meta_only_count", 
-            "profile_relative_abund_meta_count", "profile_relative_abund_only_count", 
-            "profile_relative_meta_only_count", "profile_additional_info_file"];
-        
+            "post_med_fasta", "post_med_additional_info", "pre_med_absolute_count",
+            "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count",
+            "profile_absolute_abund_only_count", "profile_absolute_meta_only_count",
+            "profile_relative_abund_meta_count", "profile_relative_abund_only_count",
+            "profile_relative_meta_only_count", "profile_additional_info_file"
+        ];
+
         // First populate the files that are in the above file type array
-        for (let i = 0; i < file_type_array.length; i++){
+        for (let i = 0; i < file_type_array.length; i++) {
             // Go in order of the file_type_array being sure to check if the file in question
             // is found in the output of this study
-            if ( data_file_paths_keys.includes(file_type_array[i])){
+            if (data_file_paths_keys.includes(file_type_array[i])) {
                 $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_type_array[i] + ':'}</div>`);
                 $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[file_type_array[i]]}" download>${data_file_paths[file_type_array[i]]}</a></div>`);
             }
         };
-        
+
         // Then we will iterate through the possible distance files that may exist and populate those
         // First go by clade, then sample/profile, then dist type
-        for (let i =0; i < clade_array.length; i++){
-            for (let j = 0; j<sample_profile_array.length; j++){
-                for (let k=0; k<dist_type_array.length; k++){
-                    let f_name_dist = "btwn_" + sample_profile_array[j]+"_"+dist_type_array[k]+"_"+clade_array[i]+"_dist";
-                    if (data_file_paths_keys.includes(f_name_dist)){
+        for (let i = 0; i < clade_array.length; i++) {
+            for (let j = 0; j < sample_profile_array.length; j++) {
+                for (let k = 0; k < dist_type_array.length; k++) {
+                    let f_name_dist = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_dist";
+                    if (data_file_paths_keys.includes(f_name_dist)) {
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_dist + ':'}</div>`);
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[f_name_dist]}" download>${data_file_paths[f_name_dist]}</a></div>`);
                     }
-                    let f_name_pcoa = "btwn_" + sample_profile_array[j]+"_"+dist_type_array[k]+"_"+clade_array[i]+"_pcoa";
-                    if (data_file_paths_keys.includes(f_name_pcoa)){
+                    let f_name_pcoa = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_pcoa";
+                    if (data_file_paths_keys.includes(f_name_pcoa)) {
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_pcoa + ':'}</div>`);
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[f_name_pcoa]}" download>${data_file_paths[f_name_pcoa]}</a></div>`);
                     }
@@ -106,21 +117,21 @@ $(document).ready(function () {
         }
     }
     populate_the_downloads_section();
-    
-    
+
+
     // Create Tooltips
-    let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
-        .html(function(d) {
+    let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+        .html(function (d) {
             let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
-            '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
-            '</div>';
+                '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
+                '</div>';
             return content;
         });
-    let tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
-        .html(function(d) {
+    let tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+        .html(function (d) {
             let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
-            '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
-            '</div>';
+                '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
+                '</div>';
             return content;
         });
 
@@ -130,17 +141,17 @@ $(document).ready(function () {
 
     // Sample name to uid object for doing the sample meta info
     // TODO we will need the same thing for the profiles once we get to doing the profile info
-    sample_name_to_uid_dict = (function(){
+    sample_name_to_uid_dict = (function () {
         let temp_dict = {};
-        Object.keys(sample_meta_info).forEach(function(sample_uid){
+        Object.keys(sample_meta_info).forEach(function (sample_uid) {
             temp_dict[sample_meta_info[sample_uid]["name"]] = +sample_uid;
         })
         return temp_dict;
     })();
 
-    profile_name_to_uid_dict = (function(){
+    profile_name_to_uid_dict = (function () {
         let temp_dict = {};
-        Object.keys(profile_meta_info).forEach(function(profile_uid){
+        Object.keys(profile_meta_info).forEach(function (profile_uid) {
             temp_dict[profile_meta_info[profile_uid]["name"]] = +profile_uid;
         })
         return temp_dict;
@@ -148,55 +159,76 @@ $(document).ready(function () {
 
     // Sequence meta info
     let available_sample_meta_info = Object.keys(sample_meta_info[Object.keys(sample_meta_info)[0]]);
-    let sample_meta_annotation_to_key = {"sample":"name", "UID":"uid", "taxa":"taxa_string", "lat":"lat",
-    "lon":"lon", "collection_date":"collection_date", "depth":"collection_depth",
-    "clade_relative_abund":"clade_prop_string", "clade_absolute_abund":"clade_abs_abund_string",
-    "raw_contigs":"raw_contigs", "post_qc_absolute":"post_taxa_id_absolute_symbiodinium_seqs",
-    "post_qc_unique":"post_taxa_id_unique_symbiodinium_seqs", "post_med_absolute":"post_med_absolute",
-    "post_med_unique":"post_med_unique", "non_Symbiodiniaceae_absolute":"post_taxa_id_absolute_non_symbiodinium_seqs",
-    "non_Symbiodiniaceae_unique":"post_taxa_id_unique_non_symbiodinium_seqs"};
+    let sample_meta_annotation_to_key = {
+        "sample": "name",
+        "UID": "uid",
+        "taxa": "taxa_string",
+        "lat": "lat",
+        "lon": "lon",
+        "collection_date": "collection_date",
+        "depth": "collection_depth",
+        "clade_relative_abund": "clade_prop_string",
+        "clade_absolute_abund": "clade_abs_abund_string",
+        "raw_contigs": "raw_contigs",
+        "post_qc_absolute": "post_taxa_id_absolute_symbiodinium_seqs",
+        "post_qc_unique": "post_taxa_id_unique_symbiodinium_seqs",
+        "post_med_absolute": "post_med_absolute",
+        "post_med_unique": "post_med_unique",
+        "non_Symbiodiniaceae_absolute": "post_taxa_id_absolute_non_symbiodinium_seqs",
+        "non_Symbiodiniaceae_unique": "post_taxa_id_unique_non_symbiodinium_seqs"
+    };
     let sample_meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
     let sample_meta_info_annotation_order_array_secondary = ["collection_date", "depth",
-    "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
-    "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"];
+        "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
+        "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
+    ];
 
     // Profile meta info
     let available_profile_meta_info = Object.keys(profile_meta_info);
-    let profile_meta_annotation_to_key = {"profile":"name", "UID":"uid", "genera":"genera", "maj_seq":"maj_its2_seq",
-    "associated species":"assoc_species", "local_abund":"local_abund", "db_abund":"db_abund", "seq_uids":"seq_uids",
-    "seq_abund_string":"seq_abund_string"};
+    let profile_meta_annotation_to_key = {
+        "profile": "name",
+        "UID": "uid",
+        "genera": "genera",
+        "maj_seq": "maj_its2_seq",
+        "associated species": "assoc_species",
+        "local_abund": "local_abund",
+        "db_abund": "db_abund",
+        "seq_uids": "seq_uids",
+        "seq_abund_string": "seq_abund_string"
+    };
     let profile_meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
     let profile_meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
-    "seq_uids", "seq_abund_string"];
+        "seq_uids", "seq_abund_string"
+    ];
 
     //populate the sample_meta_info_holders
-    (function populateSampleMetaInfoHolders(){
-        for (let i =0; i < sample_meta_info_annotation_order_array_primary.length; i ++){
+    (function populateSampleMetaInfoHolders() {
+        for (let i = 0; i < sample_meta_info_annotation_order_array_primary.length; i++) {
             let annotation = sample_meta_info_annotation_order_array_primary[i];
-            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])){
+            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
                 // We want to put taxa on its own line because it is so big and the other two paris on the same line
-                if (annotation == "taxa"){
+                if (annotation == "taxa") {
                     $(".primary_sample_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
-                }else{
+                } else {
                     $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
                 }
             }
         }
-        for (let i =0; i < sample_meta_info_annotation_order_array_secondary.length; i ++){
+        for (let i = 0; i < sample_meta_info_annotation_order_array_secondary.length; i++) {
             let annotation = sample_meta_info_annotation_order_array_secondary[i];
-            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])){
+            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
                 $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
             }
         }
     })();
 
     //populate the profile_meta_info_holders
-    (function populateProfileMetaInfoHolders(){
-        for (let i =0; i < profile_meta_info_annotation_order_array_primary.length; i ++){
+    (function populateProfileMetaInfoHolders() {
+        for (let i = 0; i < profile_meta_info_annotation_order_array_primary.length; i++) {
             let annotation = profile_meta_info_annotation_order_array_primary[i];
             $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
         }
-        for (let i =0; i < profile_meta_info_annotation_order_array_secondary.length; i ++){
+        for (let i = 0; i < profile_meta_info_annotation_order_array_secondary.length; i++) {
             let annotation = profile_meta_info_annotation_order_array_secondary[i];
             $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
         }
@@ -207,8 +239,8 @@ $(document).ready(function () {
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
     // We will have a seperate g for each of the samples so that we can plot column by column
     // The pre-med plot will not get init until later.
-    function add_sample_groups_to_bar_svgs(svg_element, sample_list){
-        sample_list.forEach(function(sample){
+    function add_sample_groups_to_bar_svgs(svg_element, sample_list) {
+        sample_list.forEach(function (sample) {
             svg_element.append("g").attr("class", "s" + sample);
         })
     }
@@ -225,12 +257,22 @@ $(document).ready(function () {
     let post_med_bars_exists = false;
     let post_med_init_by_sample_interval = 10;
     //INIT margins, widths and heights for the bar plots
-    let margin = {top: 35, left: 35, bottom: 20, right: 0};
+    let margin = {
+        top: 35,
+        left: 35,
+        bottom: 20,
+        right: 0
+    };
     let seq_prof_width;
     let seq_prof_height;
     let seq_prof_height_modal;
     // margin used for the inverted profile_modal plot
-    let inv_prof_margin = {top: 5, left: 35, bottom: 20, right: 0};
+    let inv_prof_margin = {
+        top: 5,
+        left: 35,
+        bottom: 20,
+        right: 0
+    };
     let x_post_med;
     let y_post_med;
     let xAxis_post_med;
@@ -239,9 +281,9 @@ $(document).ready(function () {
         data_post_med_by_sample = getRectDataPostMEDBySample();
         post_med_bars_exists = true;
         max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
-        if (sorting_keys.includes('profile_based')){
+        if (sorting_keys.includes('profile_based')) {
             sample_list_post = sorted_sample_uid_arrays['profile_based'];
-        }else{
+        } else {
             sample_list_post = sorted_sample_uid_arrays['similarity'];
         }
         // INIT the width and height of the chart
@@ -250,34 +292,34 @@ $(document).ready(function () {
         seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
         // Init x and y scales
         x_post_med = d3.scaleBand()
-		.range([margin.left, seq_prof_width - margin.right])
-		.padding(0.1);
-		y_post_med = d3.scaleLinear()
-        .rangeRound([seq_prof_height - margin.bottom, margin.top]);
+            .range([margin.left, seq_prof_width - margin.right])
+            .padding(0.1);
+        y_post_med = d3.scaleLinear()
+            .rangeRound([seq_prof_height - margin.bottom, margin.top]);
         // Init the axis group
         xAxis_post_med = svg_post_med.append("g")
-        .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-        .attr("id", "x_axis_post_med");
+            .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+            .attr("id", "x_axis_post_med");
         yAxis_post_med = svg_post_med.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_post_med");
+            .attr("transform", `translate(${margin.left},0)`)
+            .attr("id", "y_axis_post_med");
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
-        for (let i = 0; i < sorting_keys.length; i ++){
+        for (let i = 0; i < sorting_keys.length; i++) {
             sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
         // Add the groups per sample for plotting in
         add_sample_groups_to_bar_svgs(svg_post_med, sample_list_post);
         // Call the tool tip
         svg_post_med.call(tip_seqs);
-    }else{
+    } else {
         // Hide the card if the data to populate it doesn't exist
         $("#post_med_card").attr("display", "none");
     }
 
 
 
-    
+
     //PROFILE BARS
     let svg_profile = d3.select("#chart_profile");
     let svg_post_med_modal = d3.select("#chart_post_med_modal");
@@ -298,10 +340,10 @@ $(document).ready(function () {
         data_profile_by_sample = getRectDataProfileBySample();
         profile_bars_exists = true;
         max_y_val_profile = getRectDataProfileBySampleMaxSeq();
-        if (sorting_keys.includes('profile_based')){
+        if (sorting_keys.includes('profile_based')) {
             sample_list_profile = sorted_sample_uid_arrays['profile_based'];
             sample_list_modal = sorted_sample_uid_arrays['profile_based'];
-        }else{
+        } else {
             sample_list_profile = sorted_sample_uid_arrays['similarity'];
             sample_list_modal = sorted_sample_uid_arrays['similarity'];
         }
@@ -317,46 +359,46 @@ $(document).ready(function () {
         seq_prof_height_modal = +svg_post_med_modal.attr("height") - margin.top - margin.bottom;
         // Init x and y scales
         x_profile = d3.scaleBand()
-		.range([margin.left, seq_prof_width - margin.right])
-		.padding(0.1);
-		x_modal = d3.scaleBand()
-		.range([margin.left, seq_prof_width - margin.right])
-		.padding(0.1);
-		y_profile = d3.scaleLinear()
-        .rangeRound([seq_prof_height - margin.bottom, margin.top]);
+            .range([margin.left, seq_prof_width - margin.right])
+            .padding(0.1);
+        x_modal = d3.scaleBand()
+            .range([margin.left, seq_prof_width - margin.right])
+            .padding(0.1);
+        y_profile = d3.scaleLinear()
+            .rangeRound([seq_prof_height - margin.bottom, margin.top]);
         // Y is inverted for the inverted profile plot
-		y_post_modal = d3.scaleLinear()
-        .rangeRound([seq_prof_height_modal - margin.bottom, margin.top]);
-		y_profile_modal = d3.scaleLinear()
-        .rangeRound([inv_prof_margin.top, seq_prof_height_modal - inv_prof_margin.bottom]);
+        y_post_modal = d3.scaleLinear()
+            .rangeRound([seq_prof_height_modal - margin.bottom, margin.top]);
+        y_profile_modal = d3.scaleLinear()
+            .rangeRound([inv_prof_margin.top, seq_prof_height_modal - inv_prof_margin.bottom]);
         // Set up the axes groups
         // Profile
         xAxis_profile = svg_profile.append("g")
-        .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-        .attr("id", "x_axis_profile");
+            .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+            .attr("id", "x_axis_profile");
         yAxis_profile = svg_profile.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_profile");
+            .attr("transform", `translate(${margin.left},0)`)
+            .attr("id", "y_axis_profile");
         // Post-MED modal
         xAxis_post_med_modal = svg_post_med_modal.append("g")
-        .attr("transform", `translate(0,${seq_prof_height_modal - margin.bottom})`)
-        .attr("id", "x_axis_post_med_modal");
+            .attr("transform", `translate(0,${seq_prof_height_modal - margin.bottom})`)
+            .attr("id", "x_axis_post_med_modal");
         yAxis_post_med_modal = svg_post_med_modal.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_post_med_modal");
+            .attr("transform", `translate(${margin.left},0)`)
+            .attr("id", "y_axis_post_med_modal");
         // Profile modal
         // inverted profile modal plot is axis is only moved down by top margin
         xAxis_profile_modal = svg_profile_modal.append("g")
-        .attr("transform", `translate(0,${inv_prof_margin.top})`)
-        .attr("id", "x_axis_profile_modal");
+            .attr("transform", `translate(0,${inv_prof_margin.top})`)
+            .attr("id", "x_axis_profile_modal");
         yAxis_profile_modal = svg_profile_modal.append("g")
-		.attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_profile_modal");
+            .attr("transform", `translate(${margin.left},0)`)
+            .attr("id", "y_axis_profile_modal");
 
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate_profile = $("#profile_card").find(".svg_sort_by");
         let sort_dropdown_to_populate_modal = $("#seq-prof-modal").find(".svg_sort_by");
-        for (let i = 0; i < sorting_keys.length; i ++){
+        for (let i = 0; i < sorting_keys.length; i++) {
             sort_dropdown_to_populate_profile.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
             sort_dropdown_to_populate_modal.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
@@ -368,7 +410,7 @@ $(document).ready(function () {
         svg_post_med_modal.call(tip_seqs);
         svg_profile.call(tip_profiles);
         svg_profile_modal.call(tip_profiles);
-    }else{
+    } else {
         // Hide the card if the data to populate it doesn't exist
         $("#profile_card").attr("display", "none");
         // if the profile data doesn't exist then we don't have need for the modal so we should hide
@@ -393,23 +435,23 @@ $(document).ready(function () {
         data_pre_med_by_sample = getRectDataPreMEDBySample();
         pre_med_bars_exists = true;
         max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
-        if (sorting_keys.includes('profile_based')){
+        if (sorting_keys.includes('profile_based')) {
             sample_list_pre = sorted_sample_uid_arrays['profile_based'];
-        }else{
+        } else {
             sample_list_pre = sorted_sample_uid_arrays['similarity'];
         }
-        if (sorting_keys.includes('profile_based')){
+        if (sorting_keys.includes('profile_based')) {
             sample_list_pre = sorted_sample_uid_arrays['profile_based'];
-        }else{
+        } else {
             sample_list_pre = sorted_sample_uid_arrays['similarity'];
         }
         $("#pre_med_card").find(".seq_prof_chart").attr("width", ((sample_list_pre.length * 13) + 70).toString());
         // INIT the drop down with the sample sorting categories we have available
         let sort_dropdown_to_populate = $("#pre_med_card").find(".svg_sort_by");
-        for (let i = 0; i < sorting_keys.length; i ++){
+        for (let i = 0; i < sorting_keys.length; i++) {
             sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
         }
-    }else{
+    } else {
         // Hide the card if the data to populate it doesn't exist
         $("#pre_med_card").attr("display", "none");
     }
@@ -423,11 +465,12 @@ $(document).ready(function () {
     // Because this dataset is going to be used in the inverted modal plot we need to
     // remove the cummulative y values that have been added to the above
     let data_profile_inv_by_sample = getRectDataProfileBySample();
-    function processProfileInvData(data){
+
+    function processProfileInvData(data) {
         // For each sample in the data
-        Object.keys(data).forEach(function (dkey){
+        Object.keys(data).forEach(function (dkey) {
             // First check to see if there are any rectangles for this sample
-            if (data[dkey].length == 0){
+            if (data[dkey].length == 0) {
                 return;
             }
 
@@ -436,7 +479,7 @@ $(document).ready(function () {
             // for each next element we can set it to the y of the element that is n-1
             new_y_rel = 0;
             new_y_abs = 0;
-            for (j = 0; j < data[dkey].length; j++){
+            for (j = 0; j < data[dkey].length; j++) {
                 old_y_rel = data[dkey][j]["y_rel"];
                 old_y_abs = data[dkey][j]["y_abs"];
                 data[dkey][j]["y_rel"] = new_y_rel;
@@ -464,22 +507,30 @@ $(document).ready(function () {
     let btwn_profile_color_categories = ["profile_identity", "local_abundance", "db_abundance"]
     // We don't want to allow sorting by host or location if we don't have data for these. We can check to see if
     // there is data for these by looking to see if there are sorting arrays for them.
-    if (!(sorting_keys.includes("taxa_string"))){
-        btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("host"),1);
+    if (!(sorting_keys.includes("taxa_string"))) {
+        btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("host"), 1);
     }
-    if (!(sorting_keys.includes("lat_lon"))){
-        btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("location"),1);
+    if (!(sorting_keys.includes("lat_lon"))) {
+        btwn_sample_color_categories.splice(btwn_sample_color_categories.indexOf("location"), 1);
     }
-    let btwn_sample_c_cat_key = {"host":"taxa_string", "location":"lat_lon", "post_med_seqs_absolute":"post_med_absolute", "post_med_seqs_unique":"post_med_unique"};
-    let btwn_profile_c_cat_key = {"local_abundance":"local_abund", "db_abundance":"db_abund"};
+    let btwn_sample_c_cat_key = {
+        "host": "taxa_string",
+        "location": "lat_lon",
+        "post_med_seqs_absolute": "post_med_absolute",
+        "post_med_seqs_unique": "post_med_unique"
+    };
+    let btwn_profile_c_cat_key = {
+        "local_abundance": "local_abund",
+        "db_abundance": "db_abund"
+    };
 
     let color_dropdown_to_populate = $("#between_sample_distances").find(".color_select");
-    for (let i = 0; i < btwn_sample_color_categories.length; i ++){
+    for (let i = 0; i < btwn_sample_color_categories.length; i++) {
         color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_sample_color_categories[i]}>${btwn_sample_color_categories[i]}</a>`);
     }
 
     color_dropdown_to_populate = $("#between_profile_distances").find(".color_select");
-    for (let i = 0; i < btwn_profile_color_categories.length; i ++){
+    for (let i = 0; i < btwn_profile_color_categories.length; i++) {
         color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_profile_color_categories[i]}>${btwn_profile_color_categories[i]}</a>`);
     }
 
@@ -498,19 +549,19 @@ $(document).ready(function () {
     let profile_db_abund_c_scale;
     let profile_idenity_c_scale;
 
-    function make_categorical_color_scale_btwn_sample(cat_name){
+    function make_categorical_color_scale_btwn_sample(cat_name) {
         let key_name = btwn_sample_c_cat_key[cat_name];
         //need to get the list of taxa string
         let cats_array = [];
-        Object.keys(sample_meta_info).forEach(function(k){
+        Object.keys(sample_meta_info).forEach(function (k) {
             let cat;
-            if (cat_name == "location"){
+            if (cat_name == "location") {
                 cat = sample_meta_info[k]["lat"] + ';' + sample_meta_info[k]["lat"];
-            }else{
+            } else {
                 cat = sample_meta_info[k][key_name];
             }
 
-            if (!(cats_array.includes(cat))){
+            if (!(cats_array.includes(cat))) {
                 cats_array.push(cat);
             }
         });
@@ -519,38 +570,38 @@ $(document).ready(function () {
         return c_var = d3.scaleOrdinal().domain(cats_array).range(d3.schemeSet3);
     }
 
-    function make_quantitative_color_scale_btwn_sample(cat_name){
+    function make_quantitative_color_scale_btwn_sample(cat_name) {
         let key_name = btwn_sample_c_cat_key[cat_name];
         //need to get the list of taxa string
         let values = [];
-        Object.keys(sample_meta_info).forEach(function(k){
+        Object.keys(sample_meta_info).forEach(function (k) {
             values.push(sample_meta_info[k][key_name]);
         });
         let max_val = Math.max(...values);
         let min_val = Math.min(...values);
         // here we have a unique list of the 'host' values
         // now create the colour scale for it
-        return d3.scaleLinear().domain([min_val,max_val]).range(["blue", "red"]);
+        return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
     }
 
-    function make_quantitative_color_scale_btwn_profile(cat_name){
+    function make_quantitative_color_scale_btwn_profile(cat_name) {
         let key_name = btwn_profile_c_cat_key[cat_name];
         //need to get the list of taxa string
         let values = [];
-        Object.keys(profile_meta_info).forEach(function(k){
+        Object.keys(profile_meta_info).forEach(function (k) {
             values.push(profile_meta_info[k][key_name]);
         });
         let max_val = Math.max(...values);
         let min_val = Math.min(...values);
         // here we have a unique list of the 'host' values
         // now create the colour scale for it
-        return d3.scaleLinear().domain([min_val,max_val]).range(["blue", "red"]);
+        return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
     }
 
-    if (btwn_sample_color_categories.includes("host")){
+    if (btwn_sample_color_categories.includes("host")) {
         host_c_scale = make_categorical_color_scale_btwn_sample("host");
     }
-    if (btwn_sample_color_categories.includes("location")){
+    if (btwn_sample_color_categories.includes("location")) {
         location_c_scale = make_categorical_color_scale_btwn_sample("location");
     }
     post_med_absolute_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_absolute");
@@ -575,14 +626,17 @@ $(document).ready(function () {
     let dist_height = +svg_btwn_sample_dist.attr("height") - margin.top - margin.bottom;
     // Set up the zoom object (one for all dist plots)
     let zoom = d3.zoom()
-    .scaleExtent([.5, 20])  // This control how much you can unzoom (x0.5) and zoom (x20)
-    .extent([[0, 0], [dist_width, dist_height]])
-    .on("zoom", update_dist_plot_zoom);
+        .scaleExtent([.5, 20]) // This control how much you can unzoom (x0.5) and zoom (x20)
+        .extent([
+            [0, 0],
+            [dist_width, dist_height]
+        ])
+        .on("zoom", update_dist_plot_zoom);
     // Setup the tool tip
     //Dist plot tool tip
     let dist_tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip")
-    .style("visibility", "hidden");
+        .attr("class", "tooltip")
+        .style("visibility", "hidden");
     let sample_list_btwn_sample_dist = {};
     let scatter_btwn_sample;
     if (typeof getBtwnSampleDistCoordsBC === "function") {
@@ -592,49 +646,49 @@ $(document).ready(function () {
         available_pcs_btwn_samples = getBtwnSampleDistPCAvailableBC();
         btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
         btwn_sample_data_available = true;
-    }else if(typeof getBtwnProfileDistCoordsUF === "function"){
+    } else if (typeof getBtwnProfileDistCoordsUF === "function") {
         // use the unifrac objects
         btwn_sample_genera_coords_data = getBtwnSampleDistCoordsUF();
         btwn_sample_genera_pc_variances = getBtwnSampleDistPCVariancesUF();
         available_pcs_btwn_samples = getBtwnSampleDistPCAvailableUF();
         btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
         btwn_sample_data_available = true;
-    }else{
+    } else {
         // btwn_sample data not available
         // make display none for the btwn sample card
         $("#between_sample_distances").attr("display", "none");
     }
-    if (btwn_sample_data_available){
+    if (btwn_sample_data_available) {
         x_btwn_sample = d3.scaleLinear()
-		.range([margin.left, dist_width - margin.right]);
-		y_btwn_sample = d3.scaleLinear()
-        .rangeRound([dist_height - margin.bottom, margin.top]);
+            .range([margin.left, dist_width - margin.right]);
+        y_btwn_sample = d3.scaleLinear()
+            .rangeRound([dist_height - margin.bottom, margin.top]);
         init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
         // setup the group for holding the axes
         xAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
-        .attr("transform", `translate(0,${dist_height - margin.bottom})`)
-        .attr("id", "x_axis_btwn_sample");
+            .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+            .attr("id", "x_axis_btwn_sample");
         yAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
-        .attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_btwn_sample");
+            .attr("transform", `translate(${margin.left},0)`)
+            .attr("id", "y_axis_btwn_sample");
         // Init btwn sample sample list
-        for (let i = 0; i < btwn_sample_genera_array.length; i++){
+        for (let i = 0; i < btwn_sample_genera_array.length; i++) {
             let genera = btwn_sample_genera_array[i];
             sample_list_btwn_sample_dist[genera] = Object.keys(btwn_sample_genera_coords_data[genera]);
         }
         // Add a clip
         svg_btwn_sample_dist.append("defs").append("clipPath")
-        .attr("id", "sample_clip")
-        .append("rect")
-        .attr("width", dist_width - margin.right - margin.left)
-        .attr("height", dist_height - margin.bottom - margin.top)
-        .attr("x", margin.left)
-        .attr("y", margin.top);
+            .attr("id", "sample_clip")
+            .append("rect")
+            .attr("width", dist_width - margin.right - margin.left)
+            .attr("height", dist_height - margin.bottom - margin.top)
+            .attr("x", margin.left)
+            .attr("y", margin.top);
 
         // This is the group where we will do the drawing and that has the above
         // clipping mask applied to it
         scatter_btwn_sample = svg_btwn_sample_dist.append('g')
-        .attr("clip-path", "url(#sample_clip)")
+            .attr("clip-path", "url(#sample_clip)")
 
         // Call zoom
         svg_btwn_sample_dist.call(zoom);
@@ -644,7 +698,7 @@ $(document).ready(function () {
     //DATA for btwn profiles
     let svg_btwn_profile_dist = d3.select("#chart_btwn_profile");
     let btwn_profile_data_available = false;
-    let btwn_profile_genera_coords_data ;
+    let btwn_profile_genera_coords_data;
     let btwn_profile_genera_pc_variances;
     let available_pcs_btwn_profiles;
     let btwn_profile_genera_array;
@@ -661,49 +715,49 @@ $(document).ready(function () {
         available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableBC();
         btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
         btwn_profile_data_available = true;
-    }else if(typeof getBtwnProfileDistCoordsUF === "function"){
+    } else if (typeof getBtwnProfileDistCoordsUF === "function") {
         // use the unifrac objects
         btwn_profile_genera_coords_data = getBtwnProfileDistCoordsUF();
         btwn_profile_genera_pc_variances = getBtwnProfileDistPCVariancesUF();
         available_pcs_btwn_profiles = getBtwnProfileDistPCAvailableUF();
         btwn_profile_genera_array = Object.keys(btwn_profile_genera_coords_data);
         btwn_profile_data_available = true;
-    }else{
+    } else {
         // btwn_sample data not available
         // make display none for the btwn sample card
         $("#between_sample_distances").attr("display", "none");
     }
-    if (btwn_profile_data_available){
+    if (btwn_profile_data_available) {
         x_btwn_profile = d3.scaleLinear()
-		.range([margin.left, dist_width - margin.right]);
-		y_btwn_profile = d3.scaleLinear()
-        .rangeRound([dist_height - margin.bottom, margin.top]);
+            .range([margin.left, dist_width - margin.right]);
+        y_btwn_profile = d3.scaleLinear()
+            .rangeRound([dist_height - margin.bottom, margin.top]);
         init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
         // The group for holding the axes
         xAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
-        .attr("transform", `translate(0,${dist_height - margin.bottom})`)
-        .attr("id", "x_axis_btwn_profile");
+            .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+            .attr("id", "x_axis_btwn_profile");
         yAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
-        .attr("transform", `translate(${margin.left},0)`)
-        .attr("id", "y_axis_btwn_profile");
+            .attr("transform", `translate(${margin.left},0)`)
+            .attr("id", "y_axis_btwn_profile");
         // Init the btwn_sample profile list
-        for (let i = 0; i < btwn_profile_genera_array.length; i++){
+        for (let i = 0; i < btwn_profile_genera_array.length; i++) {
             let genera = btwn_profile_genera_array[i];
             sample_list_btwn_profile_dist[genera] = Object.keys(btwn_profile_genera_coords_data[genera]);
         }
         // Add a clip
         svg_btwn_profile_dist.append("defs").append("clipPath")
-        .attr("id", "profile_clip")
-        .append("rect")
-        .attr("width", dist_width - margin.right - margin.left)
-        .attr("height", dist_height - margin.bottom - margin.top)
-        .attr("x", margin.left)
-        .attr("y", margin.top);
+            .attr("id", "profile_clip")
+            .append("rect")
+            .attr("width", dist_width - margin.right - margin.left)
+            .attr("height", dist_height - margin.bottom - margin.top)
+            .attr("x", margin.left)
+            .attr("y", margin.top);
 
         // This is the group where we will do the drawing and that has the above
         // clipping mask applied to it
         scatter_btwn_profile = svg_btwn_profile_dist.append('g')
-        .attr("clip-path", "url(#profile_clip)")
+            .attr("clip-path", "url(#profile_clip)")
 
         svg_btwn_profile_dist.call(zoom);
     }
@@ -712,7 +766,7 @@ $(document).ready(function () {
     // Init the text value of the genera_identifier in each of the distance plots
     // INIT the genera drop down
     // INIT the PC drop down
-    function init_genera_pc_dropdown_dist_plots(card_id, genera_present, pcs_available){
+    function init_genera_pc_dropdown_dist_plots(card_id, genera_present, pcs_available) {
         let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
         let card_element = $(card_id);
         let first_genera_present;
@@ -720,12 +774,12 @@ $(document).ready(function () {
             // init the genera_indentifier with the first of the genera in the genera_array that we have data for
             // We only want to do this for the first genera that we find so we check whether the data-genera attribute
             // already has been set or not.
-            if (genera_present.includes(genera_array[j])){
+            if (genera_present.includes(genera_array[j])) {
                 let attr = card_element.find(".genera_identifier").attr("data-genera");
                 if (typeof attr !== typeof undefined && attr !== false) {
                     // then already set. just add genera link
                     card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;" data-genera="${genera_array[j]}">${genera_array[j]}</a>`);
-                }else{
+                } else {
                     // then genera_identifier not set
                     card_element.find(".genera_identifier").text(genera_array[j]);
                     card_element.find(".genera_identifier").attr("data-genera", genera_array[j]);
@@ -738,7 +792,7 @@ $(document).ready(function () {
         }
         let pcs_available_genera = pcs_available[first_genera_present];
         // Skip the first PC as we don't want PC1 in the options
-        for (let j = 1; j < pcs_available_genera.length; j++){
+        for (let j = 1; j < pcs_available_genera.length; j++) {
             card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available_genera[j]}">${pcs_available_genera[j]}</a>`)
         }
     }
@@ -753,22 +807,26 @@ $(document).ready(function () {
     // the property that we are colouring by.
     let seq_color = getSeqColor();
     let seq_names = Object.keys(seq_color);
-    let seq_colors = seq_names.map(function(seq_name){return seq_color[seq_name]});
+    let seq_colors = seq_names.map(function (seq_name) {
+        return seq_color[seq_name]
+    });
     let sequence_color_scale = d3.scaleOrdinal().domain(seq_names).range(seq_colors);
 
     let prof_color = getProfColor();
     let prof_names = Object.keys(prof_color);
-    let prof_colors = seq_names.map(function(seq_name){return seq_color[seq_name]});
+    let prof_colors = seq_names.map(function (seq_name) {
+        return seq_color[seq_name]
+    });
     let profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);
 
 
     // INIT the post-MED and profile plots modal and normal.
     let data_type;
-    if ($("#PostMEDAbsDType").hasClass("btn-primary")){
-            data_type = 'absolute';
-        } else if ($("#PostMEDRelDType").hasClass("btn-primary")){
-            data_type = 'relative';
-        }
+    if ($("#PostMEDAbsDType").hasClass("btn-primary")) {
+        data_type = 'absolute';
+    } else if ($("#PostMEDRelDType").hasClass("btn-primary")) {
+        data_type = 'relative';
+    }
 
     // We have to init the modal plots once the modal has been opened (see listener below)
     // So that we can get the size of the label text and adjust the text accordingly.
@@ -785,15 +843,15 @@ $(document).ready(function () {
     update_dist_plot("#chart_btwn_profile");
 
     // Functions for doing the init and updating of the d3 bar plots
-    function update_bar_plot_by_sample(data_type, pre_post_profile, sample_list, init_sample_interval){
+    function update_bar_plot_by_sample(data_type, pre_post_profile, sample_list, init_sample_interval) {
         // Update the domains first
         update_axis_domains_by_sample(data_type, pre_post_profile)
         // then plot the bars sample by sample
         cum_time = 0
-        for(let i = 0; i < sample_list.length; i++){
-             setTimeout(update_by_sample, i * init_sample_interval, sample_list[i],
-             data_type, init_sample_interval, pre_post_profile);
-             cum_time += init_sample_interval;
+        for (let i = 0; i < sample_list.length; i++) {
+            setTimeout(update_by_sample, i * init_sample_interval, sample_list[i],
+                data_type, init_sample_interval, pre_post_profile);
+            cum_time += init_sample_interval;
         }
         // Now draw the axis last so that they are on top of the bars
         // we can then use a transition .on event to call the centering of the labels
@@ -801,51 +859,51 @@ $(document).ready(function () {
 
         // Finally if this is the inv profile modal plot we need to draw on the path manually
         // as the bars are obscuring it for some reason
-        if (pre_post_profile == "profile-modal"){
+        if (pre_post_profile == "profile-modal") {
             let d_str = "M" + (inv_prof_margin.left + 0.5).toString() +
-            "," + (inv_prof_margin.top + 0.5).toString() + "H" +
-            (+svg_post_med.attr("width") - inv_prof_margin.left - inv_prof_margin.right + 0.5).toString();
+                "," + (inv_prof_margin.top + 0.5).toString() + "H" +
+                (+svg_post_med.attr("width") - inv_prof_margin.left - inv_prof_margin.right + 0.5).toString();
 
             svg_profile_modal.append("path").attr("stroke", "black").attr("d", d_str);
         }
     }
 
-    function update_axis_domains_by_sample(data_type, pre_post_profile){
+    function update_axis_domains_by_sample(data_type, pre_post_profile) {
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
         let y;
         let x;
         let max_y;
         let sample_list;
-        if (pre_post_profile == "post"){
+        if (pre_post_profile == "post") {
             y = y_post_med;
             x = x_post_med;
             max_y = max_y_val_post_med;
             sample_list = sample_list_post;
-        }else if (pre_post_profile == "post-modal"){
+        } else if (pre_post_profile == "post-modal") {
             y = y_post_modal;
             x = x_modal;
             max_y = max_y_val_post_med;
             sample_list = sample_list_modal;
-        }else if (pre_post_profile == "pre"){
+        } else if (pre_post_profile == "pre") {
             y = y_pre_med;
             x = x_pre_med;
             max_y = max_y_val_pre_med;
             sample_list = sample_list_pre;
-        }else if (pre_post_profile == "profile"){
+        } else if (pre_post_profile == "profile") {
             y = y_profile;
             x = x_profile;
             max_y = max_y_val_profile;
             sample_list = sample_list_profile;
-        }else if (pre_post_profile == "profile-modal"){
+        } else if (pre_post_profile == "profile-modal") {
             y = y_profile_modal;
             x = x_profile;
             max_y = max_y_val_profile;
             sample_list = sample_list_modal;
         }
 
-        if (data_type == "absolute"){
+        if (data_type == "absolute") {
             y.domain([0, max_y]).nice();
-        }else{
+        } else {
             y.domain([0, 1]).nice();
         }
 
@@ -854,37 +912,37 @@ $(document).ready(function () {
 
     }
 
-    function update_by_sample(col_sample, data_type, speed, pre_post_profile){
+    function update_by_sample(col_sample, data_type, speed, pre_post_profile) {
 
         let svg;
         let data_by_sample;
         let delay = 0.1;
         let col_scale;
         let x_key = sample_meta_info[col_sample]["name"];
-        if (pre_post_profile == "post-modal"){
+        if (pre_post_profile == "post-modal") {
             data_by_sample = data_post_med_by_sample;
             svg = svg_post_med_modal;
             x = x_modal;
             y = y_post_modal;
             col_scale = sequence_color_scale;
-        }else if (pre_post_profile == "post"){
+        } else if (pre_post_profile == "post") {
             data_by_sample = data_post_med_by_sample;
             svg = svg_post_med;
             x = x_post_med;
             y = y_post_med;
             col_scale = sequence_color_scale;
-        }else if (pre_post_profile == "pre"){
+        } else if (pre_post_profile == "pre") {
             svg = svg_pre_med;
             data_by_sample = data_pre_med_by_sample;
             x = x_pre_med;
             y = y_pre_med;
-        }else if (pre_post_profile == "profile"){
+        } else if (pre_post_profile == "profile") {
             svg = svg_profile;
             data_by_sample = data_profile_by_sample;
             x = x_profile;
             y = y_profile;
             col_scale = profile_color_scale;
-        }else if (pre_post_profile == "profile-modal"){
+        } else if (pre_post_profile == "profile-modal") {
             svg = svg_profile_modal;
             data_by_sample = data_profile_inv_by_sample;
             x = x_profile;
@@ -892,12 +950,12 @@ $(document).ready(function () {
             col_scale = profile_color_scale;
         }
 
-        let bars = svg.select("g.s" + col_sample).selectAll("rect").data(data_by_sample[col_sample], function(d){
+        let bars = svg.select("g.s" + col_sample).selectAll("rect").data(data_by_sample[col_sample], function (d) {
             // In theory because we're working on a sample by sample basis now we should be able to work with just the
             // the seq name as key. But for the time being we'll keep the key as it is.
-            if (pre_post_profile == "profile" || pre_post_profile == "profile-modal"){
+            if (pre_post_profile == "profile" || pre_post_profile == "profile-modal") {
                 return d.profile_name;
-            }else{
+            } else {
                 return d.seq_name;
             }
 
@@ -906,44 +964,50 @@ $(document).ready(function () {
         bars.exit().remove()
 
         let abbr;
-        if (data_type == 'absolute'){
+        if (data_type == 'absolute') {
             //if 'absolute' then use the abbreviation 'abs' for getting the attributes
             abbr = 'abs'
-        }else if (data_type == 'relative'){
+        } else if (data_type == 'relative') {
             // if 'relative' then use the abbreviation 'rel' for getting the attributes
             abbr = 'rel'
         }
 
-        if (pre_post_profile == "profile-modal"){
-            bars.transition().duration(speed).attr("x", function(d){
+        if (pre_post_profile == "profile-modal") {
+            bars.transition().duration(speed).attr("x", function (d) {
                 return x(col_sample);
-            }).attr("y", function(d){
+            }).attr("y", function (d) {
                 return y(+d["y_" + abbr]);
-            }).attr("width", x.bandwidth()).attr("height", function(d){
+            }).attr("width", x.bandwidth()).attr("height", function (d) {
                 return Math.max(y(+d["height_" + abbr]), 1);
-            }).attr("fill", function(d){
+            }).attr("fill", function (d) {
                 return col_scale(d.profile_name);
-            }).delay(function(d,i){return(i*delay)});
-        }else if (pre_post_profile == "profile"){
-            bars.transition().duration(speed).attr("x", function(d){
+            }).delay(function (d, i) {
+                return (i * delay)
+            });
+        } else if (pre_post_profile == "profile") {
+            bars.transition().duration(speed).attr("x", function (d) {
                 return x(col_sample);
-            }).attr("y", function(d){
+            }).attr("y", function (d) {
                 return y(+d["y_" + abbr]);
-            }).attr("width", x.bandwidth()).attr("height", function(d){
+            }).attr("width", x.bandwidth()).attr("height", function (d) {
                 return Math.max(y(0) - y(+d["height_" + abbr]), 1);
-            }).attr("fill", function(d){
+            }).attr("fill", function (d) {
                 return col_scale(d.profile_name);
-            }).delay(function(d,i){return(i*delay)});
-        }else{
-            bars.transition().duration(speed).attr("x", function(d){
+            }).delay(function (d, i) {
+                return (i * delay)
+            });
+        } else {
+            bars.transition().duration(speed).attr("x", function (d) {
                 return x(col_sample);
-            }).attr("y", function(d){
+            }).attr("y", function (d) {
                 return y(+d["y_" + abbr]);
-            }).attr("width", x.bandwidth()).attr("height", function(d){
+            }).attr("width", x.bandwidth()).attr("height", function (d) {
                 return Math.max(y(0) - y(+d["height_" + abbr]), 1);
-            }).attr("fill", function(d){
+            }).attr("fill", function (d) {
                 return col_scale(d.seq_name);
-            }).delay(function(d,i){return(i*delay)});
+            }).delay(function (d, i) {
+                return (i * delay)
+            });
         }
 
 
@@ -951,109 +1015,109 @@ $(document).ready(function () {
         // https://stackoverflow.com/questions/44495524/d3-transition-not-working-with-events?rq=1
         // We need to have separate updates for each of the profile, profile-modal and all others,
         // ys that we will be using and the tips that we will be showing.
-        if (pre_post_profile == "profile"){
+        if (pre_post_profile == "profile") {
             bars.enter().append("rect")
-            .attr("x", function(d){
-                return x(col_sample);
-            }).attr("y", y(0)).on('mouseover', function(d){
-                tip_profiles.show(d);
-                d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
-                let profile_data_series = profile_meta_info[profile_uid.toString()];
-                $(this).closest(".plot_item").find(".profile_meta_item").each(function(){
+                .attr("x", function (d) {
+                    return x(col_sample);
+                }).attr("y", y(0)).on('mouseover', function (d) {
+                    tip_profiles.show(d);
+                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                    let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
+                    let profile_data_series = profile_meta_info[profile_uid.toString()];
+                    $(this).closest(".plot_item").find(".profile_meta_item").each(function () {
                         $(this).text(profile_data_series[$(this).attr("data-key")]);
                     });
-                $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
-            })
-            .on('mouseout', function(d){
-                tip_profiles.hide(d);
-                d3.select(this).attr("style", null);
-            }).transition().duration(1000).attr("y", function(d){
-                return y(+d["y_" + abbr]);
-            }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(0) - y(+d["height_" + abbr]), 1);}
-            ).attr("fill", function(d){
-                return col_scale(d.profile_name);
-            });
-        }else if(pre_post_profile == "profile-modal"){
+                    $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
+                })
+                .on('mouseout', function (d) {
+                    tip_profiles.hide(d);
+                    d3.select(this).attr("style", null);
+                }).transition().duration(1000).attr("y", function (d) {
+                    return y(+d["y_" + abbr]);
+                }).attr("width", x.bandwidth()).attr("height", function (d) {
+                    return Math.max(y(0) - y(+d["height_" + abbr]), 1);
+                }).attr("fill", function (d) {
+                    return col_scale(d.profile_name);
+                });
+        } else if (pre_post_profile == "profile-modal") {
             bars.enter().append("rect")
-            .attr("x", function(d){
-                return x(col_sample);
-            }).attr("y", y(0)).on('mouseover', function(d){
-                tip_profiles.show(d);
-                d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
-                let profile_data_series = profile_meta_info[profile_uid.toString()];
-                $(this).closest(".plot_item").find(".profile_meta_item").each(function(){
+                .attr("x", function (d) {
+                    return x(col_sample);
+                }).attr("y", y(0)).on('mouseover', function (d) {
+                    tip_profiles.show(d);
+                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                    let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
+                    let profile_data_series = profile_meta_info[profile_uid.toString()];
+                    $(this).closest(".plot_item").find(".profile_meta_item").each(function () {
                         $(this).text(profile_data_series[$(this).attr("data-key")]);
                     });
-                $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
-            })
-            .on('mouseout', function(d){
-                tip_profiles.hide(d);
-                d3.select(this).attr("style", null);
-            }).transition().duration(1000).attr("y", function(d){
-                return y(+d["y_" + abbr]);
-            }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(+d["height_" + abbr]), 1);
-            }).attr("fill", function(d){
-                return col_scale(d.profile_name);
-            });
-        }else{
+                    $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
+                })
+                .on('mouseout', function (d) {
+                    tip_profiles.hide(d);
+                    d3.select(this).attr("style", null);
+                }).transition().duration(1000).attr("y", function (d) {
+                    return y(+d["y_" + abbr]);
+                }).attr("width", x.bandwidth()).attr("height", function (d) {
+                    return Math.max(y(+d["height_" + abbr]), 1);
+                }).attr("fill", function (d) {
+                    return col_scale(d.profile_name);
+                });
+        } else {
             bars.enter().append("rect")
-            .attr("x", function(d){
-                return x(col_sample);
-            }).attr("y", y(0)).on('mouseover', function(d){
-                tip_seqs.show(d);
-                d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-            })
-            .on('mouseout', function(d){
-                tip_seqs.hide(d);
-                d3.select(this).attr("style", null);
-            }).transition().duration(1000).attr("y", function(d){
-                return y(+d["y_" + abbr]);
-            }).attr("width", x.bandwidth()).attr("height", function(d){
-                return Math.max(y(0) - y(+d["height_" + abbr]), 1);}
-            ).attr("fill", function(d){
-                return col_scale(d.seq_name);
-            });
+                .attr("x", function (d) {
+                    return x(col_sample);
+                }).attr("y", y(0)).on('mouseover', function (d) {
+                    tip_seqs.show(d);
+                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                })
+                .on('mouseout', function (d) {
+                    tip_seqs.hide(d);
+                    d3.select(this).attr("style", null);
+                }).transition().duration(1000).attr("y", function (d) {
+                    return y(+d["y_" + abbr]);
+                }).attr("width", x.bandwidth()).attr("height", function (d) {
+                    return Math.max(y(0) - y(+d["height_" + abbr]), 1);
+                }).attr("fill", function (d) {
+                    return col_scale(d.seq_name);
+                });
         }
     }
 
-    var ellipse_axis_labels = function() {
+    var ellipse_axis_labels = function () {
         var self = d3.select(this),
-          textLength = self.node().getComputedTextLength(),
-          text = self.text();
+            textLength = self.node().getComputedTextLength(),
+            text = self.text();
         while (textLength > (70) && text.length > 0) {
-          text = text.slice(0, -1);
-          self.text(text + '...');
-          textLength = self.node().getComputedTextLength();
+            text = text.slice(0, -1);
+            self.text(text + '...');
+            textLength = self.node().getComputedTextLength();
         }
-      };
+    };
 
-    function call_axes(speed, pre_post_profile){
+    function call_axes(speed, pre_post_profile) {
         // Update the Y scale's domain depending on whether we are doing absolute or relative data_type
-        if (pre_post_profile == "post"){
+        if (pre_post_profile == "post") {
             y = y_post_med;
             x = x_post_med;
             y_axis_id = "#y_axis_post_med";
             x_axis_id = "#x_axis_post_med";
-        }else if (pre_post_profile == "post-modal"){
+        } else if (pre_post_profile == "post-modal") {
             y = y_post_modal;
             x = x_modal;
             y_axis_id = "#y_axis_post_med_modal";
             x_axis_id = "#x_axis_post_med_modal";
-        }else if (pre_post_profile == "pre"){
+        } else if (pre_post_profile == "pre") {
             y = y_pre_med;
             x = x_pre_med;
             y_axis_id = "#y_axis_pre_med";
             x_axis_id = "#x_axis_pre_med";
-        }else if (pre_post_profile == "profile"){
+        } else if (pre_post_profile == "profile") {
             y = y_profile;
             x = x_profile;
             y_axis_id = "#y_axis_profile";
             x_axis_id = "#x_axis_profile";
-        }else if (pre_post_profile == "profile-modal"){
+        } else if (pre_post_profile == "profile-modal") {
             y = y_profile_modal;
             x = x_profile;
             y_axis_id = "#y_axis_profile_modal";
@@ -1062,45 +1126,45 @@ $(document).ready(function () {
 
         // Call the y axis
         d3.select(y_axis_id)
-        .transition()
-        .duration(speed)
-        .call(d3.axisLeft(y).ticks(null, "s"));
+            .transition()
+            .duration(speed)
+            .call(d3.axisLeft(y).ticks(null, "s"));
 
         // Call the x axis
-        if (pre_post_profile == "profile-modal"){
+        if (pre_post_profile == "profile-modal") {
             // Axis with ticks above and no text
             d3.select(x_axis_id).transition().duration(speed)
-                    .call(d3.axisTop(x).tickSizeOuter(0));
+                .call(d3.axisTop(x).tickSizeOuter(0));
 
-        }else if (pre_post_profile == "post-modal") {
+        } else if (pre_post_profile == "post-modal") {
             // Axis with the centered labels
             // Has callback to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
-                    .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-                    .style("text-anchor", "start")
-                    .on("end", ellipse_axis_labels);
-        }else{
+                .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
+                .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+                .style("text-anchor", "start")
+                .on("end", ellipse_axis_labels);
+        } else {
             // The regular axis with ticks and text below
             // no call back to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                    .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
-                    .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-                    .style("text-anchor", "start").on("end", ellipse_axis_labels);
+                .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
+                .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+                .style("text-anchor", "start").on("end", ellipse_axis_labels);
         }
 
         // Listener to highlight sample names on mouse over.
         // Not needed for the post-2
-        if (pre_post_profile !== "profile-modal"){
-            let ticks = d3.select(x_axis_id).selectAll(".tick")._groups[0].forEach(function(d1){
-                d3.select(d1).on("mouseover", function(){
+        if (pre_post_profile !== "profile-modal") {
+            let ticks = d3.select(x_axis_id).selectAll(".tick")._groups[0].forEach(function (d1) {
+                d3.select(d1).on("mouseover", function () {
                     d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
                     let sample_uid = this.__data__;
                     let sample_data_series = sample_meta_info[sample_uid];
-                    $(this).closest(".plot_item").find(".sample_meta_item").each(function(){
+                    $(this).closest(".plot_item").find(".sample_meta_item").each(function () {
                         $(this).text(sample_data_series[$(this).attr("data-key")]);
                     })
-                }).on("mouseout", function(){
+                }).on("mouseout", function () {
                     d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
                 })
             })
@@ -1108,7 +1172,7 @@ $(document).ready(function () {
     }
 
     // Functions for doing the init and updating of the d3 dist plots
-    function update_dist_plot(dist_plot_id){
+    function update_dist_plot(dist_plot_id) {
         let svg;
         let scatter;
         let coords;
@@ -1133,7 +1197,7 @@ $(document).ready(function () {
 
         //TODO this will need updating to include the profile distances and the modals
         // but to save dev time we will try to get the scatter working with just this one first
-        switch(dist_plot_id){
+        switch (dist_plot_id) {
             // I think we should simplify the data here according to the various selections that have been made
             // The first will be to look at genera, then PC. The colour will be done using the colour scale eventually
             // but first I will just do this as black and we can dev this later.
@@ -1159,7 +1223,7 @@ $(document).ready(function () {
                 meta_item_type = ".sample_meta_item"
                 // Get the correct btwn sample c_scale to be used. We get this from the
                 col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
-                switch(col_key){
+                switch (col_key) {
                     case "host":
                         c_scale = host_c_scale;
                         c_property = btwn_sample_c_cat_key["host"];
@@ -1198,7 +1262,7 @@ $(document).ready(function () {
                 meta_item_type = ".profile_meta_item"
                 // Get the correct btwn profile c_scale to be used. We get this from the
                 col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
-                switch(col_key){
+                switch (col_key) {
                     case "local_abundance":
                         c_scale = profile_local_abund_c_scale;
                         c_property = btwn_profile_c_cat_key["local_abundance"];
@@ -1218,18 +1282,22 @@ $(document).ready(function () {
 
         // get the second PC from the PC selector
         let pc_selector_text = $(dist_plot_id).closest(".card-body").find(".pc_selector").attr("data-pc");
-        if ( pc_selector_text == "PC:"){second_pc="PC2";}else{second_pc=pc_selector_text;}
+        if (pc_selector_text == "PC:") {
+            second_pc = "PC2";
+        } else {
+            second_pc = pc_selector_text;
+        }
 
         first_pc_variance = pc_variances[genera][pcs_available.indexOf("PC1")];
         second_pc_variance = pc_variances[genera][pcs_available.indexOf(second_pc)];
 
         // Populate the data array that will be used for plotting
-        for (let i = 0; i < sample_array.length; i++){
+        for (let i = 0; i < sample_array.length; i++) {
             let sample = sample_array[i]
             data.push({
-                sample:sample,
-                x : +coords[sample]["PC1"],
-                y : +coords[sample][second_pc]
+                sample: sample,
+                x: +coords[sample]["PC1"],
+                y: +coords[sample][second_pc]
             })
         }
 
@@ -1246,100 +1314,100 @@ $(document).ready(function () {
         y_scale.domain([min_y - y_buffer, max_y + y_buffer]);
 
         d3.select(x_axis_id)
-        .transition()
-        .duration(1000)
-        .call(d3.axisBottom(x_scale).ticks(0));
+            .transition()
+            .duration(1000)
+            .call(d3.axisBottom(x_scale).ticks(0));
 
         d3.select(y_axis_id)
-        .transition()
-        .duration(1000)
-        .call(d3.axisLeft(y_scale).ticks(0));
+            .transition()
+            .duration(1000)
+            .call(d3.axisLeft(y_scale).ticks(0));
 
 
         // We need to process the profile and sample dist plots diffently because they should have different
         // Here do the plotting of the scatter
-        let dots = scatter.selectAll("circle").data(data, function(d) {
+        let dots = scatter.selectAll("circle").data(data, function (d) {
             return d.sample;
-        } );
+        });
 
         // Place any new scatter points
         //TODO we can add more info to the tool tip like absolute and relative abundances of the samples or profiles
-        dots.enter().append("circle").attr("class", "dot").attr("r", 3.5).attr("cx", function(d){
-            return x_scale(d.x);
-        }).attr("cy", d => y_scale(d.y))//"rgba(0,0,0,0.5)"
-        .style("fill", function(d){
-            if(c_scale){
-                if (c_property == "lat_lon"){
-                    let lat_lon_str = meta_look_up_dict[d.sample]["lat"] + ';' + meta_look_up_dict[d.sample]["lon"];
-                    return c_scale(lat_lon_str);
-                }else if (c_property == "profile_identity"){
-                    return c_scale(d.sample);
-                }else{
-                    return c_scale(meta_look_up_dict[d.sample][c_property]);
+        dots.enter().append("circle").attr("class", "dot").attr("r", 3.5).attr("cx", function (d) {
+                return x_scale(d.x);
+            }).attr("cy", d => y_scale(d.y)) //"rgba(0,0,0,0.5)"
+            .style("fill", function (d) {
+                if (c_scale) {
+                    if (c_property == "lat_lon") {
+                        let lat_lon_str = meta_look_up_dict[d.sample]["lat"] + ';' + meta_look_up_dict[d.sample]["lon"];
+                        return c_scale(lat_lon_str);
+                    } else if (c_property == "profile_identity") {
+                        return c_scale(d.sample);
+                    } else {
+                        return c_scale(meta_look_up_dict[d.sample][c_property]);
+                    }
+                } else {
+                    return "rgba(0,0,0,0.5)";
                 }
-            }else{
-                return "rgba(0,0,0,0.5)";
-            }
             })
-        .on("mouseover", function(d) {
-            // Display the tool tip on the dist plot point
-            dist_tooltip.transition().duration(200).style("visibility", "visible");
-            // First we need to look at what the drop down currently says.
-            let data_series = meta_look_up_dict[d.sample.toString()];
-            let current_color = $(this).closest(".plot_item").find('.color_select_button').attr("data-color");
-            let content_key;
-            let additional_content;
-            let content;
-            let $plot_item = $(this).closest(".plot_item");
-            let c_cat_key_obj;
-            let default_val;
-            if ($plot_item.attr("id") == "between_sample_distances"){
-                // Then we're working with the between sample dist
-                c_cat_key_obj = btwn_sample_c_cat_key;
-                default_val = 'no_color';
-            }else{
-                // Then we're working with the between profile dist
-                c_cat_key_obj = btwn_profile_c_cat_key;
-                default_val = 'profile_identity';
-            }
-            
-            if (current_color != default_val){
-                // Then we can display additional info in the div
-                content_key = c_cat_key_obj[current_color];
-                additional_content = data_series[content_key];
-                content = `<div>${data_series["name"]}</div><div style="font-size:0.5rem;"><span style="font-weight:bold;">${current_color}: </span><span>${additional_content}</span></div>`
-            }else{
-                //Then we just display the sample/profile name
-                content = `${data_series["name"]}`
-            }
-        
-            dist_tooltip.html(content).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
-            
-            // Apply the information in the sample/profile meta info area
-            // First we need to get the genera/clade
-            $(this).closest(".plot_item").find(meta_item_type).each(function(){
-                $(this).text(data_series[$(this).attr("data-key")]);
+            .on("mouseover", function (d) {
+                // Display the tool tip on the dist plot point
+                dist_tooltip.transition().duration(200).style("visibility", "visible");
+                // First we need to look at what the drop down currently says.
+                let data_series = meta_look_up_dict[d.sample.toString()];
+                let current_color = $(this).closest(".plot_item").find('.color_select_button').attr("data-color");
+                let content_key;
+                let additional_content;
+                let content;
+                let $plot_item = $(this).closest(".plot_item");
+                let c_cat_key_obj;
+                let default_val;
+                if ($plot_item.attr("id") == "between_sample_distances") {
+                    // Then we're working with the between sample dist
+                    c_cat_key_obj = btwn_sample_c_cat_key;
+                    default_val = 'no_color';
+                } else {
+                    // Then we're working with the between profile dist
+                    c_cat_key_obj = btwn_profile_c_cat_key;
+                    default_val = 'profile_identity';
+                }
+
+                if (current_color != default_val) {
+                    // Then we can display additional info in the div
+                    content_key = c_cat_key_obj[current_color];
+                    additional_content = data_series[content_key];
+                    content = `<div>${data_series["name"]}</div><div style="font-size:0.5rem;"><span style="font-weight:bold;">${current_color}: </span><span>${additional_content}</span></div>`
+                } else {
+                    //Then we just display the sample/profile name
+                    content = `${data_series["name"]}`
+                }
+
+                dist_tooltip.html(content).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
+
+                // Apply the information in the sample/profile meta info area
+                // First we need to get the genera/clade
+                $(this).closest(".plot_item").find(meta_item_type).each(function () {
+                    $(this).text(data_series[$(this).attr("data-key")]);
+                });
+            })
+            .on("mouseout", function (d) {
+                dist_tooltip.transition().duration(500).style("visibility", "hidden");
             });
-          })
-          .on("mouseout", function(d) {
-              dist_tooltip.transition().duration(500).style("visibility", "hidden");
-          });
 
         // Update any changes to points that already exist
         dots.transition().duration(1000).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
-        .style("fill", function(d){
-            if(c_scale){
-                if (c_property == "lat_lon"){
-                    let lat_lon_str = meta_look_up_dict[d.sample]["lat"] + ';' + meta_look_up_dict[d.sample]["lon"];
-                    return c_scale(lat_lon_str);
-                }else if (c_property == "profile_identity"){
-                    return c_scale(d.sample);
-                }else{
-                    return c_scale(meta_look_up_dict[d.sample][c_property]);
+            .style("fill", function (d) {
+                if (c_scale) {
+                    if (c_property == "lat_lon") {
+                        let lat_lon_str = meta_look_up_dict[d.sample]["lat"] + ';' + meta_look_up_dict[d.sample]["lon"];
+                        return c_scale(lat_lon_str);
+                    } else if (c_property == "profile_identity") {
+                        return c_scale(d.sample);
+                    } else {
+                        return c_scale(meta_look_up_dict[d.sample][c_property]);
+                    }
+                } else {
+                    return "rgba(0,0,0,0.5)";
                 }
-            }else{
-                return "rgba(0,0,0,0.5)";
-            }
             });
 
         // Remove points
@@ -1349,55 +1417,55 @@ $(document).ready(function () {
         //we need to be able to change the axis titles so we will give them ids and then
         // check to see if they exist. if they do, simply change text otherwise make from scratch
         let text_x = 15;
-        let text_y = dist_height/2;
+        let text_y = dist_height / 2;
         let y_axis_selection = $(dist_plot_id).find(".y_axis_title")
-        if (y_axis_selection.length){
+        if (y_axis_selection.length) {
             // Then the y axis title exists. Change the text of this axis
             y_axis_selection.text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
-        }else{
+        } else {
             // yaxis doesn't exist. make from scratch
             svg.append("text").attr("class", "x_axis_title")
-            .attr("y", text_y)
-            .attr("x", text_x)
-            .attr("dy", "1em").attr("font-size", "0.8rem")
-            .style("text-anchor", "middle")
-            .text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
-            .attr("transform", `rotate(-90, ${text_x}, ${text_y})`);
+                .attr("y", text_y)
+                .attr("x", text_x)
+                .attr("dy", "1em").attr("font-size", "0.8rem")
+                .style("text-anchor", "middle")
+                .text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
+                .attr("transform", `rotate(-90, ${text_x}, ${text_y})`);
         }
 
         // X axis title
-        text_x = dist_width/2;
-        text_y = dist_height -15;
+        text_x = dist_width / 2;
+        text_y = dist_height - 15;
         let x_axis_selection = $(dist_plot_id).find(".y_axis_title")
-        if (x_axis_selection.length){
+        if (x_axis_selection.length) {
             // Then the y axis title exists. Change the text of this axis
             x_axis_selection.text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
-        }else{
+        } else {
             // yaxis doesn't exist. make from scratch
             svg.append("text").attr("class", "y_axis_title")
-            .attr("y", text_y)
-            .attr("x", text_x)
-            .attr("dy", "1em").attr("font-size", "0.8rem")
-            .style("text-anchor", "middle")
-            .text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`);
+                .attr("y", text_y)
+                .attr("x", text_x)
+                .attr("dy", "1em").attr("font-size", "0.8rem")
+                .style("text-anchor", "middle")
+                .text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`);
         }
 
     }
 
-    function update_dist_plot_zoom(){
+    function update_dist_plot_zoom() {
         let newX;
         let newY;
         let scatter;
         let x_axis_id;
         let y_axis_id;
-        if (this.id.includes("sample")){
+        if (this.id.includes("sample")) {
             // recover the new scale
             newX = d3.event.transform.rescaleX(x_btwn_sample);
             newY = d3.event.transform.rescaleY(y_btwn_sample);
             x_axis_id = "#x_axis_btwn_sample";
             y_axis_id = "#y_axis_btwn_sample";
             scatter = scatter_btwn_sample;
-        }else{
+        } else {
             // recover the new scale
             newX = d3.event.transform.rescaleX(x_btwn_profile);
             newY = d3.event.transform.rescaleY(y_btwn_profile);
@@ -1410,31 +1478,35 @@ $(document).ready(function () {
         d3.select(y_axis_id).call(d3.axisLeft(newY).ticks(0));
 
         // update circle position
-        scatter.selectAll("circle").attr('cx', function(d) {return newX(d.x)}).attr('cy', function(d) {return newY(d.y)});
+        scatter.selectAll("circle").attr('cx', function (d) {
+            return newX(d.x)
+        }).attr('cy', function (d) {
+            return newY(d.y)
+        });
     }
 
 
     //Listening for opening of seq-profile modal
-    $("#seq-prof-modal").on("shown.bs.modal", function(e){
+    $("#seq-prof-modal").on("shown.bs.modal", function (e) {
         // POST-MED-MODAL INIT
         update_bar_plot_by_sample(data_type, "post-modal", sample_list_modal, post_med_init_by_sample_interval);
         // PROFILES-MODAL INIT
         update_bar_plot_by_sample(data_type, "profile-modal", sample_list_modal, profile_init_by_sample_interval);
     })
 
-	// LISTENERS RELATED TO CHARTING
-	// RELATIVE to ABSOLUTE switch
-	// When we change the modal or regular version we want these changes relected in the other.
-    $(".dtype-btn").click(function(){
+    // LISTENERS RELATED TO CHARTING
+    // RELATIVE to ABSOLUTE switch
+    // When we change the modal or regular version we want these changes relected in the other.
+    $(".dtype-btn").click(function () {
         //If the button is of class btn light then it is not selected and this click should fire
         // the change in datatype event for the relevant svg
-        if($(this).hasClass("btn-light")){
+        if ($(this).hasClass("btn-light")) {
             //First change the button attributes so that it looks like we've registered the clicks
-            $(this).parents(".btn-group").find('.dtype-btn').each(function(){
-                if ($(this).hasClass("btn-light")){
+            $(this).parents(".btn-group").find('.dtype-btn').each(function () {
+                if ($(this).hasClass("btn-light")) {
                     //Switch around the btn styles so that light becomes primary and viceversa
                     $(this).addClass("btn-primary").removeClass("btn-light")
-                }else if($(this).hasClass("btn-primary")){
+                } else if ($(this).hasClass("btn-primary")) {
                     $(this).addClass("btn-light").removeClass("btn-primary")
                 }
             });
@@ -1445,15 +1517,15 @@ $(document).ready(function () {
             let pre_post_profile = $(this).attr("data-data-type")
             let sample_list;
             let init_speed;
-            if (pre_post_profile == "post-profile"){
+            if (pre_post_profile == "post-profile") {
                 // Update post modal
                 update_bar_plot_by_sample($(this).text(), "post-modal",
-                sample_list_modal, post_med_init_by_sample_interval);
+                    sample_list_modal, post_med_init_by_sample_interval);
                 // Update profile modal
                 update_bar_plot_by_sample($(this).text(), "profile-modal",
-                sample_list_modal, profile_init_by_sample_interval);
-            }else{
-                switch(pre_post_profile){
+                    sample_list_modal, profile_init_by_sample_interval);
+            } else {
+                switch (pre_post_profile) {
                     case "post":
                         sample_list = sample_list_post;
                         init_speed = post_med_init_by_sample_interval;
@@ -1478,16 +1550,16 @@ $(document).ready(function () {
     // We want to have a listener for the Pre-MED header opening up. When this happens, we will want to plot the
     // pre-med plot, we will also want to remove the rendering the pre-MED seqs text. Also a good idea will be to have
     // a spinner set off in the top right corner.
-    $('#pre_med_svg_collapse').on('show.bs.collapse', function(){
+    $('#pre_med_svg_collapse').on('show.bs.collapse', function () {
         // First check to see if the pre-MED svg has already been initiated. If so then there is nothing
         // to do here.
         //TODO implement the spinner and get rid of the text when open
-        if (!$("#chart_pre_med").hasClass("init")){
+        if (!$("#chart_pre_med").hasClass("init")) {
             $("#chart_pre_med").attr("class", "init");
             //Plot as relative or absolute abundances according to which button is currently primary
-            if($("#PreMEDRelDType").hasClass("btn-primary")){
+            if ($("#PreMEDRelDType").hasClass("btn-primary")) {
                 let data_type = "relative";
-            }else{
+            } else {
                 let data_type = "absolute";
             }
 
@@ -1496,17 +1568,17 @@ $(document).ready(function () {
 
             // Set the x range that will be used for the x val of the bars
             x_pre_med = d3.scaleBand()
-            .range([margin.left, seq_prof_width - margin.right])
-            .padding(0.1)
+                .range([margin.left, seq_prof_width - margin.right])
+                .padding(0.1)
 
             // Set the y range
             y_pre_med = d3.scaleLinear()
-            .rangeRound([seq_prof_height - margin.bottom, margin.top])
+                .rangeRound([seq_prof_height - margin.bottom, margin.top])
 
             //Set up the svg element in which we will call the axis objects
             xAxis_pre_med = svg_pre_med.append("g")
-            .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-            .attr("id", "x_axis_pre_med")
+                .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+                .attr("id", "x_axis_pre_med")
 
             yAxis_pre_med = svg_pre_med.append("g")
                 .attr("transform", `translate(${margin.left},0)`)
@@ -1514,9 +1586,9 @@ $(document).ready(function () {
 
             //Add a g to the svgs that we will use for the bars
             //We will have a seperate g for each of the samples so that we can hopefully plot column by column
-             sample_list_pre.forEach(function(sample){
+            sample_list_pre.forEach(function (sample) {
                 svg_pre_med.append("g").attr("class", "s" + sample)
-             });
+            });
 
             update_bar_plot_by_sample(data_type, "pre", sample_list_pre, pre_med_init_by_sample_interval)
 
@@ -1526,20 +1598,20 @@ $(document).ready(function () {
     });
 
     // Listening for the bar chart sorting button clicks
-    $(".svg_sort_by a").click(function(){
+    $(".svg_sort_by a").click(function () {
         let current_text = $(this).closest(".btn-group").find(".btn").text();
         let selected_text = $(this).text()
         // Only proceed if the button text has changed
-        if (current_text !== selected_text){
+        if (current_text !== selected_text) {
             $(this).closest(".btn-group").find(".btn").text(selected_text);
 
             let data_type;
             let pre_post_profile;
             let sample_list;
             let init_speed;
-            $(this).closest(".btn-group-sm").find(".dtype-btn").each(function(){
+            $(this).closest(".btn-group-sm").find(".dtype-btn").each(function () {
                 // We need to infer the rel_abs from the primary coloured button
-                if ($(this).hasClass("btn-primary")){
+                if ($(this).hasClass("btn-primary")) {
                     pre_post_profile = $(this).attr("data-data-type");
                     data_type = $(this).text();
                 }
@@ -1549,18 +1621,18 @@ $(document).ready(function () {
             //TODO perform sorting here.
             // In place of getting a new sample order for real we will simply
             // reverse the current one
-            if (pre_post_profile == "post-profile"){
+            if (pre_post_profile == "post-profile") {
                 // Then this is the modal being re-sorted
                 sample_list_modal = sorted_sample_uid_arrays[selected_text];
                 // Update post modal
                 update_bar_plot_by_sample(data_type, "post-modal",
-                sample_list_modal, post_med_init_by_sample_interval);
+                    sample_list_modal, post_med_init_by_sample_interval);
                 // Update profile modal
                 update_bar_plot_by_sample(data_type, "profile-modal",
-                sample_list_modal, profile_init_by_sample_interval);
-            }else{
+                    sample_list_modal, profile_init_by_sample_interval);
+            } else {
                 // Then this is not the modal being re-sorted
-                switch (pre_post_profile){
+                switch (pre_post_profile) {
                     case "post":
                         sample_list_post = sorted_sample_uid_arrays[selected_text];
                         sample_list = sample_list_post;
@@ -1584,13 +1656,17 @@ $(document).ready(function () {
 
     });
 
-    // Listenting for the PC change on the distance plots
-    $(".pc_select a").click(function(){
+    function init_pc_change_listener(){
+        //When the genra drop down is created we delete and repopulate the PC drop down menu
+        // Upon doing so, we need to reinit the listener for the PC drop down click.
+        // Hence we have this method rather than just creating the listener once
+        // Listenting for the PC change on the distance plots
+        $(".pc_select a").click(function () {
         let pc_button = $(this).closest(".btn-group").find(".btn")
         let current_pc = pc_button.attr("data-pc");
         let selected_pc = $(this).attr("data-pc")
 
-        if (current_pc !== selected_pc){
+        if (current_pc !== selected_pc) {
             pc_button.text(selected_pc);
             pc_button.attr("data-pc", selected_pc);
 
@@ -1601,36 +1677,66 @@ $(document).ready(function () {
             update_dist_plot(chart_id);
         }
     });
+    }
+    init_pc_change_listener();
+    
+    
 
     // Listening for the Genera dropdown button change
-    $(".genera_select a").click(function(){
+    $(".genera_select a").click(function () {
         let genera_button = $(this).closest(".btn-group").find(".btn")
         let current_genera = genera_button.attr("data-genera");
         let selected_genera = $(this).attr("data-genera")
 
+        function update_pc_dropd_on_genera_change(card_id) {
+            //We need to change the PCs that are available accordingly. This cannot be done in the update_dist_plot
+            //If we were to do it there the PC options would be reset everytime the chart got updated, inluding
+            // when a new PC was selected. So instead, we will do it here.
+            // We should be able to do this from just knowing the chart id
+            let pcs_available;
+            if (card_id == "#between_sample_distances") {
+                pcs_available = available_pcs_btwn_samples[selected_genera];
+            } else {
+                // between profile distances
+                pcs_available = available_pcs_btwn_profiles[selected_genera];
+            }
+            let $pc_select = $(card_id).find(".pc_select");
+            
 
-        if (current_genera !== selected_genera){
+            $pc_select.empty()
+            // Skip PC1 in the for loop
+            for (let j = 1; j < pcs_available.length; j++) {
+                $pc_select.append(`<a class="dropdown-item" data-pc="${pcs_available[j]}">${pcs_available[j]}</a>`);
+            }
+            // Then reset the button so that PC1 and PC2 will be used for the distance plot update
+            $(card_id).find(".pc_selector").attr("data-pc", "PC2").html("PC2");
+        }
+
+        if (current_genera !== selected_genera) {
             genera_button.text(selected_genera);
             genera_button.attr("data-genera", selected_genera);
 
             // We need to get the chart is
-            // TODO eventually we will want to link this into the modal as well so that it mirrors the non-modal
-            chart_id = '#' + genera_button.closest('.card').find('.chart').attr("id");
+            let chart_id = '#' + genera_button.closest('.card').find('.chart').attr("id");
+            let card_id = '#' + genera_button.closest('.card').attr("id");
 
             genera_button.closest('.plot_item').find(".genera_identifier").text(selected_genera);
             genera_button.closest('.plot_item').find(".genera_identifier").attr("data-genera", selected_genera);
 
+            update_pc_dropd_on_genera_change(card_id)
             update_dist_plot(chart_id);
+            init_pc_change_listener();
         }
+        
     });
 
     //Listening for the color dropdown button change
-    $(".color_select a").click(function(){
+    $(".color_select a").click(function () {
         let color_button = $(this).closest(".btn-group").find(".btn")
         let current_color = color_button.attr("data-color");
         let selected_color = $(this).attr("data-color")
 
-        if (current_color !== selected_color){
+        if (current_color !== selected_color) {
             color_button.text(selected_color);
             color_button.attr("data-color", selected_color);
 
@@ -1643,12 +1749,12 @@ $(document).ready(function () {
     });
 
     // Listening for the click of a more v button to show secondary sample meta info
-    $(".secondary_meta_info_collapser").click(function(){
+    $(".secondary_meta_info_collapser").click(function () {
         // Change the text of the button div
-        if ($(this).attr("data-status") == "more"){
+        if ($(this).attr("data-status") == "more") {
             $(this).text('less ^');
             $(this).attr("data-status", "less");
-        }else if($(this).attr("data-status") == "less"){
+        } else if ($(this).attr("data-status") == "less") {
             $(this).text('more v');
             $(this).attr("data-status", "more");
         }
@@ -1657,50 +1763,63 @@ $(document).ready(function () {
     //INIT MAP if lat_lon data available
     // TODO we will want a list of the unique sites
     // We will also want a dict of site to samples uid array
-    if (sorting_keys.includes('lat_lon')){
+    if (sorting_keys.includes('lat_lon')) {
         let unique_site_set = new Set();
         let sample_meta_info_keys = Object.keys(sample_meta_info);
         // Create and init the site to sample uid dict. we will use this similar to a python defualtdict(list)
         let site_to_sample_uid_dict = {};
         // Keep track of the largest and smallest lat and long so that we can work out an average to center the map on
-        let max_lat = -90; let min_lat=+90; let max_lon=-180; let min_lon = +180;
-        
+        let max_lat = -90;
+        let min_lat = +90;
+        let max_lon = -180;
+        let min_lon = +180;
+
         // Need to take into account that samples with bad or no lat lon details will have been set to the 
         // default value of 999
-        for (let i = 0; i < sample_meta_info_keys.length; i ++){
+        for (let i = 0; i < sample_meta_info_keys.length; i++) {
             let sample_obj = sample_meta_info[sample_meta_info_keys[i]];
             let numeric_lat = +sample_obj['lat'];
             let numeric_lon = +sample_obj['lon'];
-            if (numeric_lat == 999 || numeric_lon == 999){continue;}
-            if (numeric_lat > max_lat){max_lat = numeric_lat;}
-            if(numeric_lat < min_lat){min_lat = numeric_lat;}
-            if (numeric_lon > max_lon){max_lon = numeric_lon;}
-            if(numeric_lon < min_lon){min_lon = numeric_lon;}
-            let lat_lon_str = sample_obj['lat'].toString() + ';'  + sample_obj['lon'].toString();
+            if (numeric_lat == 999 || numeric_lon == 999) {
+                continue;
+            }
+            if (numeric_lat > max_lat) {
+                max_lat = numeric_lat;
+            }
+            if (numeric_lat < min_lat) {
+                min_lat = numeric_lat;
+            }
+            if (numeric_lon > max_lon) {
+                max_lon = numeric_lon;
+            }
+            if (numeric_lon < min_lon) {
+                min_lon = numeric_lon;
+            }
+            let lat_lon_str = sample_obj['lat'].toString() + ';' + sample_obj['lon'].toString();
             unique_site_set.add(lat_lon_str);
             // if lat_lon already in the dict then simply add the sample uid to the list
             // else create a new list and add the sample uid to this list
-            if (Object.keys(site_to_sample_uid_dict).includes(lat_lon_str)){
+            if (Object.keys(site_to_sample_uid_dict).includes(lat_lon_str)) {
                 site_to_sample_uid_dict[lat_lon_str].push(sample_meta_info_keys[i]);
-            }else{
+            } else {
                 site_to_sample_uid_dict[lat_lon_str] = [sample_meta_info_keys[i]];
             }
         }
         // Here we have the unique site set and site to sample uid dict populated and we can now move on to populating the map
-        
+
         function initMap() {
-            
-            
+
+
             // Calculate the position for the center of the map
             let center_location;
-            if (unique_site_set.size < 2){
+            if (unique_site_set.size < 2) {
                 center_location = new google.maps.LatLng(max_lat, max_lon);
-            }else{
-                let center_lat = max_lat - ((max_lat - min_lat)/2);
-                let center_lon = max_lon - ((max_lon - min_lon)/2);
+            } else {
+                let center_lat = max_lat - ((max_lat - min_lat) / 2);
+                let center_lon = max_lon - ((max_lon - min_lon) / 2);
                 center_location = new google.maps.LatLng(center_lat, center_lon);
             }
-            
+
             // Init the map
             let mapCanvas = document.getElementById('map');
             let mapOptions = {
@@ -1715,17 +1834,22 @@ $(document).ready(function () {
             // Here we need to cyle through the unique lat long positions.
             // Create a marker
             // And then create an info window for each of the markers with dynamic content
-            unique_site_set.forEach(function(site_loc_str){
+            unique_site_set.forEach(function (site_loc_str) {
                 let lat_numeric = +site_loc_str.split(';')[0];
                 let lon_numeric = +site_loc_str.split(';')[1];
-                let marker =  new google.maps.Marker({
-                    position: {lat: lat_numeric, lng: lon_numeric},
-                    map:map
-                    });
-                
-                marker.addListener('click', function() {
+                let marker = new google.maps.Marker({
+                    position: {
+                        lat: lat_numeric,
+                        lng: lon_numeric
+                    },
+                    map: map
+                });
+
+                marker.addListener('click', function () {
                     //TODO create the content that will be displayed here
-                    let $content_object = $("<div></div>", {"class":"map_info_window"});
+                    let $content_object = $("<div></div>", {
+                        "class": "map_info_window"
+                    });
                     //Add the spans that will hold the meta info
                     let $meta_div = $('<div></div>');
                     $meta_div.appendTo($content_object);
@@ -1734,19 +1858,30 @@ $(document).ready(function () {
                     $meta_div.append(`<span class="iwindowprop">site_name: </span><span class="iwindowval">--</span>`) // site_name TODO
                     $meta_div.append(`<span class="iwindowprop">num_samples: </span><span class="iwindowval">${site_to_sample_uid_dict[site_loc_str].length}</span>`) // num_samples
                     // Then the table that will hold data for each sample
-                    let $table_div = $('<div></div>'); $table_div.appendTo($content_object);
-                    
-                    let $table = $('<table></table>', {"class":"table table-hover table-sm", "style":"font-size:0.5rem;"}); $table.appendTo($table_div);
-                    
-                    let $thead = $('<thead></thead>'); $thead.appendTo($table);
-                    let $tr = $('<tr></tr>'); $tr.appendTo($thead);
-                    $tr.append('<th>sample_name</th>'); $tr.append('<th>host_taxa</th>'); $tr.append('<th>depth</th>');
-                    let $tbody = $('<tbody></tbody>'); $tbody.appendTo($table);
-                    
+                    let $table_div = $('<div></div>');
+                    $table_div.appendTo($content_object);
+
+                    let $table = $('<table></table>', {
+                        "class": "table table-hover table-sm",
+                        "style": "font-size:0.5rem;"
+                    });
+                    $table.appendTo($table_div);
+
+                    let $thead = $('<thead></thead>');
+                    $thead.appendTo($table);
+                    let $tr = $('<tr></tr>');
+                    $tr.appendTo($thead);
+                    $tr.append('<th>sample_name</th>');
+                    $tr.append('<th>host_taxa</th>');
+                    $tr.append('<th>depth</th>');
+                    let $tbody = $('<tbody></tbody>');
+                    $tbody.appendTo($table);
+
                     // Add a tr and cells for every sample of at the location
-                    for (let j = 0; j < site_to_sample_uid_dict[site_loc_str].length; j++){
+                    for (let j = 0; j < site_to_sample_uid_dict[site_loc_str].length; j++) {
                         let sample_uid = site_to_sample_uid_dict[site_loc_str][j];
-                        $tr = $('<tr></tr>'); $tr.appendTo($tbody);
+                        $tr = $('<tr></tr>');
+                        $tr.appendTo($tbody);
                         $tr.append(`<td>${sample_meta_info[sample_uid]["name"]}</td>`);
                         // The full taxa string is really too long here so get the last element that isn't NoData
                         let tax_str = sample_meta_info[sample_uid]["taxa_string"];
@@ -1764,9 +1899,9 @@ $(document).ready(function () {
         }
         google.maps.event.addDomListener(window, 'load', initMap);
     }
-    
 
-    function centerAlignXLabels(){
+
+    function centerAlignXLabels() {
         // This function aims to move the text labels down slightly
         // to align them vertically centrally.
         // Only those labels shorter than others need moving
@@ -1776,15 +1911,15 @@ $(document).ready(function () {
         // UPDATE: because the modal hasn't appeared yet we the method below
         // doesn't work because there are no bounding boxes yet.
         //TODO fix this.
-        $('#x_axis_post_med_modal').find('text').each(function(){
+        $('#x_axis_post_med_modal').find('text').each(function () {
             let text_current_x = +$(this).attr("x");
             let g_bbox_height = $("#x_axis_post_med_modal")[0].getBoundingClientRect().height;
             let text_bbox_height_inc_tick = this.getBBox().width + text_current_x;
             let distance_btwn_g_and_text = g_bbox_height - text_bbox_height_inc_tick;
             // I have no idea why I have to divide by four here, but dividing by two
             // and adding this to the attributes was moving it all the way to the bottom.
-            let dist_to_move = distance_btwn_g_and_text/4;
-            if (dist_to_move > 1){
+            let dist_to_move = distance_btwn_g_and_text / 4;
+            if (dist_to_move > 1) {
                 let new_x = (text_current_x + dist_to_move).toString();
                 $(this).attr("x", new_x);
             }
@@ -1792,32 +1927,28 @@ $(document).ready(function () {
         });
     }
 
-    function getShortTaxStr(fullTaxStr){
+    function getShortTaxStr(fullTaxStr) {
         let tax_elements = fullTaxStr.split(';');
         tax_elements.reverse();
         let shortTax = "NoData";
-        for (let i = 0; i < tax_elements.length; i++){
-            if (tax_elements[i] != "NoData"){
+        for (let i = 0; i < tax_elements.length; i++) {
+            if (tax_elements[i] != "NoData") {
                 // If we have a species name then report the first letter of the genera too
-                if (i == 0){
-                    if (tax_elements[1] != "NoData"){
+                if (i == 0) {
+                    if (tax_elements[1] != "NoData") {
                         shortTax = tax_elements[1][0] + '. ' + tax_elements[0];
                         break;
-                    }else{ // If we don't have the genera then just report the species name
+                    } else { // If we don't have the genera then just report the species name
                         shortTax = tax_elements[0];
                         break;
                     }
-                }else{shortTax=tax_elements[i];break;}
+                } else {
+                    shortTax = tax_elements[i];
+                    break;
+                }
             }
         }
         return shortTax;
     }
 
 });
-
-
-
-
-
-
-
