@@ -121,7 +121,6 @@ $(document).ready(function () {
             let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
             '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
             '</div>';
-            console.log(d);
             return content;
         });
 
@@ -1291,20 +1290,33 @@ $(document).ready(function () {
             let content_key;
             let additional_content;
             let content;
-            if (current_color != 'profile_identity'){
+            let $plot_item = $(this).closest(".plot_item");
+            let c_cat_key_obj;
+            let default_val;
+            if ($plot_item.attr("id") == "between_sample_distances"){
+                // Then we're working with the between sample dist
+                c_cat_key_obj = btwn_sample_c_cat_key;
+                default_val = 'no_color';
+            }else{
+                // Then we're working with the between profile dist
+                c_cat_key_obj = btwn_profile_c_cat_key;
+                default_val = 'profile_identity';
+            }
+            
+            if (current_color != default_val){
                 // Then we can display additional info in the div
-                content_key = btwn_profile_c_cat_key[current_color];
+                content_key = c_cat_key_obj[current_color];
                 additional_content = data_series[content_key];
                 content = `<div>${data_series["name"]}</div><div style="font-size:0.5rem;"><span style="font-weight:bold;">${current_color}: </span><span>${additional_content}</span></div>`
             }else{
-                //Then we just display the profile name
+                //Then we just display the sample/profile name
                 content = `${data_series["name"]}`
             }
-            // dist_tooltip.html(meta_look_up_dict[d.sample]["name"]).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
+        
             dist_tooltip.html(content).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
-            // Apply the information in the profile meta info area
-            // First we need to get the genera/clade
             
+            // Apply the information in the sample/profile meta info area
+            // First we need to get the genera/clade
             $(this).closest(".plot_item").find(meta_item_type).each(function(){
                 $(this).text(data_series[$(this).attr("data-key")]);
             });
