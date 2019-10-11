@@ -258,19 +258,19 @@ $(document).ready(function () {
     let post_med_init_by_sample_interval = 10;
     //INIT margins, widths and heights for the bar plots
     let margin = {
-        top: 35,
+        top: 5,
         left: 35,
-        bottom: 20,
+        bottom: 60,
         right: 0
     };
     let seq_prof_width;
     let seq_prof_height;
-    let seq_prof_height_modal;
+    
     // margin used for the inverted profile_modal plot
     let inv_prof_margin = {
         top: 5,
         left: 35,
-        bottom: 20,
+        bottom: 5,
         right: 0
     };
     let x_post_med;
@@ -297,6 +297,10 @@ $(document).ready(function () {
         y_post_med = d3.scaleLinear()
             .rangeRound([seq_prof_height - margin.bottom, margin.top]);
         // Init the axis group
+        //NB the axis no need translating down or left in the direction they orientate.
+        // I.e. x axis doesn't need to be translated right (only down)
+        // and yaxis doesn't need translating down (only right).
+        // This is because they apparently use their ranges to set their positions
         xAxis_post_med = svg_post_med.append("g")
             .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
             .attr("id", "x_axis_post_med");
@@ -336,6 +340,8 @@ $(document).ready(function () {
     let xAxis_profile;
     let xAxis_post_med_modal;
     let xAxis_profile_modal;
+    let seq_height_modal;
+    let prof_height_modal;
     if (typeof getRectDataProfileBySample === "function") {
         data_profile_by_sample = getRectDataProfileBySample();
         profile_bars_exists = true;
@@ -354,23 +360,30 @@ $(document).ready(function () {
         // Viewport height
         let vp_height = window.innerHeight;
         // 30% of this
-        let height_for_modal_svg = 0.35 * vp_height
-        $("#seq-prof-modal").find(".seq_prof_chart").attr("height", height_for_modal_svg);
-        seq_prof_height_modal = +svg_post_med_modal.attr("height") - margin.top - margin.bottom;
+        let height_for_seq_modal_svg = 0.35 * vp_height;
+        let height_for_profile_modal_svg = height_for_seq_modal_svg - margin.bottom;
+        $("#chart_post_med_modal").attr("height", height_for_seq_modal_svg);
+        $("#chart_profile_modal").attr("height", height_for_profile_modal_svg);
+        seq_height_modal = +svg_post_med_modal.attr("height") - margin.top - margin.bottom;
+        prof_height_modal = +svg_profile_modal.attr("height") - inv_prof_margin.top - inv_prof_margin.bottom;
+        // We want to make tha actual plot areas the same height for the seq modal and the profile modal.
+        // Because the seq modal has to incorporate the labels in its height as well we will reduce the 
+        // profile modal by this height (i.e. bottom margin)
+
         // Init x and y scales
         x_profile = d3.scaleBand()
             .range([margin.left, seq_prof_width - margin.right])
             .padding(0.1);
         x_modal = d3.scaleBand()
-            .range([margin.left, seq_prof_width - margin.right])
+            .range([margin.left, seq_prof_width + margin.left])
             .padding(0.1);
         y_profile = d3.scaleLinear()
             .rangeRound([seq_prof_height - margin.bottom, margin.top]);
         // Y is inverted for the inverted profile plot
         y_post_modal = d3.scaleLinear()
-            .rangeRound([seq_prof_height_modal - margin.bottom, margin.top]);
+            .rangeRound([seq_height_modal + margin.top, margin.top]);
         y_profile_modal = d3.scaleLinear()
-            .rangeRound([inv_prof_margin.top, seq_prof_height_modal - inv_prof_margin.bottom]);
+            .rangeRound([inv_prof_margin.top, prof_height_modal + inv_prof_margin.top]);
         // Set up the axes groups
         // Profile
         xAxis_profile = svg_profile.append("g")
@@ -381,7 +394,7 @@ $(document).ready(function () {
             .attr("id", "y_axis_profile");
         // Post-MED modal
         xAxis_post_med_modal = svg_post_med_modal.append("g")
-            .attr("transform", `translate(0,${seq_prof_height_modal - margin.bottom})`)
+            .attr("transform", `translate(0,${seq_height_modal + margin.top})`)
             .attr("id", "x_axis_post_med_modal");
         yAxis_post_med_modal = svg_post_med_modal.append("g")
             .attr("transform", `translate(${margin.left},0)`)
@@ -391,8 +404,9 @@ $(document).ready(function () {
         xAxis_profile_modal = svg_profile_modal.append("g")
             .attr("transform", `translate(0,${inv_prof_margin.top})`)
             .attr("id", "x_axis_profile_modal");
+        // This should also be moved down by the top axis
         yAxis_profile_modal = svg_profile_modal.append("g")
-            .attr("transform", `translate(${margin.left},0)`)
+            .attr("transform", `translate(${margin.left}, 0)`)
             .attr("id", "y_axis_profile_modal");
 
         // INIT the drop down with the sample sorting categories we have available
@@ -896,7 +910,7 @@ $(document).ready(function () {
             sample_list = sample_list_profile;
         } else if (pre_post_profile == "profile-modal") {
             y = y_profile_modal;
-            x = x_profile;
+            x = x_modal;
             max_y = max_y_val_profile;
             sample_list = sample_list_modal;
         }
@@ -945,7 +959,7 @@ $(document).ready(function () {
         } else if (pre_post_profile == "profile-modal") {
             svg = svg_profile_modal;
             data_by_sample = data_profile_inv_by_sample;
-            x = x_profile;
+            x = x_modal;
             y = y_profile_modal;
             col_scale = profile_color_scale;
         }
@@ -1119,7 +1133,7 @@ $(document).ready(function () {
             x_axis_id = "#x_axis_profile";
         } else if (pre_post_profile == "profile-modal") {
             y = y_profile_modal;
-            x = x_profile;
+            x = x_modal;
             y_axis_id = "#y_axis_profile_modal";
             x_axis_id = "#x_axis_profile_modal";
         }
