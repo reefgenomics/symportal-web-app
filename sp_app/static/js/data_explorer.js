@@ -292,17 +292,17 @@ $(document).ready(function () {
         seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
         // Init x and y scales
         x_post_med = d3.scaleBand()
-            .range([margin.left, seq_prof_width - margin.right])
+            .range([margin.left, seq_prof_width + margin.left])
             .padding(0.1);
         y_post_med = d3.scaleLinear()
-            .rangeRound([seq_prof_height - margin.bottom, margin.top]);
+            .rangeRound([seq_prof_height + margin.top, margin.top]);
         // Init the axis group
         //NB the axis no need translating down or left in the direction they orientate.
         // I.e. x axis doesn't need to be translated right (only down)
         // and yaxis doesn't need translating down (only right).
         // This is because they apparently use their ranges to set their positions
         xAxis_post_med = svg_post_med.append("g")
-            .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+            .attr("transform", `translate(0,${seq_prof_height + margin.top})`)
             .attr("id", "x_axis_post_med");
         yAxis_post_med = svg_post_med.append("g")
             .attr("transform", `translate(${margin.left},0)`)
@@ -360,7 +360,7 @@ $(document).ready(function () {
         // Viewport height
         let vp_height = window.innerHeight;
         // 30% of this
-        let height_for_seq_modal_svg = 0.35 * vp_height;
+        let height_for_seq_modal_svg = 0.30 * vp_height;
         let height_for_profile_modal_svg = height_for_seq_modal_svg - margin.bottom;
         $("#chart_post_med_modal").attr("height", height_for_seq_modal_svg);
         $("#chart_profile_modal").attr("height", height_for_profile_modal_svg);
@@ -372,13 +372,13 @@ $(document).ready(function () {
 
         // Init x and y scales
         x_profile = d3.scaleBand()
-            .range([margin.left, seq_prof_width - margin.right])
+            .range([margin.left, seq_prof_width + margin.left])
             .padding(0.1);
         x_modal = d3.scaleBand()
             .range([margin.left, seq_prof_width + margin.left])
             .padding(0.1);
         y_profile = d3.scaleLinear()
-            .rangeRound([seq_prof_height - margin.bottom, margin.top]);
+            .rangeRound([seq_prof_height + margin.top, margin.top]);
         // Y is inverted for the inverted profile plot
         y_post_modal = d3.scaleLinear()
             .rangeRound([seq_height_modal + margin.top, margin.top]);
@@ -387,7 +387,7 @@ $(document).ready(function () {
         // Set up the axes groups
         // Profile
         xAxis_profile = svg_profile.append("g")
-            .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
+            .attr("transform", `translate(0,${seq_prof_height + margin.top})`)
             .attr("id", "x_axis_profile");
         yAxis_profile = svg_profile.append("g")
             .attr("transform", `translate(${margin.left},0)`)
