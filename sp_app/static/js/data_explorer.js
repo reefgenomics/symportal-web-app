@@ -273,6 +273,8 @@ $(document).ready(function () {
         bottom: 5,
         right: 0
     };
+
+    let dist_margin = {top: 35, left: 35, bottom: 20, right: 0};
     let x_post_med;
     let y_post_med;
     let xAxis_post_med;
@@ -636,8 +638,8 @@ $(document).ready(function () {
     let xAxis_btwn_sample;
     let yAxis_btwn_sample;
     // Distance plots heights and widths
-    let dist_width = +svg_btwn_sample_dist.attr("width") - margin.left - margin.right;
-    let dist_height = +svg_btwn_sample_dist.attr("height") - margin.top - margin.bottom;
+    let dist_width = +svg_btwn_sample_dist.attr("width") - dist_margin.left - dist_margin.right;
+    let dist_height = +svg_btwn_sample_dist.attr("height") - dist_margin.top - dist_margin.bottom;
     // Set up the zoom object (one for all dist plots)
     let zoom = d3.zoom()
         .scaleExtent([.5, 20]) // This control how much you can unzoom (x0.5) and zoom (x20)
@@ -674,16 +676,16 @@ $(document).ready(function () {
     }
     if (btwn_sample_data_available) {
         x_btwn_sample = d3.scaleLinear()
-            .range([margin.left, dist_width - margin.right]);
+            .range([dist_margin.left, dist_width - dist_margin.right]);
         y_btwn_sample = d3.scaleLinear()
-            .rangeRound([dist_height - margin.bottom, margin.top]);
+            .rangeRound([dist_height - dist_margin.bottom, dist_margin.top]);
         init_genera_pc_dropdown_dist_plots("#between_sample_distances", btwn_sample_genera_array, available_pcs_btwn_samples);
         // setup the group for holding the axes
         xAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
-            .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+            .attr("transform", `translate(0,${dist_height - dist_margin.bottom})`)
             .attr("id", "x_axis_btwn_sample");
         yAxis_btwn_sample = svg_btwn_sample_dist.append("g").attr("class", "grey_axis")
-            .attr("transform", `translate(${margin.left},0)`)
+            .attr("transform", `translate(${dist_margin.left},0)`)
             .attr("id", "y_axis_btwn_sample");
         // Init btwn sample sample list
         for (let i = 0; i < btwn_sample_genera_array.length; i++) {
@@ -694,10 +696,10 @@ $(document).ready(function () {
         svg_btwn_sample_dist.append("defs").append("clipPath")
             .attr("id", "sample_clip")
             .append("rect")
-            .attr("width", dist_width - margin.right - margin.left)
-            .attr("height", dist_height - margin.bottom - margin.top)
-            .attr("x", margin.left)
-            .attr("y", margin.top);
+            .attr("width", dist_width - dist_margin.right - dist_margin.left)
+            .attr("height", dist_height - dist_margin.bottom - dist_margin.top)
+            .attr("x", dist_margin.left)
+            .attr("y", dist_margin.top);
 
         // This is the group where we will do the drawing and that has the above
         // clipping mask applied to it
@@ -743,16 +745,16 @@ $(document).ready(function () {
     }
     if (btwn_profile_data_available) {
         x_btwn_profile = d3.scaleLinear()
-            .range([margin.left, dist_width - margin.right]);
+            .range([dist_margin.left, dist_width - dist_margin.right]);
         y_btwn_profile = d3.scaleLinear()
-            .rangeRound([dist_height - margin.bottom, margin.top]);
+            .rangeRound([dist_height - dist_margin.bottom, dist_margin.top]);
         init_genera_pc_dropdown_dist_plots("#between_profile_distances", btwn_profile_genera_array, available_pcs_btwn_profiles);
         // The group for holding the axes
         xAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
-            .attr("transform", `translate(0,${dist_height - margin.bottom})`)
+            .attr("transform", `translate(0,${dist_height - dist_margin.bottom})`)
             .attr("id", "x_axis_btwn_profile");
         yAxis_btwn_profile = svg_btwn_profile_dist.append("g").attr("class", "grey_axis")
-            .attr("transform", `translate(${margin.left},0)`)
+            .attr("transform", `translate(${dist_margin.left},0)`)
             .attr("id", "y_axis_btwn_profile");
         // Init the btwn_sample profile list
         for (let i = 0; i < btwn_profile_genera_array.length; i++) {
@@ -763,10 +765,10 @@ $(document).ready(function () {
         svg_btwn_profile_dist.append("defs").append("clipPath")
             .attr("id", "profile_clip")
             .append("rect")
-            .attr("width", dist_width - margin.right - margin.left)
-            .attr("height", dist_height - margin.bottom - margin.top)
-            .attr("x", margin.left)
-            .attr("y", margin.top);
+            .attr("width", dist_width - dist_margin.right - dist_margin.left)
+            .attr("height", dist_height - dist_margin.bottom - dist_margin.top)
+            .attr("x", dist_margin.left)
+            .attr("y", dist_margin.top);
 
         // This is the group where we will do the drawing and that has the above
         // clipping mask applied to it
