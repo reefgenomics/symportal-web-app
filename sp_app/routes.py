@@ -14,7 +14,3 @@ def index():
 @app.route('/submit_data_learn_more')
 def submit_data_learn_more():
     return render_template('submit_data_learn_more.html')
-
-@app.route('/data_explorer')
-def d_test():
-    return render_template('data_explorer.html', study_to_load='Terraneo_et_al_2019')
