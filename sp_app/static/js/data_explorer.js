@@ -1103,31 +1103,13 @@ $(document).ready(function () {
     let ellipse_axis_labels = function () {
         var self = d3.select(this),
             textLength = self.node().getComputedTextLength(),
-            text = self.text();
-        while (textLength > (70) && text.length > 0) {
+            text = self.text(),
+            current_x = self.attr("x");
+        while (textLength > (margin.bottom - current_x) && text.length > 0) {
             text = text.slice(0, -1);
             self.text(text + '...');
             textLength = self.node().getComputedTextLength();
         }
-    };
-
-    let ellipse_axis_labels_and_center = function () {
-        var self = d3.select(this),
-            textLength = self.node().getComputedTextLength(),
-            text = self.text();
-        while (textLength > (70) && text.length > 0) {
-            text = text.slice(0, -1);
-            self.text(text + '...');
-            textLength = self.node().getComputedTextLength();
-        }
-        // Have to take into account the fact tha the labels are already displaced by an amount x
-        // Also have to take into account that the ticks from the inv profile axis are protruding
-        // Into the space of the seq modal margin. To account for this we will adjust by 2 px
-        let current_x = +$(this).attr("x");
-        let bb_height = $(this)[0].getBoundingClientRect().height;
-        let translate_by = ((margin.bottom - (bb_height+current_x))/2)-2;
-        $(this).attr("x", `${current_x + translate_by}`);
-	    // $(this).attr("transform", `rotate(90) translate(${translate_by}, 0)`);
     };
 
     function call_axes(speed, pre_post_profile) {
@@ -1147,6 +1129,7 @@ $(document).ready(function () {
             // create an inner html to translate x value.
             // if tanslate value, then do translate to center.
             // else, do ellipse logic.
+            // We also have to do the ellipse shortening here
             let sample_names = sample_list_modal.map(sample_uid => sample_meta_info[sample_uid]["name"]);  // your text here
             svg_post_med_modal.append('g').attr("class", '.dummyTextG')
                 .selectAll('.dummyText')
@@ -1160,11 +1143,26 @@ $(document).ready(function () {
                 .attr("x", "10")
                 .attr("y", "10")
                 .each(function(d,i) {
-                    var thisWidth = this.getComputedTextLength()
-                    if (d != "SA1574"){this.remove()}
-                    sample_name_width_obj[d] = thisWidth;
-                     // remove them just after displaying them
+                    let length_of_text = this.getComputedTextLength();
+                    let self = d3.select(this),
+                        text = self.text(),
+                        current_x = self.attr("x");
+                    let available_space = margin.bottom - current_x - 2;
+                    if (length_of_text > available_space){
+                        // Perform the ellipse shortening here
+                        while (length_of_text > (margin.bottom - current_x) && text.length > 0) {
+                            text = text.slice(0, -1);
+                            self.text(text + '...');
+                            length_of_text = self.node().getComputedTextLength();
+                        }
+                        sample_name_width_obj[d] = {"ellipse":true, "ellipse_text":self.text()};
+                    }else{
+                        sample_name_width_obj[d] = {"width":length_of_text, "ellipse":false};
+                    }
+                    this.remove();
+                    
                 })
+            $("#chart_post_med_modal").find(".dummyTextG").remove();
             
             
         } else if (pre_post_profile == "pre") {
@@ -1184,8 +1182,8 @@ $(document).ready(function () {
             x_axis_id = "#x_axis_profile_modal";
         }
 
-        let testerfunction = function(){
-            console.log('poo');
+        let center_or_ellipse_axis_labels = function(){
+            // text has already been ellipsed. So we just need to do centering here.
             d3.select(this).attr("y", 0).attr("x", 9).attr("dy", "-0.35em").attr("style", "font-size:10px;").attr("transform", "rotate(90)")
             .style("text-anchor", "start");
             // Set the values we need to here dynamically according to the dict that we worked out above. but still need to find some way of linking.
@@ -1194,29 +1192,18 @@ $(document).ready(function () {
             // Available width is the margin - 9 for the displacement of the sequence tick and -2 for displacement of the profile tick
             // So figure out if our text is larger than the available space. If it is larger, then ellipse until smaller
             // If its smaller, center
-            let length_of_text = sample_name_width_obj[sample_name]
-            let available_space = margin.bottom - 9 - 2;
-            if (length_of_text > available_space){
-                // Perform the ellipse shortening here
-                let self = d3.select(this),
-                    textLength = self.node().getComputedTextLength(),
-                    text = self.text();
-                while (textLength > available_space && text.length > 0) {
-                    text = text.slice(0, -1);
-                    self.text(text + '...');
-                    textLength = self.node().getComputedTextLength();
-                }
-            }else if (length_of_text < available_space){
+            if (sample_name_width_obj[sample_name]["ellipse"]){
+                return;
+            }else{
                 // Then this needs centering
                 // Have to take into account the fact that the labels are already displaced by an amount x
                 // Also have to take into account that the ticks from the inv profile axis are protruding
                 // Into the space of the seq modal margin. To account for this we will adjust by 2 px
                 let current_x = +$(this).attr("x");
+                let length_of_text = sample_name_width_obj[sample_name]["width"]
                 let translate_by = ((margin.bottom - (length_of_text+current_x))/2)-2;
                 $(this).attr("x", `${current_x + translate_by}`);
-            }// If length of text is equal to available space then we don't need to do anything
-            let inspect = d3.select(this);
-            
+            }
         }
 
         // Call the y axis
@@ -1235,7 +1222,12 @@ $(document).ready(function () {
             // Axis with the centered labels
             // Has callback to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text").each(testerfunction);
+                .call(d3.axisBottom(x).tickFormat(function(d) {
+                    let sample_name = sample_meta_info[d]["name"];
+                    if (sample_name_width_obj[sample_name]["ellipse"]){
+                        return sample_name_width_obj[sample_name]["ellipse_text"];
+                    }else{return sample_name;}
+                }).tickSizeOuter(0)).selectAll("text").each(center_or_ellipse_axis_labels);
         } else {
             // The regular axis with ticks and text below
             // no call back to center the labels
