@@ -62,7 +62,15 @@ Have a network window for when the sample is clicked on (this can be later)
             <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" alt="Logo" style="width:40px;">
         </a>
         <!--This should be the data set header that we are working with-->
-        <p class="nav navbar-text">SymPortal Explorer: {{ study_to_load }}</p>
+        <p class="nav navbar-text">SymPortal Explorer:</p>
+        <form action="", method="POST">
+            <div class="form-group">
+                <select id="study_select" class="form-control" name="study_to_load" onchange="this.form.submit()">
+                    
+                </select>
+            </div>
+        </form>
+        
     </ul>
 
     <!--To the right-->
@@ -482,10 +490,12 @@ Have a network window for when the sample is clicked on (this can be later)
     </div>
 
 <script type="text/javascript">
-    let study_to_load = "{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/') }}";
+    let study_to_load = "{{  study_to_load }}";
+    let study_to_load_path = "{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/') }}";
 </script>
 <script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/study_data.js') }}"></script>
 <script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/study_meta_info.js') }}"></script>
+<script src="{{ url_for('static', filename='published_articles/published_articles.js') }}"></script>
 
 <!--TODO to enable the marker clustering we will need to have the library on the server-->
 <!--<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">-->

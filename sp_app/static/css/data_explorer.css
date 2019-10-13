@@ -82,3 +82,9 @@
     opacity:0.9;
     background-color: rgba(255,255,255,1);
 }
+
+#study_select{
+    background-color: rgb(247,247,247);
+    border:none;
+    color:#212529;
+}

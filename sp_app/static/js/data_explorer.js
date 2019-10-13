@@ -8,6 +8,28 @@
 
 $(document).ready(function () {
 
+    function populate_study_select_dropdown(){
+        // Get a list of the studies that have the DataExplorer available
+        let pub_articles = getPublishedArticlesData();
+        // First add the current study
+        $("#study_select").append(`<option value=${study_to_load}>${study_to_load}</option>`)
+        pub_articles.forEach(function(article){
+            if (article["DataExplorer"]){
+                // Then this had DataExplorer data available
+                if (article["study_to_load_str"] != study_to_load){
+                    $("#study_select").append(`<option value=${article["study_to_load_str"]}>${article["article_name"]}</option>`)
+                }
+            }
+        })
+        // Here we have a list of the article names that need to be populated
+        
+    }
+    populate_study_select_dropdown();
+    
+    // // Now listen for a change
+    // $("#study_select").on('change', function () {
+    //     $("#study_select_form").submit();
+    // });
 
     function init_publication_details() {
         //INIT title
@@ -93,7 +115,7 @@ $(document).ready(function () {
             // is found in the output of this study
             if (data_file_paths_keys.includes(file_type_array[i])) {
                 $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_type_array[i] + ':'}</div>`);
-                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[file_type_array[i]]}" download>${data_file_paths[file_type_array[i]]}</a></div>`);
+                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[file_type_array[i]]}" download>${data_file_paths[file_type_array[i]]}</a></div>`);
             }
         };
 
@@ -105,12 +127,12 @@ $(document).ready(function () {
                     let f_name_dist = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_dist";
                     if (data_file_paths_keys.includes(f_name_dist)) {
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_dist + ':'}</div>`);
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[f_name_dist]}" download>${data_file_paths[f_name_dist]}</a></div>`);
+                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_dist]}" download>${data_file_paths[f_name_dist]}</a></div>`);
                     }
                     let f_name_pcoa = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_pcoa";
                     if (data_file_paths_keys.includes(f_name_pcoa)) {
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_pcoa + ':'}</div>`);
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load + data_file_paths[f_name_pcoa]}" download>${data_file_paths[f_name_pcoa]}</a></div>`);
+                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_pcoa]}" download>${data_file_paths[f_name_pcoa]}</a></div>`);
                     }
                 }
             }
@@ -1984,33 +2006,6 @@ $(document).ready(function () {
         google.maps.event.addDomListener(window, 'load', initMap);
     }
 
-
-    function centerAlignXLabels() {
-        // This function aims to move the text labels down slightly
-        // to align them vertically centrally.
-        // Only those labels shorter than others need moving
-        // We use the bottom of the bounding box of the axis (svg g element)
-        // We calculate the distance between the bottom of the text element
-        // and this g box and then move it down by half of this.
-        // UPDATE: because the modal hasn't appeared yet we the method below
-        // doesn't work because there are no bounding boxes yet.
-        //TODO fix this.
-        $('#x_axis_post_med_modal').find('text').each(function () {
-            let text_current_x = +$(this).attr("x");
-            let g_bbox_height = $("#x_axis_post_med_modal")[0].getBoundingClientRect().height;
-            let text_bbox_height_inc_tick = this.getBBox().width + text_current_x;
-            let distance_btwn_g_and_text = g_bbox_height - text_bbox_height_inc_tick;
-            // I have no idea why I have to divide by four here, but dividing by two
-            // and adding this to the attributes was moving it all the way to the bottom.
-            let dist_to_move = distance_btwn_g_and_text / 4;
-            if (dist_to_move > 1) {
-                let new_x = (text_current_x + dist_to_move).toString();
-                $(this).attr("x", new_x);
-            }
-
-        });
-    }
-
     function getShortTaxStr(fullTaxStr) {
         let tax_elements = fullTaxStr.split(';');
         tax_elements.reverse();
@@ -2034,5 +2029,7 @@ $(document).ready(function () {
         }
         return shortTax;
     }
+
+    
 
 });

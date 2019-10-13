@@ -14,3 +14,4 @@ sp_flask_launcher.py
 sp_app/static/images/
 symportal_website/data/
 symportal_website/data_dev/html_data/
+.vscode/launch.json
