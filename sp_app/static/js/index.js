@@ -99,7 +99,7 @@ function populate_article_table(data){
             }
             tr.appendChild(td);
         });
-        //TODO here we have to put in the data explorer icon in green if the data explorer is available
+        // Put in the data explorer icon in green if the data explorer is available
         // else we should just put the image in black
         if (article['DataExplorer']){
             let $td = $("<td></td>", {"align":"center"});

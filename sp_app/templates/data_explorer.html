@@ -58,7 +58,7 @@ Have a network window for when the sample is clicked on (this can be later)
 
     <!--To the left-->
     <ul class="navbar-nav mr-auto">
-        <a class="navbar-brand">
+        <a class="navbar-brand" href="/">
             <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" alt="Logo" style="width:40px;">
         </a>
         <!--This should be the data set header that we are working with-->
@@ -166,8 +166,8 @@ Have a network window for when the sample is clicked on (this can be later)
                         </div>
 
                         <div class="p-1 overflow-auto text-center">
-                            <svg id="chart_post_med_modal" class="chart seq_prof_chart"  ></svg>
-                            <svg id="chart_profile_modal" class="chart seq_prof_chart"  ></svg>
+                            <svg id="chart_post_med_modal" class="chart seq_prof_chart" style="display:block;margin:auto;" ></svg>
+                            <svg id="chart_profile_modal" class="chart seq_prof_chart" style="display:block;margin:auto;" ></svg>
                         </div>
                     </div>
                     <!-- Modal footer -->
