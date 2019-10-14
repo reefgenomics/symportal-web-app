@@ -97,3 +97,10 @@
     padding-right: 12px;
     width:110%;
 }
+
+#study_select:hover{
+    cursor:pointer;
+    color: #0056B3;
+}
+
+option{color:#212529;}
