@@ -1,4 +1,5 @@
 sp_app/static/data/
+sp_app/static/utils/google_maps_api_key.txt
 media
 ./media/*
 templated-projection
