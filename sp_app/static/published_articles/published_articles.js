@@ -26,10 +26,10 @@ return [
 
     {"article_name":"Klein et al. 2019",
     "title":"Night-time temperature reprieves enhance the thermal tolerance of a symbiotic Cnidarian",
-    "location":"Red Sea", "num_samples":"--", "additional_markers":"--",
-    "run_type":"local",
+    "location":"Red Sea", "num_samples":"52", "additional_markers":"--",
+    "run_type":"local&remote",
     "article_url":"https://www.frontiersin.org/articles/10.3389/fmars.2019.00453/full",
-    "seq_data_url":"--", "published":true, "DataExplorer":false, "study_to_load_str":"Klein_et_al_2019"},
+    "seq_data_url":"https://www.ncbi.nlm.nih.gov/bioproject/PRJNA494341", "published":true, "DataExplorer":true, "study_to_load_str":"Klein_et_al_2019"},
 
     {"article_name":"Terraneo et al. 2019",
     "title":"Environmental latitudinal gradients and host‐specificity shape Symbiodiniaceae distribution in Red Sea Porites corals",
@@ -46,5 +46,6 @@ return [
     "article_url":"--",
     "seq_data_url":"https://www.ncbi.nlm.nih.gov/sra/PRJNA565621", "published":false, "DataExplorer":false, 
     "study_to_load_str":"Hume_et_al_2019b"}
+
     ]
 };
