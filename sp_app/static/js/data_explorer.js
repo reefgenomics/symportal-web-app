@@ -26,16 +26,13 @@ $(document).ready(function () {
     }
     populate_study_select_dropdown();
     
-    // // Now listen for a change
-    // $("#study_select").on('change', function () {
-    //     $("#study_select_form").submit();
-    // });
+    let study_meta_info = getStudyMetaInfo()
 
     function init_publication_details() {
         //INIT title
-        $("#study_title").html(getStudyMetaInfo()['title']);
+        $("#study_title").html(study_meta_info['title']);
         //INIT authors
-        $("#authors").html(getStudyMetaInfo()['author_list']);
+        $("#authors").html(study_meta_info['author_list']);
     }
     init_publication_details();
 
@@ -89,7 +86,20 @@ $(document).ready(function () {
             data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_analysis_meta_info[data_analysis_meta_info_prop_to_key_dict[data_analysis_meta_info_properties_array[i]]]}</div>`);
         }
     }
-    populate_the_data_analysis_meta_information();
+
+    // remove the data analysis meta information card if analysis was not conducted
+    function populate_the_data_analysis_meta_infomation_empty(){
+        $("#analysis_meta_info_card").remove();
+    }
+
+    // In some cases we will not have run an analysis and will only have loaded the data.
+    // As such we will not have information to populate in the data_analysis_meta_information section
+    if (study_meta_info['analysis']){ 
+        populate_the_data_analysis_meta_information();
+    }else{
+        populate_the_data_analysis_meta_infomation_empty();
+    }
+    
 
     function populate_the_downloads_section() {
         //TODO populate the downloads section
@@ -158,11 +168,7 @@ $(document).ready(function () {
         });
 
     // Get the sample and profile meta info
-    let profile_meta_info = getProfileMetaInfo();
     let sample_meta_info = getSampleMetaInfo();
-
-    // Sample name to uid object for doing the sample meta info
-    // TODO we will need the same thing for the profiles once we get to doing the profile info
     sample_name_to_uid_dict = (function () {
         let temp_dict = {};
         Object.keys(sample_meta_info).forEach(function (sample_uid) {
@@ -170,14 +176,20 @@ $(document).ready(function () {
         })
         return temp_dict;
     })();
-
-    profile_name_to_uid_dict = (function () {
-        let temp_dict = {};
-        Object.keys(profile_meta_info).forEach(function (profile_uid) {
-            temp_dict[profile_meta_info[profile_uid]["name"]] = +profile_uid;
-        })
-        return temp_dict;
-    })();
+    
+    let profile_meta_info;
+    let profile_name_to_uid_dict;
+    if (study_meta_info['analysis']){ 
+        profile_meta_info = getProfileMetaInfo();
+        profile_name_to_uid_dict = (function () {
+            let temp_dict = {};
+            Object.keys(profile_meta_info).forEach(function (profile_uid) {
+                temp_dict[profile_meta_info[profile_uid]["name"]] = +profile_uid;
+            })
+            return temp_dict;
+        })();
+    }
+    
 
     // Sequence meta info
     let available_sample_meta_info = Object.keys(sample_meta_info[Object.keys(sample_meta_info)[0]]);
@@ -205,24 +217,6 @@ $(document).ready(function () {
         "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
     ];
 
-    // Profile meta info
-    let available_profile_meta_info = Object.keys(profile_meta_info);
-    let profile_meta_annotation_to_key = {
-        "profile": "name",
-        "UID": "uid",
-        "genera": "genera",
-        "maj_seq": "maj_its2_seq",
-        "associated species": "assoc_species",
-        "local_abund": "local_abund",
-        "db_abund": "db_abund",
-        "seq_uids": "seq_uids",
-        "seq_abund_string": "seq_abund_string"
-    };
-    let profile_meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
-    let profile_meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
-        "seq_uids", "seq_abund_string"
-    ];
-
     //populate the sample_meta_info_holders
     (function populateSampleMetaInfoHolders() {
         for (let i = 0; i < sample_meta_info_annotation_order_array_primary.length; i++) {
@@ -244,19 +238,38 @@ $(document).ready(function () {
         }
     })();
 
-    //populate the profile_meta_info_holders
-    (function populateProfileMetaInfoHolders() {
-        for (let i = 0; i < profile_meta_info_annotation_order_array_primary.length; i++) {
-            let annotation = profile_meta_info_annotation_order_array_primary[i];
-            $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
-        }
-        for (let i = 0; i < profile_meta_info_annotation_order_array_secondary.length; i++) {
-            let annotation = profile_meta_info_annotation_order_array_secondary[i];
-            $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
-        }
-    })();
+    if (study_meta_info['analysis']){
+        // Profile meta info
+        let available_profile_meta_info = Object.keys(profile_meta_info);
+        let profile_meta_annotation_to_key = {
+            "profile": "name",
+            "UID": "uid",
+            "genera": "genera",
+            "maj_seq": "maj_its2_seq",
+            "associated species": "assoc_species",
+            "local_abund": "local_abund",
+            "db_abund": "db_abund",
+            "seq_uids": "seq_uids",
+            "seq_abund_string": "seq_abund_string"
+        };
+        let profile_meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
+        let profile_meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
+            "seq_uids", "seq_abund_string"
+        ];
 
-
+        //populate the profile_meta_info_holders
+        (function populateProfileMetaInfoHolders() {
+            for (let i = 0; i < profile_meta_info_annotation_order_array_primary.length; i++) {
+                let annotation = profile_meta_info_annotation_order_array_primary[i];
+                $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
+            }
+            for (let i = 0; i < profile_meta_info_annotation_order_array_secondary.length; i++) {
+                let annotation = profile_meta_info_annotation_order_array_secondary[i];
+                $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
+            }
+        })();
+    }
+    
 
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
     // We will have a seperate g for each of the samples so that we can plot column by column
@@ -342,7 +355,7 @@ $(document).ready(function () {
         svg_post_med.call(tip_seqs);
     } else {
         // Hide the card if the data to populate it doesn't exist
-        $("#post_med_card").attr("display", "none");
+        $("#post_med_card").css("display", "none");
     }
 
 
@@ -366,6 +379,7 @@ $(document).ready(function () {
     let xAxis_profile_modal;
     let seq_height_modal;
     let prof_height_modal;
+    let data_profile_inv_by_sample;
     if (typeof getRectDataProfileBySample === "function") {
         data_profile_by_sample = getRectDataProfileBySample();
         profile_bars_exists = true;
@@ -448,12 +462,47 @@ $(document).ready(function () {
         svg_post_med_modal.call(tip_seqs);
         svg_profile.call(tip_profiles);
         svg_profile_modal.call(tip_profiles);
+
+        //INIT inv profile data for the modal
+        //TODO we can work with this for the time being and see how long it takes to process on the
+        // large test dataset. If it takes too long then we can switch to the already having the inv values
+        // calculated. If it is fast then we no longer need to output the inv values and can save some space
+        // DATA for profile inverted
+        // Because this dataset is going to be used in the inverted modal plot we need to
+        // remove the cummulative y values that have been added to the above
+        data_profile_inv_by_sample = getRectDataProfileBySample();
+
+        function processProfileInvData(data) {
+            // For each sample in the data
+            Object.keys(data).forEach(function (dkey) {
+                // First check to see if there are any rectangles for this sample
+                if (data[dkey].length == 0) {
+                    return;
+                }
+
+                // Go through each element removing the cummulative y
+                // we can do this by setting the y to 0 for the first element and then
+                // for each next element we can set it to the y of the element that is n-1
+                new_y_rel = 0;
+                new_y_abs = 0;
+                for (j = 0; j < data[dkey].length; j++) {
+                    old_y_rel = data[dkey][j]["y_rel"];
+                    old_y_abs = data[dkey][j]["y_abs"];
+                    data[dkey][j]["y_rel"] = new_y_rel;
+                    data[dkey][j]["y_abs"] = new_y_abs;
+                    new_y_rel = old_y_rel;
+                    new_y_abs = old_y_abs;
+                }
+
+            })
+        }
+        processProfileInvData(data_profile_inv_by_sample);
     } else {
         // Hide the card if the data to populate it doesn't exist
-        $("#profile_card").attr("display", "none");
+        $("#profile_card").css("display", "none");
         // if the profile data doesn't exist then we don't have need for the modal so we should hide
         // the modal buttons.
-        $(".viewer_link_seq_prof").attr("display", "none");
+        $(".viewer_link_seq_prof").remove();
     }
 
 
@@ -491,58 +540,15 @@ $(document).ready(function () {
         }
     } else {
         // Hide the card if the data to populate it doesn't exist
-        $("#pre_med_card").attr("display", "none");
+        $("#pre_med_card").css("display", "none");
     }
-
-
-    //INIT inv profile data for the modal
-    //TODO we can work with this for the time being and see how long it takes to process on the
-    // large test dataset. If it takes to long then we can switch to the already having the inv values
-    // calculated. If it is fast then we no longer need to output the inv values and can save some space
-    // DATA for profile inverted
-    // Because this dataset is going to be used in the inverted modal plot we need to
-    // remove the cummulative y values that have been added to the above
-    let data_profile_inv_by_sample = getRectDataProfileBySample();
-
-    function processProfileInvData(data) {
-        // For each sample in the data
-        Object.keys(data).forEach(function (dkey) {
-            // First check to see if there are any rectangles for this sample
-            if (data[dkey].length == 0) {
-                return;
-            }
-
-            // Go through each element removing the cummulative y
-            // we can do this by setting the y to 0 for the first element and then
-            // for each next element we can set it to the y of the element that is n-1
-            new_y_rel = 0;
-            new_y_abs = 0;
-            for (j = 0; j < data[dkey].length; j++) {
-                old_y_rel = data[dkey][j]["y_rel"];
-                old_y_abs = data[dkey][j]["y_abs"];
-                data[dkey][j]["y_rel"] = new_y_rel;
-                data[dkey][j]["y_abs"] = new_y_abs;
-                new_y_rel = old_y_rel;
-                new_y_abs = old_y_abs;
-            }
-
-        })
-    }
-    processProfileInvData(data_profile_inv_by_sample);
-
-
-
-
-
-
-
-
-
+   
 
     // Distance colors
+    // Process between samples first and then profiles because profiles may not exist and so may not need processing
+
     // INIT the color by drop down for the btwn sample and the btwn profile dist plots
     let btwn_sample_color_categories = ["host", "location", "post_med_seqs_absolute", "post_med_seqs_unique", "no_color"];
-    let btwn_profile_color_categories = ["profile_identity", "local_abundance", "db_abundance"]
     // We don't want to allow sorting by host or location if we don't have data for these. We can check to see if
     // there is data for these by looking to see if there are sorting arrays for them.
     if (!(sorting_keys.includes("taxa_string"))) {
@@ -557,19 +563,10 @@ $(document).ready(function () {
         "post_med_seqs_absolute": "post_med_absolute",
         "post_med_seqs_unique": "post_med_unique"
     };
-    let btwn_profile_c_cat_key = {
-        "local_abundance": "local_abund",
-        "db_abundance": "db_abund"
-    };
-
+    
     let color_dropdown_to_populate = $("#between_sample_distances").find(".color_select");
     for (let i = 0; i < btwn_sample_color_categories.length; i++) {
         color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_sample_color_categories[i]}>${btwn_sample_color_categories[i]}</a>`);
-    }
-
-    color_dropdown_to_populate = $("#between_profile_distances").find(".color_select");
-    for (let i = 0; i < btwn_profile_color_categories.length; i++) {
-        color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_profile_color_categories[i]}>${btwn_profile_color_categories[i]}</a>`);
     }
 
     // Create the color scales for the above parameters
@@ -583,9 +580,6 @@ $(document).ready(function () {
     let location_c_scale;
     let post_med_absolute_c_scale;
     let post_med_unique_c_scale;
-    let profile_local_abund_c_scale;
-    let profile_db_abund_c_scale;
-    let profile_idenity_c_scale;
 
     function make_categorical_color_scale_btwn_sample(cat_name) {
         let key_name = btwn_sample_c_cat_key[cat_name];
@@ -622,20 +616,6 @@ $(document).ready(function () {
         return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
     }
 
-    function make_quantitative_color_scale_btwn_profile(cat_name) {
-        let key_name = btwn_profile_c_cat_key[cat_name];
-        //need to get the list of taxa string
-        let values = [];
-        Object.keys(profile_meta_info).forEach(function (k) {
-            values.push(profile_meta_info[k][key_name]);
-        });
-        let max_val = Math.max(...values);
-        let min_val = Math.min(...values);
-        // here we have a unique list of the 'host' values
-        // now create the colour scale for it
-        return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
-    }
-
     if (btwn_sample_color_categories.includes("host")) {
         host_c_scale = make_categorical_color_scale_btwn_sample("host");
     }
@@ -644,9 +624,47 @@ $(document).ready(function () {
     }
     post_med_absolute_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_absolute");
     post_med_unique_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_unique");
-    profile_local_abund_c_scale = make_quantitative_color_scale_btwn_profile("local_abundance");
-    profile_db_abund_c_scale = make_quantitative_color_scale_btwn_profile("db_abundance");
-    profile_idenity_c_scale = d3.scaleOrdinal().domain(Object.keys(profile_meta_info)).range(Object.keys(profile_meta_info).map(k => profile_meta_info[k]["color"]));
+
+    // Now profiles
+    let btwn_profile_c_cat_key;
+    let profile_local_abund_c_scale;
+    let profile_db_abund_c_scale;
+    let profile_idenity_c_scale;
+    if (study_meta_info['analysis']){
+        
+        let btwn_profile_color_categories = ["profile_identity", "local_abundance", "db_abundance"]
+        
+        btwn_profile_c_cat_key = {
+            "local_abundance": "local_abund",
+            "db_abundance": "db_abund"
+        };
+
+        color_dropdown_to_populate = $("#between_profile_distances").find(".color_select");
+        for (let i = 0; i < btwn_profile_color_categories.length; i++) {
+            color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_profile_color_categories[i]}>${btwn_profile_color_categories[i]}</a>`);
+        }
+
+        
+
+        
+        function make_quantitative_color_scale_btwn_profile(cat_name) {
+            let key_name = btwn_profile_c_cat_key[cat_name];
+            //need to get the list of taxa string
+            let values = [];
+            Object.keys(profile_meta_info).forEach(function (k) {
+                values.push(profile_meta_info[k][key_name]);
+            });
+            let max_val = Math.max(...values);
+            let min_val = Math.min(...values);
+            // here we have a unique list of the 'host' values
+            // now create the colour scale for it
+            return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
+        }
+
+        profile_local_abund_c_scale = make_quantitative_color_scale_btwn_profile("local_abundance");
+        profile_db_abund_c_scale = make_quantitative_color_scale_btwn_profile("db_abundance");
+        profile_idenity_c_scale = d3.scaleOrdinal().domain(Object.keys(profile_meta_info)).range(Object.keys(profile_meta_info).map(k => profile_meta_info[k]["color"]));
+    }
 
     //DATA for btwn sample
     let svg_btwn_sample_dist = d3.select("#chart_btwn_sample");
@@ -694,7 +712,7 @@ $(document).ready(function () {
     } else {
         // btwn_sample data not available
         // make display none for the btwn sample card
-        $("#between_sample_distances").attr("display", "none");
+        $("#between_sample_distances").css("display", "none");
     }
     if (btwn_sample_data_available) {
         x_btwn_sample = d3.scaleLinear()
@@ -763,7 +781,7 @@ $(document).ready(function () {
     } else {
         // btwn_sample data not available
         // make display none for the btwn sample card
-        $("#between_sample_distances").attr("display", "none");
+        $("#between_profile_distances").css("display", "none");
     }
     if (btwn_profile_data_available) {
         x_btwn_profile = d3.scaleLinear()
@@ -849,14 +867,17 @@ $(document).ready(function () {
         return seq_color[seq_name]
     });
     let sequence_color_scale = d3.scaleOrdinal().domain(seq_names).range(seq_colors);
-
-    let prof_color = getProfColor();
-    let prof_names = Object.keys(prof_color);
-    let prof_colors = seq_names.map(function (seq_name) {
-        return seq_color[seq_name]
-    });
-    let profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);
-
+    
+    let profile_color_scale;
+    if (study_meta_info['analysis']){
+        let prof_color = getProfColor();
+        let prof_names = Object.keys(prof_color);
+        let prof_colors = seq_names.map(function (seq_name) {
+            return seq_color[seq_name]
+        });
+        profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);
+    }
+    
 
     // INIT the post-MED and profile plots modal and normal.
     let data_type;
@@ -872,13 +893,13 @@ $(document).ready(function () {
     update_bar_plot_by_sample(data_type, "post", sample_list_post, post_med_init_by_sample_interval);
 
     // PROFILES INIT
-    update_bar_plot_by_sample(data_type, "profile", sample_list_profile, profile_init_by_sample_interval);
+    if (study_meta_info['analysis']){update_bar_plot_by_sample(data_type, "profile", sample_list_profile, profile_init_by_sample_interval);}
 
     // BTWN SAMPLE INIT
     update_dist_plot("#chart_btwn_sample");
 
-    // BTWN SAMPLE INIT
-    update_dist_plot("#chart_btwn_profile");
+    // BTWN PROFILE INIT
+    if (study_meta_info['analysis']){update_dist_plot("#chart_btwn_profile");}
 
     // Functions for doing the init and updating of the d3 bar plots
     function update_bar_plot_by_sample(data_type, pre_post_profile, sample_list, init_sample_interval) {
