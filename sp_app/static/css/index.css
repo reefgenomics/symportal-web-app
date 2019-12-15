@@ -130,6 +130,16 @@ nav a {
 
 }
 
+.services .container {
+    max-width: 960px;
+    margin: auto;
+    overflow: hidden;
+    padding-top: 4rem;
+    padding-bottom: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
 .services .services_text, .fas {
     color: grey;
 }
@@ -143,6 +153,14 @@ nav a {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-gap: 20px;
+    padding-bottom: 1rem;
+}
+
+.grid-1{
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-top: 1rem;
+    border-top: 1px solid #606060;
 }
 
 
@@ -159,6 +177,15 @@ nav a {
     border-radius: 50%;
     height:100px;
     box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+.services .logo {
+    height:120px;
+    filter: invert(100%);
+}
+
+.services .logo:hover {
+    height:130px;
 }
 
 .email_a {
@@ -329,11 +356,11 @@ footer
         display: None;
     }
 
-    .grid-2, .grid-3 {
+    /* .grid-2, .grid-3 {
         
         grid-template-columns: 1fr;
         
-    }
+    } */
 
     .container {
         max-width: 960px;

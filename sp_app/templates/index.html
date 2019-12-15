@@ -43,27 +43,49 @@
     </header>
     
     
-    <!-- Services -->
+    <!-- Services and DataExplorer-->
     <section class="services bg-dark">
-        <div class="container grid-3 center">
-            <div class="service_item">
-                <i class="fas fa-users fa-3x"></i>
-                <p class="services_head">Community driven</p>
-                <p class="services_text">Improved resolution with greater use</p>
+        <div class="container">
+            <div class="grid-3 center">
+                <div class="service_item">
+                    <i class="fas fa-users fa-3x"></i>
+                    <p class="services_head">Community driven</p>
+                    <p class="services_text">Improved resolution with greater use</p>
+                </div>
+                <div class="service_item">
+                    <i class="fas fa-database fa-3x"></i>
+                    <p class="services_head">Database integrated</p>
+                    <p class="services_text">Standardisation-enforced central repository</p>
+                </div>
+                <div class="service_item">
+                    <i class="fas fa-fingerprint fa-3x"></i>
+                    <p class="services_head">ITS2 type profiling</p>
+                    <p class="services_text">Sequence-based putative taxa prediction</p>
+                </div>
+                
             </div>
-            <div class="service_item">
-                <i class="fas fa-database fa-3x"></i>
-                <p class="services_head">Database integrated</p>
-                <p class="services_text">Standardisation-enforced central repository</p>
-            </div>
-            <div class="service_item">
-                <i class="fas fa-fingerprint fa-3x"></i>
-                <p class="services_head">ITS2 type profiling</p>
-                <p class="services_text">Sequence-based putative taxa prediction</p>
+            <div class="grid-1 center">
+                <div class="service_item">
+                    <form action="" method="POST">
+                        <button class="DEbtn" name="study_to_load" value="Terraneo_et_al_2019">
+                            <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" class="logo" alt="pic01"></img>
+                        </button>
+                    </form>
+                    <h3>DataExplorer</h3>
+                    <p class="services_text">Launch SymPortal's DataExplorer to interact with published data sets</p>
+                </div>
             </div>
         </div>
+        
     </section>
     
+    <!-- Enter DataExplorer-->
+    
+        
+    
+        
+    
+
     <!-- Operations-->
     <section class="operations bg-light">
         <div class="container grid-2">
@@ -88,6 +110,8 @@
 
         </div>
     </section>
+
+    
 
     <!-- Resources -->
     <section class="cite_us bg-light">
