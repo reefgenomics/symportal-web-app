@@ -16,3 +16,9 @@ sp_app/static/images/
 symportal_website/data/
 symportal_website/data_dev/html_data/
 .vscode/launch.json
+app.db
+*__pycache__*
+migrations/README
+migrations/env.py
+migrations/alembic.ini
+migrations/script.py.mako

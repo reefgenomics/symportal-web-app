@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, flash
+from flask import render_template, request, redirect, flash, url_for
 from sp_app import app
 import os
 from sp_app.forms import LoginForm
@@ -28,5 +28,5 @@ def login():
     if form.validate_on_submit():
         flash('Login requested for user {}, remember_me={}'.format(
             form.username.data, form.remember_me.data))
-        return redirect('/index')
+        return redirect(url_for('index'))
     return render_template('login.html', form=form)
