@@ -203,57 +203,151 @@
                 <!-- Article rows will go in here-->
                 <!-- NB the label attributes are used for the mobile display -->
                 {% for pd in published_datasets %}
-                <!-- We need to set the row type to get the grey non-grey background via css -->
-                {% if loop.index0 % 2 == 0 %}
-                {% set row_type="row_off" %}
-                {% else %}
-                {% set row_type="row_on" %}
-                {% endif %}
-                <tr class="hover_row {{row_type}}">
-                    <td label="Article">{{ pd.study_name }}</td>
-                    <td label="Title">{{ pd.title }}</td>
-                    <td label="Location">{{ pd.location }}</td>
-                    <td label="#Samples">{{ pd.num_samples }}</td>
-                    <td label="Additional markers">{{ pd.additional_markers }}</td>
-                    <td label="Run type">{{ pd.run_type }}</td>
-                    {% if pd.article_url != '--' %}
-                    <td label="Article URL">
-                        <a href="{{ pd.article_url }}">
-                            <div style="height:100%;width:100%">Article</div>
-                        </a>
-                    </td>
+                    <!-- We need to set the row type to get the grey non-grey background via css -->
+                    {% if loop.index0 % 2 == 0 %}
+                    {% set row_type="row_off" %}
                     {% else %}
-                    <td label="Article URL">--</td>
+                    {% set row_type="row_on" %}
                     {% endif %}
-                    {% if pd.article_url != '--' %}
-                    <td label="Seq data URL">
-                        <a href="{{ pd.seq_data_url }}">
-                            <div style="height:100%;width:100%">Data</div>
-                        </a>
-                    </td>
-                    {% else %}
-                    <td label="Seq data URL">--</td>
-                    {% endif %}
-                    <!-- DataExplorer icon -->
-                    {% if pd.data_explorer %}
-                    <td align="center">
-                        <form action method="post">
-                            <button class="DEbtn" name="study_to_load" value="{{ pd.study_to_load_str }}">
-                                <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
-                            </button>
-                        </form>
-                    </td>
-                    {% else %}
-                    <td align="center">
-                        <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
-                    </td>
-                    {% endif %}
-                </tr>
-                
+                    <tr class="hover_row {{row_type}}">
+                        <td label="Article">{{ pd.study_name }}</td>
+                        <td label="Title">{{ pd.title }}</td>
+                        <td label="Location">{{ pd.location }}</td>
+                        <td label="#Samples">{{ pd.num_samples }}</td>
+                        {% if pd.additional_markers == 'psbAncr' %}
+                        <td label="Additional markers">
+                            <i>psbA<sup>ncr</sup></i>
+                        </td>
+                        {% else %}
+                        <td label="Additional markers">{{ pd.additional_markers }}</td>
+                        {% endif %}
+                        <td label="Run type">{{ pd.run_type }}</td>
+                        {% if pd.article_url != '--' %}
+                        <td label="Article URL">
+                            <a href="{{ pd.article_url }}">
+                                <div style="height:100%;width:100%">Article</div>
+                            </a>
+                        </td>
+                        {% else %}
+                        <td label="Article URL">--</td>
+                        {% endif %}
+                        {% if pd.article_url != '--' %}
+                        <td label="Seq data URL">
+                            <a href="{{ pd.seq_data_url }}">
+                                <div style="height:100%;width:100%">Data</div>
+                            </a>
+                        </td>
+                        {% else %}
+                        <td label="Seq data URL">--</td>
+                        {% endif %}
+                        <!-- DataExplorer icon -->
+                        {% if pd.data_explorer %}
+                        <td align="center">
+                            <form action method="post">
+                                <button class="DEbtn" name="study_to_load" value="{{ pd.study_to_load_str }}">
+                                    <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
+                                </button>
+                            </form>
+                        </td>
+                        {% else %}
+                        <td align="center">
+                            <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
+                        </td>
+                        {% endif %}
+                    </tr>
                 {% endfor %}
                 </tbody>
             </table>
             <p class="table_footnotes">Do you have an article to add? Do you have additional information about an existing article? Get in touch!</p>
+        </div>
+    </section>
+
+    <!-- Your unpublished analyses -->
+    <section class="unpublished_articles bg-light" >
+        <!--<header3></header3>-->
+        <div class="container middle_container">
+            <h3 class="light_header">Your unpublished analyses</h3>
+            {% if current_user.is_anonymous %}
+            <p class="center">No unpublished analyses to load</p>
+            {% else %}
+                {% if user_unpublished_datasets %}
+                    <table id="unpublished_articles_table">
+                        <thead>
+                            <tr class="row_on header_row">
+                                <th>Article</th>
+                                <th>Title</th>
+                                <th>Location</th>
+                                <th>#Samples</th>
+                                <th>Additional markers</th>
+                                <th>Run type</th>
+                                <th>Article</th>
+                                <th>Data</th>
+                                <th>DataExplorer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for upd in user_unpublished_datasets %}
+                            <!-- We need to set the row type to get the grey non-grey background via css -->
+                                {% if loop.index0 % 2 == 0 %}
+                                {% set row_type="row_off" %}
+                                {% else %}
+                                {% set row_type="row_on" %}
+                                {% endif %}
+                                <tr class="hover_row {{row_type}}">
+                                    <td label="Article">{{ upd.study_name }}</td>
+                                    <td label="Title">{{ upd.title }}</td>
+                                    <td label="Location">{{ upd.location }}</td>
+                                    <td label="#Samples">{{ upd.num_samples }}</td>
+                                    {% if upd.additional_markers == 'psbAncr' %}
+                                    <td label="Additional markers">
+                                        <i>psbA<sup>ncr</sup></i>
+                                    </td>
+                                    {% else %}
+                                    <td label="Additional markers">{{ upd.additional_markers }}</td>
+                                    {% endif %}
+                                    <td label="Run type">{{ upd.run_type }}</td>
+                                    {% if upd.article_url != '--' %}
+                                    <td label="Article URL">
+                                        <a href="{{ upd.article_url }}">
+                                            <div style="height:100%;width:100%">Article</div>
+                                        </a>
+                                    </td>
+                                    {% else %}
+                                    <td label="Article URL">--</td>
+                                    {% endif %}
+                                    {% if upd.article_url != '--' %}
+                                    <td label="Seq data URL">
+                                        <a href="{{ upd.seq_data_url }}">
+                                            <div style="height:100%;width:100%">Data</div>
+                                        </a>
+                                    </td>
+                                    {% else %}
+                                    <td label="Seq data URL">--</td>
+                                    {% endif %}
+                                    <!-- DataExplorer icon -->
+                                    {% if upd.data_explorer %}
+                                    <td align="center">
+                                        <form action method="post">
+                                            <button class="DEbtn" name="study_to_load" value="{{ upd.study_to_load_str }}">
+                                                <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
+                                            </button>
+                                        </form>
+                                    </td>
+                                    {% else %}
+                                    <td align="center">
+                                        <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    
+                {% else %}
+                <p class="center">No unpublished analyses to load</p>
+                {% endif %}
+            {% endif %}
         </div>
     </section>
 

@@ -10,17 +10,21 @@ from werkzeug.urls import url_parse
 @app.route('/index', methods=['GET','POST'])
 def index():
     if request.method == 'GET':
+        # get the datasets that will be loaded into the published data set table
         published_datasets = DataSet.query.filter_by(is_published=True).all()
-        return render_template('index.html', published_datasets=published_datasets)
+        # get the datasets that belong to the user that are not yet published
+        user_unpublished_datasets = [ds for ds in DataSet.query.filter_by(is_published=False) if current_user in ds.authors]
+        print(user_unpublished_datasets)
+        return render_template('index.html', published_datasets=published_datasets, user_unpublished_datasets=user_unpublished_datasets)
     elif request.method == 'POST':
         # get the google maps api key to be used
         map_key_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'utils', 'google_maps_api_key.txt')
         with open(map_key_path) as f:
             map_key = f.read().rstrip()
         return render_template('data_explorer.html', study_to_load=request.form.get('study_to_load'), map_key=map_key)
-    else:
-        published_datasets = DataSet.query.filter_by(is_published=True).all()
-        return render_template('index.html', published_datasets=published_datasets)
+    # else:
+    #     published_datasets = DataSet.query.filter_by(is_published=True).all()
+    #     return render_template('index.html', published_datasets=published_datasets)
 
 @app.route('/submit_data_learn_more')
 def submit_data_learn_more():
