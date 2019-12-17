@@ -201,6 +201,56 @@
                 </thead>
                 <tbody>
                 <!-- Article rows will go in here-->
+                <!-- NB the label attributes are used for the mobile display -->
+                {% for pd in published_datasets %}
+                <!-- We need to set the row type to get the grey non-grey background via css -->
+                {% if loop.index0 % 2 == 0 %}
+                {% set row_type="row_off" %}
+                {% else %}
+                {% set row_type="row_on" %}
+                {% endif %}
+                <tr class="hover_row {{row_type}}">
+                    <td label="Article">{{ pd.study_name }}</td>
+                    <td label="Title">{{ pd.title }}</td>
+                    <td label="Location">{{ pd.location }}</td>
+                    <td label="#Samples">{{ pd.num_samples }}</td>
+                    <td label="Additional markers">{{ pd.additional_markers }}</td>
+                    <td label="Run type">{{ pd.run_type }}</td>
+                    {% if pd.article_url != '--' %}
+                    <td label="Article URL">
+                        <a href="{{ pd.article_url }}">
+                            <div style="height:100%;width:100%">Article</div>
+                        </a>
+                    </td>
+                    {% else %}
+                    <td label="Article URL">--</td>
+                    {% endif %}
+                    {% if pd.article_url != '--' %}
+                    <td label="Seq data URL">
+                        <a href="{{ pd.seq_data_url }}">
+                            <div style="height:100%;width:100%">Data</div>
+                        </a>
+                    </td>
+                    {% else %}
+                    <td label="Seq data URL">--</td>
+                    {% endif %}
+                    <!-- DataExplorer icon -->
+                    {% if pd.data_explorer %}
+                    <td align="center">
+                        <form action method="post">
+                            <button class="DEbtn" name="study_to_load" value="{{ pd.study_to_load_str }}">
+                                <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
+                            </button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td align="center">
+                        <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
+                    </td>
+                    {% endif %}
+                </tr>
+                
+                {% endfor %}
                 </tbody>
             </table>
             <p class="table_footnotes">Do you have an article to add? Do you have additional information about an existing article? Get in touch!</p>

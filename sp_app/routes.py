@@ -3,14 +3,15 @@ from sp_app import app
 import os
 from sp_app.forms import LoginForm
 from flask_login import current_user, login_user, logout_user
-from sp_app.models import User
+from sp_app.models import User, DataSet
 from werkzeug.urls import url_parse
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
 def index():
     if request.method == 'GET':
-        return render_template('index.html')
+        published_datasets = DataSet.query.filter_by(is_published=True).all()
+        return render_template('index.html', published_datasets=published_datasets)
     elif request.method == 'POST':
         # get the google maps api key to be used
         map_key_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'utils', 'google_maps_api_key.txt')
@@ -18,8 +19,8 @@ def index():
             map_key = f.read().rstrip()
         return render_template('data_explorer.html', study_to_load=request.form.get('study_to_load'), map_key=map_key)
     else:
-        user = {'username': 'Guest'}
-        return render_template('index.html', user=user)
+        published_datasets = DataSet.query.filter_by(is_published=True).all()
+        return render_template('index.html', published_datasets=published_datasets)
 
 @app.route('/submit_data_learn_more')
 def submit_data_learn_more():

@@ -123,6 +123,6 @@ function populate_article_table(data){
 
 
 
-// populate the published articles table
-published_articles = getPublishedArticlesData()
-populate_article_table(published_articles)
+// // populate the published articles table
+// published_articles = getPublishedArticlesData()
+// populate_article_table(published_articles)
