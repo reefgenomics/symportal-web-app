@@ -1,10 +1,11 @@
 from flask import render_template, request, redirect, flash, url_for
-from sp_app import app
+from sp_app import app, db
 import os
 from sp_app.forms import LoginForm
 from flask_login import current_user, login_user, logout_user
 from sp_app.models import User, DataSet
 from werkzeug.urls import url_parse
+from sqlalchemy import or_
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
@@ -13,7 +14,7 @@ def index():
         # get the datasets that will be loaded into the published data set table
         published_datasets = DataSet.query.filter_by(is_published=True).all()
         # get the datasets that belong to the user that are not yet published
-        user_unpublished_datasets = [ds for ds in DataSet.query.filter_by(is_published=False) if current_user in ds.authors]
+        user_unpublished_datasets = [ds for ds in DataSet.query.filter_by(is_published=False) if current_user in ds.users_with_access]
         print(user_unpublished_datasets)
         return render_template('index.html', published_datasets=published_datasets, user_unpublished_datasets=user_unpublished_datasets)
     elif request.method == 'POST':
@@ -21,10 +22,27 @@ def index():
         map_key_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'utils', 'google_maps_api_key.txt')
         with open(map_key_path) as f:
             map_key = f.read().rstrip()
-        return render_template('data_explorer.html', study_to_load=request.form.get('study_to_load'), map_key=map_key)
-    # else:
-    #     published_datasets = DataSet.query.filter_by(is_published=True).all()
-    #     return render_template('index.html', published_datasets=published_datasets)
+        # Here we are going to load the data_explorer page
+        # We will need to provide the database object that represents the study_to_load string
+        # provided by the request.
+        # We will also need to provide a list of studies to load in the dataexplorer drop
+        # down that allows users to switch between the DataSet that they are viewing
+        dataset_to_load = DataSet.query.filter_by(study_to_load_str=request.form.get('study_to_load')).first()
+        # The other datasets should be those that are:
+        # a - published
+        # b - have dataexplorer data
+        # c - are unpublished but have the current user in their users_with_access list
+        # We also want to exclude the dataset_to_load dataset.
+        if current_user.is_anonymous:
+            published_and_authorised_datasets = db.session.query(DataSet)\
+                .filter(DataSet.data_explorer==True, DataSet.is_published==True).all()
+        else:
+            published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer==True)\
+                .filter(or_(DataSet.is_published==True, DataSet.users_with_access.contains(current_user)))\
+                .filter(DataSet.study_to_load_str != dataset_to_load.study_to_load_str).all()
+        return render_template('data_explorer.html', dataset_to_load=dataset_to_load,
+                               published_and_authorised_datasets=published_and_authorised_datasets ,map_key=map_key)
+    
 
 @app.route('/submit_data_learn_more')
 def submit_data_learn_more():

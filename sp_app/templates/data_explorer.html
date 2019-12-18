@@ -66,15 +66,24 @@ Have a network window for when the sample is clicked on (this can be later)
         <form action="", method="POST">
             <div class="form-group">
                 <select id="study_select" class="form-control" name="study_to_load" onchange="this.form.submit()">
-                    
+                    <option value="{{ dataset_to_load.study_to_load_str }}">{{ dataset_to_load.study_name }}</option>
+                    {% for article in published_and_authorised_datasets %}
+                        <option value="{{ article.study_to_load_str }}">{{ article.study_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
         </form>
-        
     </ul>
 
     <!--To the right-->
     <ul class="navbar-nav">
+        <li class="nav-item" style="padding-top:0.5rem;">
+            {% if current_user.is_anonymous %}
+                <span style="padding-right:1rem;">Logged in as: <b>anonymous</b></span>
+            {% else %}
+                <span class="nav_link" style="padding-right:1rem;">Logged in as: <b>{{ current_user.username }}</b></span>
+            {% endif %}
+        </li>
         <li class="nav-item">
             <a class="nav-link" href="/">Home</a>
         </li>
@@ -87,10 +96,10 @@ Have a network window for when the sample is clicked on (this can be later)
     <!--LHS-->
     <div class="col-md-7">
         <!--Title of the paper-->
-        <h5 class="display-4" id='study_title' style="font-size:2rem;"></h5>
+        <h5 class="display-4" id='study_title' style="font-size:2rem;">{{ dataset_to_load.title }}</h5>
         <!--Authors of the paper-->
         <div class="d-flex flex-column p-3" style="color:#777">
-            <P id="authors"></P>
+            <P id="authors">{{ dataset_to_load.author_list_string }}</P>
         </div>
 
         <!--POST MED SVG HOLDER-->
@@ -477,7 +486,7 @@ Have a network window for when the sample is clicked on (this can be later)
                     
                 </div>
             <div class="d-flex justify-content-end">
-                <a href="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/' + study_to_load + '.zip') }}">Download all</a>
+                <a href="{{ url_for('static', filename='data/data_explorer_data/' + dataset_to_load.study_to_load_str + '/' + dataset_to_load.study_to_load_str + '.zip') }}">Download all</a>
             </div>
           </div>
 
@@ -490,12 +499,15 @@ Have a network window for when the sample is clicked on (this can be later)
     </div>
 
 <script type="text/javascript">
-    let study_to_load = "{{  study_to_load }}";
-    let study_to_load_path = "{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/') }}";
+    let study_to_load = "{{  dataset_to_load.study_to_load_str }}";
+    let study_to_load_path = "{{ url_for('static', filename='data/data_explorer_data/' + dataset_to_load.study_to_load_str + '/') }}";
+    {% if dataset_to_load.analysis %}
+    let analysis = true;
+    {% else %}
+    let analysis = false;
+    {% endif %}
 </script>
-<script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/study_data.js') }}"></script>
-<script src="{{ url_for('static', filename='data/data_explorer_data/' + study_to_load + '/study_meta_info.js') }}"></script>
-<script src="{{ url_for('static', filename='published_articles/published_articles.js') }}"></script>
+<script src="{{ url_for('static', filename='data/data_explorer_data/' + dataset_to_load.study_to_load_str + '/study_data.js') }}"></script>
 
 <!--TODO to enable the marker clustering we will need to have the library on the server-->
 <!--<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">-->

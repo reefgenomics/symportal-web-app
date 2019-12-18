@@ -8,33 +8,33 @@
 
 $(document).ready(function () {
 
-    function populate_study_select_dropdown(){
-        // Get a list of the studies that have the DataExplorer available
-        let pub_articles = getPublishedArticlesData();
-        // First add the current study
-        $("#study_select").append(`<option value=${study_to_load}>${study_to_load}</option>`)
-        pub_articles.forEach(function(article){
-            if (article["DataExplorer"]){
-                // Then this had DataExplorer data available
-                if (article["study_to_load_str"] != study_to_load){
-                    $("#study_select").append(`<option value=${article["study_to_load_str"]}>${article["article_name"]}</option>`)
-                }
-            }
-        })
-        // Here we have a list of the article names that need to be populated
+    // function populate_study_select_dropdown(){
+    //     // Get a list of the studies that have the DataExplorer available
+    //     let pub_articles = getPublishedArticlesData();
+    //     // First add the current study
+    //     $("#study_select").append(`<option value=${study_to_load}>${study_to_load}</option>`)
+    //     pub_articles.forEach(function(article){
+    //         if (article["DataExplorer"]){
+    //             // Then this had DataExplorer data available
+    //             if (article["study_to_load_str"] != study_to_load){
+    //                 $("#study_select").append(`<option value=${article["study_to_load_str"]}>${article["article_name"]}</option>`)
+    //             }
+    //         }
+    //     })
+    //     // Here we have a list of the article names that need to be populated
         
-    }
-    populate_study_select_dropdown();
+    // }
+    // populate_study_select_dropdown();
     
-    let study_meta_info = getStudyMetaInfo()
+    // let study_meta_info = getStudyMetaInfo()
 
-    function init_publication_details() {
-        //INIT title
-        $("#study_title").html(study_meta_info['title']);
-        //INIT authors
-        $("#authors").html(study_meta_info['author_list']);
-    }
-    init_publication_details();
+    // function init_publication_details() {
+    //     //INIT title
+    //     $("#study_title").html(study_meta_info['title']);
+    //     //INIT authors
+    //     $("#authors").html(study_meta_info['author_list']);
+    // }
+    // init_publication_details();
 
     function populate_the_associated_data_set_meta_information() {
         //populate the associated data set meta information
@@ -94,7 +94,7 @@ $(document).ready(function () {
 
     // In some cases we will not have run an analysis and will only have loaded the data.
     // As such we will not have information to populate in the data_analysis_meta_information section
-    if (study_meta_info['analysis']){ 
+    if (analysis){ 
         populate_the_data_analysis_meta_information();
     }else{
         populate_the_data_analysis_meta_infomation_empty();
@@ -179,7 +179,7 @@ $(document).ready(function () {
     
     let profile_meta_info;
     let profile_name_to_uid_dict;
-    if (study_meta_info['analysis']){ 
+    if (analysis){ 
         profile_meta_info = getProfileMetaInfo();
         profile_name_to_uid_dict = (function () {
             let temp_dict = {};
@@ -238,7 +238,7 @@ $(document).ready(function () {
         }
     })();
 
-    if (study_meta_info['analysis']){
+    if (analysis){
         // Profile meta info
         let available_profile_meta_info = Object.keys(profile_meta_info);
         let profile_meta_annotation_to_key = {
@@ -630,7 +630,7 @@ $(document).ready(function () {
     let profile_local_abund_c_scale;
     let profile_db_abund_c_scale;
     let profile_idenity_c_scale;
-    if (study_meta_info['analysis']){
+    if (analysis){
         
         let btwn_profile_color_categories = ["profile_identity", "local_abundance", "db_abundance"]
         
@@ -869,7 +869,7 @@ $(document).ready(function () {
     let sequence_color_scale = d3.scaleOrdinal().domain(seq_names).range(seq_colors);
     
     let profile_color_scale;
-    if (study_meta_info['analysis']){
+    if (analysis){
         let prof_color = getProfColor();
         let prof_names = Object.keys(prof_color);
         let prof_colors = seq_names.map(function (seq_name) {
@@ -893,13 +893,13 @@ $(document).ready(function () {
     update_bar_plot_by_sample(data_type, "post", sample_list_post, post_med_init_by_sample_interval);
 
     // PROFILES INIT
-    if (study_meta_info['analysis']){update_bar_plot_by_sample(data_type, "profile", sample_list_profile, profile_init_by_sample_interval);}
+    if (analysis){update_bar_plot_by_sample(data_type, "profile", sample_list_profile, profile_init_by_sample_interval);}
 
     // BTWN SAMPLE INIT
     update_dist_plot("#chart_btwn_sample");
 
     // BTWN PROFILE INIT
-    if (study_meta_info['analysis']){update_dist_plot("#chart_btwn_profile");}
+    if (analysis){update_dist_plot("#chart_btwn_profile");}
 
     // Functions for doing the init and updating of the d3 bar plots
     function update_bar_plot_by_sample(data_type, pre_post_profile, sample_list, init_sample_interval) {

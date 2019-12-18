@@ -22,9 +22,11 @@ class PopulateDBFromJson:
                     location=json_ds_obj['location'], num_samples=int(json_ds_obj['num_samples']),
                     additional_markers=json_ds_obj['additional_markers'], is_published=json_ds_obj['is_published'],
                     run_type=json_ds_obj['run_type'], article_url=json_ds_obj['article_url'],
-                    seq_data_url=json_ds_obj['seq_data_url'], data_explorer=json_ds_obj['data_explorer']
+                    seq_data_url=json_ds_obj['seq_data_url'], data_explorer=json_ds_obj['data_explorer'],
+                    analysis=json_ds_obj['analysis'], author_list_string=json_ds_obj['author_list_string']
                 )
                 db.session.add(ds)
+                print(f'Adding DataSet {ds} to the databse')
             else:
                 print(f'DataSet {ds_query} already exists')
 
@@ -32,8 +34,9 @@ class PopulateDBFromJson:
         for json_user_obj in self.json_user_objects:
             user_query = User.query.filter_by(username=json_user_obj['username']).first()
             if not user_query:
-                u = User(username=json_user_obj['username'], email=json_user_obj['email'], is_admin=json_user_obj['is_admin'])
+                u = User(username=json_user_obj['username'], is_admin=json_user_obj['is_admin'])
                 db.session.add(u)
+                print(f'Adding User {u} to the databse')
             else:
                 print(f'User {user_query} already exists')
 
@@ -46,19 +49,20 @@ class PopulateDBFromJson:
             if not ds_obj:
                 print(f"Unable to find the DataSet object matching the data_name {json_ds_obj['data_name']}")
                 continue
-            # check to see if there is an authors list
-            if json_ds_obj['authors']:
+            # check to see if there is a users_with_access list
+            if json_ds_obj['users_with_access']:
                 # iterate through the authors list and search for the matching user object
                 # if found then add to the dataset object
-                for json_username in json_ds_obj['authors']:
+                for json_username in json_ds_obj['users_with_access']:
                     u = User.query.filter_by(username=json_username).first()
                     if not u:
                         print(f'Unable to find User object matching user name {json_username}')
                     else:
                         # The add_author method instigates checks to see if the user
-                        # object is already listed in the authors list of the
+                        # object is already listed in the users_with_access list of the
                         # dataset object
-                        ds_obj.add_author(u)
+                        ds_obj.add_user_authorisation(u)
+                        print(f'Adding {u} to the users_with_access list for {ds_obj}')
 
         for json_user_obj in self.json_user_objects:
             user_obj = User.query.filter_by(username=json_user_obj['username']).first()
@@ -71,7 +75,8 @@ class PopulateDBFromJson:
                     if not ds_obj:
                         print(f'Unable to find DataSet object matching data_name {json_study_to_load_str}')
                     else:
-                        user_obj.add_dataset(ds_obj)
+                        user_obj.add_authorisation_for_dataset(ds_obj)
+                        print(f'Adding {u} to the list of Users who are authorised to access {ds_obj}')
 
         db.session.commit()
 
