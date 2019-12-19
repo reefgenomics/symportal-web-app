@@ -37,7 +37,17 @@
                             <tbody>
                                 {% for study in authorised_datasets %}
                                 <tr>
-                                <td>{{study.study_name}}</td>
+                                <td>
+                                    {% if study.data_explorer %}
+                                    <form action="" method="POST">
+                                        <button class="link_button" name="study_to_load" value="{{ study.study_to_load_str }}">
+                                            {{study.study_name}}
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    {{study.study_name}}
+                                    {% endif %}
+                                </td>
                                 <td>{{study.upload_timestamp}}</td>
                                 <td>{{study.is_published}}</td>
                                 <td>

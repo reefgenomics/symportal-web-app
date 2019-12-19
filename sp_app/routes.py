@@ -91,13 +91,43 @@ def change_password():
     # We reach here if this is the first navigation to this page
     return render_template('change_password.html', form=form)
 
-@app.route('/profile', methods=['GET'])
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
-    if current_user.is_anonymous:
-        return redirect(url_for('index'))
-    # We will populate a table that shows the datasets that the user is authorised for
-    authorised_datasets = list(db.session.query(DataSet).filter(DataSet.users_with_access.contains(current_user)).all())
-    print(authorised_datasets)
-    for study in authorised_datasets:
-        print(study)
-    return render_template('profile.html', authorised_datasets=authorised_datasets)
+    if request.method == 'GET':
+        if current_user.is_anonymous:
+            return redirect(url_for('index'))
+        # We will populate a table that shows the datasets that the user is authorised for
+        authorised_datasets = list(db.session.query(DataSet).filter(DataSet.users_with_access.contains(current_user)).all())
+        print(authorised_datasets)
+        for study in authorised_datasets:
+            print(study)
+        return render_template('profile.html', authorised_datasets=authorised_datasets)
+    if request.method == 'POST':
+        print(f'This is the study_to_load that we got through: {request.form.get("study_to_load")}')
+        # Then someone has clicked on one of the study titles
+        # and we should send them to the DataExplorer view of respective study
+        # get the google maps api key to be used
+        map_key_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'utils', 'google_maps_api_key.txt')
+        with open(map_key_path) as f:
+            map_key = f.read().rstrip()
+        # Here we are going to load the data_explorer page
+        # We will need to provide the database object that represents the study_to_load string
+        # provided by the request.
+        # We will also need to provide a list of studies to load in the dataexplorer drop
+        # down that allows users to switch between the DataSet that they are viewing
+        dataset_to_load = DataSet.query.filter_by(study_to_load_str=request.form.get('study_to_load')).first()
+        print(f'This is the data_set_to_load we end up with {dataset_to_load}')
+        # The other datasets should be those that are:
+        # a - published
+        # b - have dataexplorer data
+        # c - are unpublished but have the current user in their users_with_access list
+        # We also want to exclude the dataset_to_load dataset.
+        if current_user.is_anonymous:
+            published_and_authorised_datasets = db.session.query(DataSet)\
+                .filter(DataSet.data_explorer==True, DataSet.is_published==True).all()
+        else:
+            published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer==True)\
+                .filter(or_(DataSet.is_published==True, DataSet.users_with_access.contains(current_user)))\
+                .filter(DataSet.study_to_load_str != dataset_to_load.study_to_load_str).all()
+        return render_template('data_explorer.html', dataset_to_load=dataset_to_load,
+                               published_and_authorised_datasets=published_and_authorised_datasets ,map_key=map_key)
