@@ -81,7 +81,7 @@ Have a network window for when the sample is clicked on (this can be later)
             {% if current_user.is_anonymous %}
                 <span style="padding-right:1rem;">Logged in as: <b>anonymous</b></span>
             {% else %}
-                <span class="nav_link" style="padding-right:1rem;">Logged in as: <b>{{ current_user.username }}</b></span>
+                <span style="padding-right:1rem;">Logged in as: <b><a href="{{ url_for('profile') }}" style="text-decoration: underline;">{{ current_user.username }}</a></b></span>
             {% endif %}
         </li>
         <li class="nav-item">

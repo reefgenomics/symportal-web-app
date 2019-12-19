@@ -2,9 +2,9 @@
 let vp_width_match = window.matchMedia("(max-width: 560px)");
 let vp_height_match = window.matchMedia("(max-height: 500px)");
 
-// Even listeners for the mouse enter and leave
-let showcase_content_enter_listener = document.getElementById("showcase_content").addEventListener("mouseenter", blur_nav_bar);
-let showcase_content_leave_listener = document.getElementById("showcase_content").addEventListener("mouseleave", unblur_nav_bar);
+// // Even listeners for the mouse enter and leave
+// let showcase_content_enter_listener = document.getElementById("showcase_content").addEventListener("mouseenter", blur_nav_bar);
+// let showcase_content_leave_listener = document.getElementById("showcase_content").addEventListener("mouseleave", unblur_nav_bar);
 
 
 
