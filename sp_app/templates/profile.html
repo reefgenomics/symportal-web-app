@@ -1,0 +1,63 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta property="og:site_name" content="symportal.org">
+    <meta property="og:description" content="a novel analytical framework and platform for coral algal symbiont NGS ITS2 profiling">
+    <meta property="og:image" content="{{ url_for('static', filename='images/preview_img.jpg') }}">
+    <meta property="og:url" content="http://symportal.org/">
+    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    
+    <title>Symportal | profile</title>
+</head>
+<body>
+    <div class="center_container">
+        <div class="inner_container">
+            <div class="card">
+                <div class="card-header text-center">
+                    {{ current_user.username }}
+                </div>
+                <div class="card-body text-left">
+                    <h7 class="card-title">Authorised data sets</h7>
+                    <div class="table-responsive">
+                        <table class="table table-hover mx-auto w-auto" style="font-size: x-small;">
+                            <thead>
+                                <tr>
+                                <th>Study Name</th>
+                                <th>Timestamp</th>
+                                <th>Published</th>
+                                <th>Authorised Users</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for study in authorised_datasets %}
+                                <tr>
+                                <td>{{study.study_name}}</td>
+                                <td>{{study.upload_timestamp}}</td>
+                                <td>{{study.is_published}}</td>
+                                <td>
+                                    {% for user in study.users_with_access %}
+                                        {{ user.username }}<br>
+                                    {% endfor %}
+                                </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-muted text-right" style="font-size: small;">
+                    <a href="{{ url_for('change_password') }}">Change password</a>
+                </div>
+                </div>
+        </div>
+    </div>
+    
+</body>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+

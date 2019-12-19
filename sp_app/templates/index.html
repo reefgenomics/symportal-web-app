@@ -19,6 +19,15 @@
 </head>
 
 <body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="bg-dark" style="padding:1rem 0rem;">
+            {% for message in messages %}
+            <span style="padding:0rem 1rem;">{{ message}}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
     <header class="showcase">
         <!-- Nav bar in here -->
         <nav class="nav_content no_blur" id="nav_cont">
@@ -30,7 +39,7 @@
                 <span style="padding-right:1rem;">Logged in as: <b>anonymous</b></span>
                 <a href="{{ url_for('login') }}">Login</a>
                 {% else %}
-                <span style="padding-right:1rem;">Logged in as: <b>{{ current_user.username }}</b></span>
+                <span style="padding-right:1rem;">Logged in as: <b><a href="{{ url_for('profile') }}" style="text-decoration: underline;">{{ current_user.username }}</a></b></span>
                 <a href="{{ url_for('logout') }}">Logout</a>
                 {% endif %}
                 <a href="https://github.com/SymPortal/SymPortal_framework">source code</a><span class="vert_div_smll"></span><a href="https://github.com/SymPortal/SymPortal_framework/wiki">wiki</a><span class="vert_div_smll"></span><a href="/">home</a>

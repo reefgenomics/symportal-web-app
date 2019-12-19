@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, flash, url_for
 from sp_app import app, db
 import os
-from sp_app.forms import LoginForm
+from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user
 from sp_app.models import User, DataSet
 from werkzeug.urls import url_parse
@@ -69,3 +69,35 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/change_password', methods=['GET', 'POST'])
+def change_password():
+    if current_user.is_anonymous:
+        return redirect(url_for('index'))
+    form=ChangePassword()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None or not user.check_password(form.current_password.data):
+            print("Invalid username or password")
+            flash("Invalid username or password")
+            return redirect(url_for('change_password'))
+        else:
+            # Then the password username was good and we should change the password for the user
+            user.set_password(form.new_password.data)
+            db.session.commit()
+            flash("Password successfully changed")
+            print("Password successfully changed")
+            return redirect(url_for('index'))
+    # We reach here if this is the first navigation to this page
+    return render_template('change_password.html', form=form)
+
+@app.route('/profile', methods=['GET'])
+def profile():
+    if current_user.is_anonymous:
+        return redirect(url_for('index'))
+    # We will populate a table that shows the datasets that the user is authorised for
+    authorised_datasets = list(db.session.query(DataSet).filter(DataSet.users_with_access.contains(current_user)).all())
+    print(authorised_datasets)
+    for study in authorised_datasets:
+        print(study)
+    return render_template('profile.html', authorised_datasets=authorised_datasets)
