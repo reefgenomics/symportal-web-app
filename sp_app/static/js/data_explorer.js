@@ -102,7 +102,12 @@ $(document).ready(function () {
     
 
     function populate_the_downloads_section() {
-        //TODO populate the downloads section
+        // The uncompressed files were far to big to work with
+        // The Restrepo analysis for example ended up being round 1Gb
+        // Compressed it was closer to 50M.
+        // As such we will individually compress all files and provide a download all zip
+        // The hrefs given here for the files to be downloaded should therefore
+        // all have the .zip extension added to them
         let data_file_paths = getDataFilePaths();
         let data_file_paths_keys = Object.keys(data_file_paths);
         let clade_array = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
@@ -125,7 +130,7 @@ $(document).ready(function () {
             // is found in the output of this study
             if (data_file_paths_keys.includes(file_type_array[i])) {
                 $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_type_array[i] + ':'}</div>`);
-                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[file_type_array[i]]}" download>${data_file_paths[file_type_array[i]]}</a></div>`);
+                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[file_type_array[i]]}.zip" download>${data_file_paths[file_type_array[i]]}</a></div>`);
             }
         };
 
@@ -137,12 +142,12 @@ $(document).ready(function () {
                     let f_name_dist = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_dist";
                     if (data_file_paths_keys.includes(f_name_dist)) {
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_dist + ':'}</div>`);
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_dist]}" download>${data_file_paths[f_name_dist]}</a></div>`);
+                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_dist]}.zip" download>${data_file_paths[f_name_dist]}</a></div>`);
                     }
                     let f_name_pcoa = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_pcoa";
                     if (data_file_paths_keys.includes(f_name_pcoa)) {
                         $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_pcoa + ':'}</div>`);
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_pcoa]}" download>${data_file_paths[f_name_pcoa]}</a></div>`);
+                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_pcoa]}.zip" download>${data_file_paths[f_name_pcoa]}</a></div>`);
                     }
                 }
             }
@@ -702,7 +707,7 @@ $(document).ready(function () {
         available_pcs_btwn_samples = getBtwnSampleDistPCAvailableBC();
         btwn_sample_genera_array = Object.keys(btwn_sample_genera_coords_data);
         btwn_sample_data_available = true;
-    } else if (typeof getBtwnProfileDistCoordsUF === "function") {
+    } else if (typeof getBtwnSampleDistCoordsUF === "function") {
         // use the unifrac objects
         btwn_sample_genera_coords_data = getBtwnSampleDistCoordsUF();
         btwn_sample_genera_pc_variances = getBtwnSampleDistPCVariancesUF();
@@ -1540,6 +1545,8 @@ $(document).ready(function () {
         // Remove points
         dots.exit().remove()
 
+        // X axis should be PC1
+        // Y axis will be the other PC
         // Y axis title
         //we need to be able to change the axis titles so we will give them ids and then
         // check to see if they exist. if they do, simply change text otherwise make from scratch
@@ -1548,25 +1555,7 @@ $(document).ready(function () {
         let y_axis_selection = $(dist_plot_id).find(".y_axis_title")
         if (y_axis_selection.length) {
             // Then the y axis title exists. Change the text of this axis
-            y_axis_selection.text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
-        } else {
-            // yaxis doesn't exist. make from scratch
-            svg.append("text").attr("class", "x_axis_title")
-                .attr("y", text_y)
-                .attr("x", text_x)
-                .attr("dy", "1em").attr("font-size", "0.8rem")
-                .style("text-anchor", "middle")
-                .text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
-                .attr("transform", `rotate(-90, ${text_x}, ${text_y})`);
-        }
-
-        // X axis title
-        text_x = dist_width / 2;
-        text_y = dist_height - 15;
-        let x_axis_selection = $(dist_plot_id).find(".y_axis_title")
-        if (x_axis_selection.length) {
-            // Then the y axis title exists. Change the text of this axis
-            x_axis_selection.text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
+            y_axis_selection.text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
         } else {
             // yaxis doesn't exist. make from scratch
             svg.append("text").attr("class", "y_axis_title")
@@ -1574,7 +1563,25 @@ $(document).ready(function () {
                 .attr("x", text_x)
                 .attr("dy", "1em").attr("font-size", "0.8rem")
                 .style("text-anchor", "middle")
-                .text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`);
+                .text(`${second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
+                .attr("transform", `rotate(-90, ${text_x}, ${text_y})`);
+        }
+
+        // X axis title
+        text_x = dist_width / 2;
+        text_y = dist_height - 15;
+        let x_axis_selection = $(dist_plot_id).find(".x_axis_title")
+        if (x_axis_selection.length) {
+            // Then the y axis title exists. Change the text of this axis
+            x_axis_selection.text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`)
+        } else {
+            // yaxis doesn't exist. make from scratch
+            svg.append("text").attr("class", "x_axis_title")
+                .attr("y", text_y)
+                .attr("x", text_x)
+                .attr("dy", "1em").attr("font-size", "0.8rem")
+                .style("text-anchor", "middle")
+                .text(`PC1 - ${Number.parseFloat(first_pc_variance*100).toPrecision(2)}%`);
         }
 
     }
