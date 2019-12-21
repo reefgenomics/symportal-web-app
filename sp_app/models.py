@@ -36,14 +36,18 @@ class User(UserMixin, db.Model):
     def add_authorisation_for_dataset(self, dataset):
         if not self.is_authorised_to_access_dataset(dataset):
             self.datasets.append(dataset)
+            return True
         else:
             print(f'{dataset} is already in the datasets list of {self}. Cannot add.')
+            return False
     
     def remove_authorisation_for_dataset(self, dataset):
         if self.is_authorised_to_access_dataset(dataset):
             self.datasets.remove(dataset)
+            return True
         else:
             print(f'{dataset} is not in the datasets list of {self}. Cannot remove.')
+            return False
     
     def is_authorised_to_access_dataset(self, dataset):
         return self.datasets.filter(datasets.c.dataset_id == dataset.id).count() > 0
@@ -75,14 +79,18 @@ class DataSet(db.Model):
     def add_user_authorisation(self, user):
         if not self.is_an_authorised_user(user):
             self.users_with_access.append(user)
+            return True
         else:
             print(f'{user} already in users_with_access of {self}. Cannot add.')
+            return False
     
     def remove_user_authorisation(self, user):
         if self.is_an_authorised_user(user):
             self.users_with_access.remove(user)
+            return True
         else:
             print(f'{user} is not in users_with_access of {self}. Cannot remove.')
+            return False
     
     def is_an_authorised_user(self, user):
         # NB this will thow an error about 'filter' not being a method
