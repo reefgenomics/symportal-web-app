@@ -132,7 +132,13 @@ def profile():
         if current_user.is_anonymous:
             published_and_authorised_datasets = db.session.query(DataSet)\
                 .filter(DataSet.data_explorer==True, DataSet.is_published==True).all()
+        elif current_user.is_admin:
+            # If user is admin then we just want to display all of the datasets that have dataexplorer available
+            # regardless of whether the user is in the users_with_access list
+            published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer).all()
         else:
+            # If not admin but signed in, then we want to return the published articles
+            # and those that the user is authorised to have.
             published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer==True)\
                 .filter(or_(DataSet.is_published==True, DataSet.users_with_access.contains(current_user)))\
                 .filter(DataSet.study_to_load_str != dataset_to_load.study_to_load_str).all()
