@@ -97,13 +97,15 @@ def profile():
         if current_user.is_anonymous:
             return redirect(url_for('index'))
         # We will populate a table that shows the datasets that the user is authorised for
-        authorised_datasets = list(db.session.query(DataSet).filter(DataSet.users_with_access.contains(current_user)).all())
-        print(authorised_datasets)
-        for study in authorised_datasets:
-            print(study)
-        return render_template('profile.html', authorised_datasets=authorised_datasets)
+        user_authorised_datasets = list(db.session.query(DataSet).filter(DataSet.users_with_access.contains(current_user)).all())
+        # We will also populate a table that will only be visible is the user is an admin
+        # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
+        if current_user.is_admin:
+            admin_authorised_datasets = list(db.session.query(DataSet).filter(~DataSet.is_published).filter(~DataSet.users_with_access.contains(current_user)).all())
+        else:
+            admin_authorised_datasets= list()
+        return render_template('profile.html', user_authorised_datasets=user_authorised_datasets, admin_authorised_datasets=admin_authorised_datasets)
     if request.method == 'POST':
-        print(f'This is the study_to_load that we got through: {request.form.get("study_to_load")}')
         # Then someone has clicked on one of the study titles
         # and we should send them to the DataExplorer view of respective study
         # get the google maps api key to be used
