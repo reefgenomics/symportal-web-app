@@ -1898,6 +1898,9 @@ $(document).ready(function () {
     // TODO we will want a list of the unique sites
     // We will also want a dict of site to samples uid array
     if (sorting_keys.includes('lat_lon')) {
+        // If there is data to do a map then set the helper text
+        $("#map_helper_text").text("Click markers for site details")
+        
         let unique_site_set = new Set();
         let sample_meta_info_keys = Object.keys(sample_meta_info);
         // Create and init the site to sample uid dict. we will use this similar to a python defualtdict(list)
@@ -2033,6 +2036,11 @@ $(document).ready(function () {
         }
         // google.maps.event.addDomListener(window, 'load', initMap);
         initMap();
+    }else{
+        // If there is no map then set the helper text to say this
+        $("#map_helper_text").text("No lat lon data for samples. No map available.")
+        // Then hide the map object.
+        $("#map").css("display", "none");
     }
 
     function getShortTaxStr(fullTaxStr) {
