@@ -871,11 +871,12 @@ $(document).ready(function () {
     // then the getSeqColor method will not have been output.
     // However the getSeqColorPostMED function should have been output and we will
     // use this instead
+    let seq_color;
     try{
-        let seq_color = getSeqColor();
+        seq_color = getSeqColor();
     }
     catch(err){
-        let seq_color = getSeqColorPostMED();
+        seq_color = getSeqColorPostMED();
     }
     let seq_names = Object.keys(seq_color);
     let seq_colors = seq_names.map(function (seq_name) {
