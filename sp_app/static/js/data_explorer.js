@@ -295,7 +295,7 @@ $(document).ready(function () {
     let max_y_val_post_med;
     let sample_list_post;
     let post_med_bars_exists = false;
-    let post_med_init_by_sample_interval = 10;
+    let post_med_init_by_sample_interval = 1;
     //INIT margins, widths and heights for the bar plots
     let margin = {
         top: 30,
@@ -866,7 +866,17 @@ $(document).ready(function () {
     // The fill colours of the rect objects are now already in the array of objects
     //TODO we will need to have color scales for the distance plots as these will vary depending on
     // the property that we are colouring by.
-    let seq_color = getSeqColor();
+
+    // If we ran the data loading or analysis using the --no_pre_med_seqs flag
+    // then the getSeqColor method will not have been output.
+    // However the getSeqColorPostMED function should have been output and we will
+    // use this instead
+    try{
+        let seq_color = getSeqColor();
+    }
+    catch(err){
+        let seq_color = getSeqColorPostMED();
+    }
     let seq_names = Object.keys(seq_color);
     let seq_colors = seq_names.map(function (seq_name) {
         return seq_color[seq_name]
