@@ -888,8 +888,8 @@ $(document).ready(function () {
     if (analysis){
         let prof_color = getProfColor();
         let prof_names = Object.keys(prof_color);
-        let prof_colors = seq_names.map(function (seq_name) {
-            return seq_color[seq_name]
+        let prof_colors = prof_names.map(function (prof_name) {
+            return prof_color[prof_name]
         });
         profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);
     }
@@ -1055,7 +1055,7 @@ $(document).ready(function () {
             }).attr("width", x.bandwidth()).attr("height", function (d) {
                 return Math.max(y(+d["height_" + abbr]), 1);
             }).attr("fill", function (d) {
-                return col_scale(d.profile_name);
+                return col_scale(profile_name_to_uid_dict[d.profile_name]);
             }).delay(function (d, i) {
                 return (i * delay)
             });
@@ -1067,7 +1067,7 @@ $(document).ready(function () {
             }).attr("width", x.bandwidth()).attr("height", function (d) {
                 return Math.max(y(0) - y(+d["height_" + abbr]), 1);
             }).attr("fill", function (d) {
-                return col_scale(d.profile_name);
+                return col_scale(profile_name_to_uid_dict[d.profile_name]);
             }).delay(function (d, i) {
                 return (i * delay)
             });
@@ -1112,7 +1112,7 @@ $(document).ready(function () {
                 }).attr("width", x.bandwidth()).attr("height", function (d) {
                     return Math.max(y(0) - y(+d["height_" + abbr]), 1);
                 }).attr("fill", function (d) {
-                    return col_scale(d.profile_name);
+                    return col_scale(profile_name_to_uid_dict[d.profile_name]);
                 });
         } else if (pre_post_profile == "profile-modal") {
             bars.enter().append("rect")
@@ -1136,7 +1136,7 @@ $(document).ready(function () {
                 }).attr("width", x.bandwidth()).attr("height", function (d) {
                     return Math.max(y(+d["height_" + abbr]), 1);
                 }).attr("fill", function (d) {
-                    return col_scale(d.profile_name);
+                    return col_scale(profile_name_to_uid_dict[d.profile_name]);
                 });
         } else {
             bars.enter().append("rect")
