@@ -256,12 +256,12 @@ $(document).ready(function () {
         // plots
         // We will use an extension of this for each of the post_med and 
         // profile plots that will contain the methods for doing the plotting
-        constructor(name_of_html_svg_object, get_data_method, plot_type){
+        constructor(name_of_html_svg_object, get_data_method, get_max_y_val_method, plot_type){
             // Get the object that has the sorting parameter as key
             // and a sorted list of the uids (either samples or profiles) as value
             this.plot_type = plot_type;
             this.sorted_uid_arrays = getSampleSortedArrays();
-            this.sorted_keys = Object.keys(this.sorted_uid_arrays);
+            this.sorting_keys = Object.keys(this.sorted_uid_arrays);
             this.svg = d3.select(name_of_html_svg_object);
             // The object containing the rectangle data to be plotted
             this.data = get_data_method();
@@ -275,7 +275,7 @@ $(document).ready(function () {
             this.current_sample_order_array = this._init_current_sample_order_array();
             this.margin = this._init_margin();
             this.plot_speed = this._init_plot_speed();
-            this.width, this.height = this._init_width_and_height();
+            [this.width, this.height] = this._init_width_and_height();
             this.x_scale, this.y_scale = this._init_scales();
             // Init the axis group
             //NB the axis no need translating down or left in the direction they orientate.
@@ -302,6 +302,19 @@ $(document).ready(function () {
             this.absolute_relative = this._init_absolute_realtive();
         }
 
+        // Base level plotting functions
+        _ellipse_axis_labels(){
+            var self = d3.select(this),
+            textLength = self.node().getComputedTextLength(),
+            text = self.text(),
+            current_x = self.attr("x");
+            while (textLength > (this.margin.bottom - current_x) && text.length > 0) {
+                text = text.slice(0, -1);
+                self.text(text + '...');
+                textLength = self.node().getComputedTextLength();
+            }
+        }
+
         // Private init methods
         _init_current_sample_order_array(){
             if (this.sorting_keys.includes('profile_based')) {
@@ -319,11 +332,12 @@ $(document).ready(function () {
                 return 10;
             }
         }
+        // TODO 
         _init_width_and_height(){
-            this.svg.attr("width", ((sample_list_post.length * 13) + 70).toString());
+            this.svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
             let width = +this.svg.attr("width") - this.margin.left - this.margin.right;
             let height = +this.svg.attr("height") - this.margin.top - this.margin.bottom;
-            return width, height;
+            return [width, height];
         }
         _init_scales(){
             let x_scale = d3.scaleBand()
@@ -439,8 +453,8 @@ $(document).ready(function () {
         // all of the plotting logic is dependent on plot_type
         // so it makes sense to have the plotting logic seperate for
         // each of the post_med and profile stacked plots
-        constructor(name_of_html_svg_object, get_data_method, plot_type){
-            super(name_of_html_svg_object, get_data_method, plot_type);
+        constructor(name_of_html_svg_object, get_data_method, get_max_y_val_method, plot_type){
+            super(name_of_html_svg_object, get_data_method, get_max_y_val_method, plot_type);
         }
         // Plotting methods
         update_plot(){
@@ -518,7 +532,31 @@ $(document).ready(function () {
                 });
         }
         _update_axes(){
+            // y axis
+            d3.select("#y_axis_post_med")
+            .transition()
+            .duration(1000)
+            .call(d3.axisLeft(this.y_scale).ticks(null, "s"));
 
+            // x axis
+            d3.selectAll("#x_axis_post_med").transition().duration(1000)
+            .call(d3.axisBottom(this.x_scale).tickFormat(d => post_med_meta_info_populator.meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
+            .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+            .style("text-anchor", "start").on("end", this._ellipse_axis_labels);
+
+            // Listener to highlight sample names on mouse over.
+            d3.select("#x_axis_post_med").selectAll(".tick")._groups[0].forEach(function (d1) {
+                d3.select(d1).on("mouseover", function () {
+                    d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
+                    let sample_uid = this.__data__;
+                    let sample_data_series = post_med_meta_info_populator.meta_info[sample_uid];
+                    $(this).closest(".plot_item").find(".sample_meta_item").each(function () {
+                        $(this).text(sample_data_series[$(this).attr("data-key")]);
+                    })
+                }).on("mouseout", function () {
+                    d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
+                })
+            })
         }
     }
 
@@ -528,7 +566,7 @@ $(document).ready(function () {
         // attributes.
         constructor(){
             this.sorted_uid_arrays = getSampleSortedArrays();
-            this.sorted_keys = Object.keys(this.sorted_uid_arrays);
+            this.sorting_keys = Object.keys(this.sorted_uid_arrays);
             this.post_med_svg = d3.select("#chart_post_med_modal");
             this.profile_svg = d3.select("#chart_profile_modal");
             this.post_med_data = getRectDataPostMEDBySample();
@@ -708,12 +746,14 @@ $(document).ready(function () {
         }
     };
 
-    const post_med_stacked_bar_plot = new SimpleStackedBarPlot(
+    const post_med_stacked_bar_plot = new PostMEDStackedBarPlot(
         name_of_html_svg_object="#chart_post_med", 
         get_data_method=getRectDataPostMEDBySample, get_max_y_val_method=getRectDataPostMEDBySampleMaxSeq,
         plot_type='post_med'
     );
-
+    post_med_stacked_bar_plot.update_plot()
+    // TODO! At this point in the script we should basically be able to test some code
+    // Exciting. We can see if the post_med plot can be rendered.
     let profile_stacked_bar_plot;
     let modal_stacked_bar_plot;
     if (analysis){
@@ -1411,7 +1451,7 @@ $(document).ready(function () {
         x.domain(sample_list);
 
     }
-    
+
     function update_by_sample(col_sample, data_type, speed, pre_post_profile) {
 
         let svg;
@@ -1648,12 +1688,6 @@ $(document).ready(function () {
                 })
             $("#chart_post_med_modal").find(".dummyTextG").remove();
             
-            
-        } else if (pre_post_profile == "pre") {
-            y = y_pre_med;
-            x = x_pre_med;
-            y_axis_id = "#y_axis_pre_med";
-            x_axis_id = "#x_axis_pre_med";
         } else if (pre_post_profile == "profile") {
             y = y_profile;
             x = x_profile;
