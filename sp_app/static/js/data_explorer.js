@@ -252,6 +252,10 @@ $(document).ready(function () {
     easiest and clearest to have a seperate class. We can call the classes
     SimpleStackedBarPlot and ModalStackedBarPlot.*/
     class SimpleStackedBarPlot{
+        // This base class will hold most of the setup for the stacked bar
+        // plots
+        // We will use an extension of this for each of the post_med and 
+        // profile plots that will contain the methods for doing the plotting
         constructor(name_of_html_svg_object, get_data_method, plot_type){
             // Get the object that has the sorting parameter as key
             // and a sorted list of the uids (either samples or profiles) as value
@@ -428,6 +432,95 @@ $(document).ready(function () {
             }
         }
     };
+
+    class PostMEDStackedBarPlot extends SimpleStackedBarPlot{
+        // This extension of the SimpleStackedBarPlot will contain 
+        // the logic for doing the plotting. This is because almost
+        // all of the plotting logic is dependent on plot_type
+        // so it makes sense to have the plotting logic seperate for
+        // each of the post_med and profile stacked plots
+        constructor(name_of_html_svg_object, get_data_method, plot_type){
+            super(name_of_html_svg_object, get_data_method, plot_type);
+        }
+        // Plotting methods
+        update_plot(){
+            //First update the x_scale and y_scale domains
+            this._update_axes_domains();
+            
+            // Code that does the majoirty of the replotting
+            let cumulative_time = 0;
+            for (let i = 0; i < sample_list.length; i++) {
+                setTimeout(
+                    this._replot_data, 
+                    i * this.plot_speed, 
+                    this.current_sample_order_array[i],
+                );
+                cumulative_time += this.plot_speed;
+            }
+            
+            // Now draw the axis last so that they are on top of the bars
+            // we can then use a transition .on event to call the centering of the labels
+            setTimeout(this._update_axes, cumulative_time);
+        }
+        _update_axes_domains(){
+            if (this.absolute_relative == 'absolute'){
+                this.y_scale.domain([0, this.max_y]).nice();
+            }else if (this.aboslute_relative == 'relative'){
+                this.y_scale([0,1]).nice();
+            }
+            this.x_scale.domain(this.current_sample_order_array);
+        }
+        _replot_data(sample_uid){
+            
+            // Bars is the join that we will call exit
+            let bars = svg.select("g.s" + sample_uid).selectAll("rect").data(data_by_sample[sample_uid], function (d) {
+                return d.seq_name; 
+            });
+
+            // Remove any data points from the plot that don't exist
+            bars.exit().remove()
+            
+            // Transitions
+            let absolute_relative = this.absolute_relative;
+            let color_scale = this.color_scale;
+            let x_scale = this.x_scale;
+            let y_scale = this.y_scale;
+            bars.transition().duration(this.plot_speed).attr("x", function (d) {
+                return x_scale(sample_uid);
+            }).attr("y", function (d) {
+                return y_scale(+d["y_" + absolute_relative]);
+            }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                return Math.max(y_scale(0) - y_scale(+d["height_" + absolute_relative]), 1);
+            }).attr("fill", function (d) {
+                return color_scale(d.seq_name);
+            }).delay(function (d, i) {
+                return (i * 0.1)
+            });
+
+            // New objects to be created (enter phase)
+            let tips = this.tips;
+            bars.enter().append("rect")
+                .attr("x", function (d) {
+                    return x(sample_uid);
+                }).attr("y", y(0)).on('mouseover', function (d) {
+                    tip_seqs.show(d);
+                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                })
+                .on('mouseout', function (d) {
+                    tips.hide(d);
+                    d3.select(this).attr("style", null);
+                }).transition().duration(1000).attr("y", function (d) {
+                    return x_scale(+d["y_" + absolute_relative]);
+                }).attr("width", x.bandwidth()).attr("height", function (d) {
+                    return Math.max(y_scale(0) - y_scale(+d["height_" + absolute_relative]), 1);
+                }).attr("fill", function (d) {
+                    return color_scale(d.seq_name);
+                });
+        }
+        _update_axes(){
+
+        }
+    }
 
     class ModalStackedBarPlot{
         // Given that there will only be the one instance of the class we 
@@ -1318,7 +1411,7 @@ $(document).ready(function () {
         x.domain(sample_list);
 
     }
-
+    
     function update_by_sample(col_sample, data_type, speed, pre_post_profile) {
 
         let svg;
