@@ -1,159 +1,130 @@
-// d3.json("data/seqs.absolute.json").then(d => chart(d))
-//TODO list includes:
-// Have a toggle for absolute/relative
-// Have a toggle for pre-MED/post-MED
-
-
-
-
 $(document).ready(function () {
 
-    // function populate_study_select_dropdown(){
-    //     // Get a list of the studies that have the DataExplorer available
-    //     let pub_articles = getPublishedArticlesData();
-    //     // First add the current study
-    //     $("#study_select").append(`<option value=${study_to_load}>${study_to_load}</option>`)
-    //     pub_articles.forEach(function(article){
-    //         if (article["DataExplorer"]){
-    //             // Then this had DataExplorer data available
-    //             if (article["study_to_load_str"] != study_to_load){
-    //                 $("#study_select").append(`<option value=${article["study_to_load_str"]}>${article["article_name"]}</option>`)
-    //             }
-    //         }
-    //     })
-    //     // Here we have a list of the article names that need to be populated
-        
-    // }
-    // populate_study_select_dropdown();
     
-    // let study_meta_info = getStudyMetaInfo()
-
-    // function init_publication_details() {
-    //     //INIT title
-    //     $("#study_title").html(study_meta_info['title']);
-    //     //INIT authors
-    //     $("#authors").html(study_meta_info['author_list']);
-    // }
-    // init_publication_details();
-
-    function populate_the_associated_data_set_meta_information() {
-        //populate the associated data set meta information
-        let data_set_meta_info = getDataSetMetaData();
-        let data_set_meta_info_properties_array = [
-            "num_datasets", "names(s)", "UID(s)", "num_samples", "time_stamp(s)", "average_sequencing_depth",
-            "average_Sym_sequences_absolute", "average_Sym_sequences_unique"
-        ];
-        let data_set_meta_info_prop_to_key_dict = {
-            "num_datasets": "num_associated_data_sets",
-            "names(s)": "ds_names",
-            "UID(s)": "ds_uids",
-            "num_samples": "num_samples",
-            "time_stamp(s)": "ds_time_stamps",
-            "average_sequencing_depth": "seq_depth_av",
-            "average_Sym_sequences_absolute": "sym_seqs_absolute_av",
-            "average_Sym_sequences_unique": "sym_seqs_unique_av"
-        };
-
-        let data_set_meta_info_holder = $("#dataset_info_collapse");
-        for (let i = 0; i < data_set_meta_info_properties_array.length; i++) {
-            data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_set_meta_info_properties_array[i] + ':'}</div>`);
-            data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_set_meta_info[data_set_meta_info_prop_to_key_dict[data_set_meta_info_properties_array[i]]]}</div>`);
-        }
-    }
-    populate_the_associated_data_set_meta_information();
-
-    function populate_the_data_analysis_meta_information() {
-        //populate the data analysis meta information
-        let data_analysis_meta_info = getDataAnalysisMetaInfo();
-        let data_analysis_meta_info_properties_array = [
-            "name", "UID", "time_stamp", "samples_in_output", "sample_in_analysis",
-            "unique_profiles_local", "profile_instances_local", "unique_profiles_analysis", "profile_instances_analysis"
-        ];
-        let data_analysis_meta_info_prop_to_key_dict = {
-            "name": "name",
-            "UID": "uid",
-            "time_stamp": "time_stamp",
-            "samples_in_output": "samples_in_output",
-            "sample_in_analysis": "samples_in_analysis",
-            "unique_profiles_local": "unique_profile_local",
-            "profile_instances_local": "instance_profile_local",
-            "unique_profiles_analysis": "unique_profile_analysis",
-            "profile_instances_analysis": "instances_profile_analysis"
-        };
-        let data_analysis_meta_info_holder = $("#analysis_info_collapse");
-        for (let i = 0; i < data_analysis_meta_info_properties_array.length; i++) {
-            data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_analysis_meta_info_properties_array[i] + ':'}</div>`);
-            data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_analysis_meta_info[data_analysis_meta_info_prop_to_key_dict[data_analysis_meta_info_properties_array[i]]]}</div>`);
-        }
-    }
-
-    // remove the data analysis meta information card if analysis was not conducted
-    function populate_the_data_analysis_meta_infomation_empty(){
-        $("#analysis_meta_info_card").remove();
-    }
-
-    // In some cases we will not have run an analysis and will only have loaded the data.
-    // As such we will not have information to populate in the data_analysis_meta_information section
-    if (analysis){ 
-        populate_the_data_analysis_meta_information();
-    }else{
-        populate_the_data_analysis_meta_infomation_empty();
-    }
+    /* Populate the tabs that display the information on the DataSet, the DataAnalysis
+    and the resources that can be downloaded */
+    populate_dataset_dataanalysis_resource_download_cards()
+    function populate_dataset_dataanalysis_resource_download_cards(){
+        function populate_the_associated_data_set_meta_information() {
+            //populate the associated data set meta information
+            let data_set_meta_info = getDataSetMetaData();
+            let data_set_meta_info_properties_array = [
+                "num_datasets", "names(s)", "UID(s)", "num_samples", "time_stamp(s)", "average_sequencing_depth",
+                "average_Sym_sequences_absolute", "average_Sym_sequences_unique"
+            ];
+            let data_set_meta_info_prop_to_key_dict = {
+                "num_datasets": "num_associated_data_sets",
+                "names(s)": "ds_names",
+                "UID(s)": "ds_uids",
+                "num_samples": "num_samples",
+                "time_stamp(s)": "ds_time_stamps",
+                "average_sequencing_depth": "seq_depth_av",
+                "average_Sym_sequences_absolute": "sym_seqs_absolute_av",
+                "average_Sym_sequences_unique": "sym_seqs_unique_av"
+            };
     
-
-    function populate_the_downloads_section() {
-        // The uncompressed files were far to big to work with
-        // The Restrepo analysis for example ended up being round 1Gb
-        // Compressed it was closer to 50M.
-        // As such we will individually compress all files and provide a download all zip
-        // The hrefs given here for the files to be downloaded should therefore
-        // all have the .zip extension added to them
-        let data_file_paths = getDataFilePaths();
-        let data_file_paths_keys = Object.keys(data_file_paths);
-        let clade_array = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
-        let dist_type_array = ['unifrac', 'braycurtis'];
-        let sample_profile_array = ['sample', 'profile'];
-        let file_type_array = [
-            "post_med_absolute_abund_meta_count", "post_med_absolute_abund_only_count",
-            "post_med_absolute_meta_only_count", "post_med_relative_abund_meta_count",
-            "post_med_relative_abund_only_count", "post_med_relative_meta_only_count",
-            "post_med_fasta", "post_med_additional_info", "pre_med_absolute_count",
-            "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count",
-            "profile_absolute_abund_only_count", "profile_absolute_meta_only_count",
-            "profile_relative_abund_meta_count", "profile_relative_abund_only_count",
-            "profile_relative_meta_only_count", "profile_additional_info_file"
-        ];
-
-        // First populate the files that are in the above file type array
-        for (let i = 0; i < file_type_array.length; i++) {
-            // Go in order of the file_type_array being sure to check if the file in question
-            // is found in the output of this study
-            if (data_file_paths_keys.includes(file_type_array[i])) {
-                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_type_array[i] + ':'}</div>`);
-                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[file_type_array[i]]}.zip" download>${data_file_paths[file_type_array[i]]}</a></div>`);
+            let data_set_meta_info_holder = $("#dataset_info_collapse");
+            for (let i = 0; i < data_set_meta_info_properties_array.length; i++) {
+                data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_set_meta_info_properties_array[i] + ':'}</div>`);
+                data_set_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_set_meta_info[data_set_meta_info_prop_to_key_dict[data_set_meta_info_properties_array[i]]]}</div>`);
             }
-        };
-
-        // Then we will iterate through the possible distance files that may exist and populate those
-        // First go by clade, then sample/profile, then dist type
-        for (let i = 0; i < clade_array.length; i++) {
-            for (let j = 0; j < sample_profile_array.length; j++) {
-                for (let k = 0; k < dist_type_array.length; k++) {
-                    let f_name_dist = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_dist";
-                    if (data_file_paths_keys.includes(f_name_dist)) {
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_dist + ':'}</div>`);
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_dist]}.zip" download>${data_file_paths[f_name_dist]}</a></div>`);
-                    }
-                    let f_name_pcoa = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_pcoa";
-                    if (data_file_paths_keys.includes(f_name_pcoa)) {
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_pcoa + ':'}</div>`);
-                        $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_pcoa]}.zip" download>${data_file_paths[f_name_pcoa]}</a></div>`);
+        }
+        populate_the_associated_data_set_meta_information();
+    
+        //populate the data analysis meta information
+        function populate_the_data_analysis_meta_information() {
+            
+            let data_analysis_meta_info = getDataAnalysisMetaInfo();
+            let data_analysis_meta_info_properties_array = [
+                "name", "UID", "time_stamp", "samples_in_output", "sample_in_analysis",
+                "unique_profiles_local", "profile_instances_local", "unique_profiles_analysis", "profile_instances_analysis"
+            ];
+            let data_analysis_meta_info_prop_to_key_dict = {
+                "name": "name",
+                "UID": "uid",
+                "time_stamp": "time_stamp",
+                "samples_in_output": "samples_in_output",
+                "sample_in_analysis": "samples_in_analysis",
+                "unique_profiles_local": "unique_profile_local",
+                "profile_instances_local": "instance_profile_local",
+                "unique_profiles_analysis": "unique_profile_analysis",
+                "profile_instances_analysis": "instances_profile_analysis"
+            };
+            let data_analysis_meta_info_holder = $("#analysis_info_collapse");
+            for (let i = 0; i < data_analysis_meta_info_properties_array.length; i++) {
+                data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_property">${data_analysis_meta_info_properties_array[i] + ':'}</div>`);
+                data_analysis_meta_info_holder.find(".row").append(`<div class="col-sm-6 data_value">${data_analysis_meta_info[data_analysis_meta_info_prop_to_key_dict[data_analysis_meta_info_properties_array[i]]]}</div>`);
+            }
+        }
+    
+        // remove the data analysis meta information card if analysis was not conducted
+        function populate_the_data_analysis_meta_infomation_empty(){
+            $("#analysis_meta_info_card").remove();
+        }
+    
+        // In some cases we will not have run an analysis and will only have conducted a loading the data.
+        // As such we will not have information to populate in the data_analysis_meta_information section
+        if (analysis){ 
+            populate_the_data_analysis_meta_information();
+        }else{
+            populate_the_data_analysis_meta_infomation_empty();
+        }
+        
+        function populate_the_downloads_section() {
+            // The uncompressed files were far to big to work with
+            // The Restrepo analysis for example ended up being round 1Gb
+            // Compressed it was closer to 50M.
+            // As such we will individually compress all files and provide a download all zip
+            // The hrefs given here for the files to be downloaded should therefore
+            // all have the .zip extension added to them
+            let data_file_paths = getDataFilePaths();
+            let data_file_paths_keys = Object.keys(data_file_paths);
+            let clade_array = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+            let dist_type_array = ['unifrac', 'braycurtis'];
+            let sample_profile_array = ['sample', 'profile'];
+            let file_type_array = [
+                "post_med_absolute_abund_meta_count", "post_med_absolute_abund_only_count",
+                "post_med_absolute_meta_only_count", "post_med_relative_abund_meta_count",
+                "post_med_relative_abund_only_count", "post_med_relative_meta_only_count",
+                "post_med_fasta", "post_med_additional_info", "pre_med_absolute_count",
+                "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count",
+                "profile_absolute_abund_only_count", "profile_absolute_meta_only_count",
+                "profile_relative_abund_meta_count", "profile_relative_abund_only_count",
+                "profile_relative_meta_only_count", "profile_additional_info_file"
+            ];
+    
+            // First populate the files that are in the above file type array
+            for (let i = 0; i < file_type_array.length; i++) {
+                // Go in order of the file_type_array being sure to check if the file in question
+                // is found in the output of this study
+                if (data_file_paths_keys.includes(file_type_array[i])) {
+                    $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_type_array[i] + ':'}</div>`);
+                    $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[file_type_array[i]]}.zip" download>${data_file_paths[file_type_array[i]]}</a></div>`);
+                }
+            };
+    
+            // Then we will iterate through the possible distance files that may exist and populate those
+            // First go by clade, then sample/profile, then dist type
+            for (let i = 0; i < clade_array.length; i++) {
+                for (let j = 0; j < sample_profile_array.length; j++) {
+                    for (let k = 0; k < dist_type_array.length; k++) {
+                        let f_name_dist = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_dist";
+                        if (data_file_paths_keys.includes(f_name_dist)) {
+                            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_dist + ':'}</div>`);
+                            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_dist]}.zip" download>${data_file_paths[f_name_dist]}</a></div>`);
+                        }
+                        let f_name_pcoa = "btwn_" + sample_profile_array[j] + "_" + dist_type_array[k] + "_" + clade_array[i] + "_pcoa";
+                        if (data_file_paths_keys.includes(f_name_pcoa)) {
+                            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${f_name_pcoa + ':'}</div>`);
+                            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + data_file_paths[f_name_pcoa]}.zip" download>${data_file_paths[f_name_pcoa]}</a></div>`);
+                        }
                     }
                 }
             }
         }
+        populate_the_downloads_section();
     }
-    populate_the_downloads_section();
+    
 
 
     // Create Tooltips
@@ -172,108 +143,231 @@ $(document).ready(function () {
             return content;
         });
 
-    // Get the sample and profile meta info
-    let sample_meta_info = getSampleMetaInfo();
-    sample_name_to_uid_dict = (function () {
-        let temp_dict = {};
-        Object.keys(sample_meta_info).forEach(function (sample_uid) {
-            temp_dict[sample_meta_info[sample_uid]["name"]] = +sample_uid;
-        })
-        return temp_dict;
-    })();
-    
-    let profile_meta_info;
-    let profile_name_to_uid_dict;
-    if (analysis){ 
-        profile_meta_info = getProfileMetaInfo();
-        profile_name_to_uid_dict = (function () {
-            let temp_dict = {};
-            Object.keys(profile_meta_info).forEach(function (profile_uid) {
-                temp_dict[profile_meta_info[profile_uid]["name"]] = +profile_uid;
-            })
-            return temp_dict;
-        })();
-    }
-    
 
-    // Sequence meta info
-    let available_sample_meta_info = Object.keys(sample_meta_info[Object.keys(sample_meta_info)[0]]);
-    let sample_meta_annotation_to_key = {
-        "sample": "name",
-        "UID": "uid",
-        "taxa": "taxa_string",
-        "lat": "lat",
-        "lon": "lon",
-        "collection_date": "collection_date",
-        "depth": "collection_depth",
-        "clade_relative_abund": "clade_prop_string",
-        "clade_absolute_abund": "clade_abs_abund_string",
-        "raw_contigs": "raw_contigs",
-        "post_qc_absolute": "post_taxa_id_absolute_symbiodinium_seqs",
-        "post_qc_unique": "post_taxa_id_unique_symbiodinium_seqs",
-        "post_med_absolute": "post_med_absolute",
-        "post_med_unique": "post_med_unique",
-        "non_Symbiodiniaceae_absolute": "post_taxa_id_absolute_non_symbiodinium_seqs",
-        "non_Symbiodiniaceae_unique": "post_taxa_id_unique_non_symbiodinium_seqs"
-    };
-    let sample_meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
-    let sample_meta_info_annotation_order_array_secondary = ["collection_date", "depth",
-        "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
-        "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
-    ];
-
-    //populate the sample_meta_info_holders
-    (function populateSampleMetaInfoHolders() {
-        for (let i = 0; i < sample_meta_info_annotation_order_array_primary.length; i++) {
-            let annotation = sample_meta_info_annotation_order_array_primary[i];
-            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
-                // We want to put taxa on its own line because it is so big and the other two paris on the same line
-                if (annotation == "taxa") {
-                    $(".primary_sample_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
-                } else {
-                    $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+    /* Declare a class that takes care of the annotation of the meta information that is populated below 
+    the post-MED plot and below the profiles plot */
+    class PopulatePlotMetaInfo{
+        constructor(meta_info_method, plot_type){
+            // Call the function that gets the meta info data object
+            // This is strucured as two nested sets of objecets
+            // First object (sample or profile) uid. This is paired with 
+            // an object that is meta info property (e.g. uid, name) and value (e.g. 6374, 'a_name')
+            this.meta_info = meta_info_method();
+            // Create a name to uid dictionary using an anonymous method
+            this.name_to_uid_dict = this._make_name_to_uid_dict();
+            // Get an array of the meta info property keys that are available
+            this.available_meta_info = Object.keys(this.meta_info[Object.keys(this.meta_info)[0]]);
+            // This is either 'post_med' or 'profile'
+            this.plot_type = plot_type;
+            // For presentation in the meta_info section of the plot cards, we will use
+            // slightly different strings than actual meta info property keys.
+            // To map between the two we use this meta_annotation_to_key dict
+            if (this.plot_type == 'post_med'){
+                this.meta_annotation_to_key = {
+                "sample": "name",
+                "UID": "uid",
+                "taxa": "taxa_string",
+                "lat": "lat",
+                "lon": "lon",
+                "collection_date": "collection_date",
+                "depth": "collection_depth",
+                "clade_relative_abund": "clade_prop_string",
+                "clade_absolute_abund": "clade_abs_abund_string",
+                "raw_contigs": "raw_contigs",
+                "post_qc_absolute": "post_taxa_id_absolute_symbiodinium_seqs",
+                "post_qc_unique": "post_taxa_id_unique_symbiodinium_seqs",
+                "post_med_absolute": "post_med_absolute",
+                "post_med_unique": "post_med_unique",
+                "non_Symbiodiniaceae_absolute": "post_taxa_id_absolute_non_symbiodinium_seqs",
+                "non_Symbiodiniaceae_unique": "post_taxa_id_unique_non_symbiodinium_seqs"
+                };
+                this.meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
+                this.meta_info_annotation_order_array_secondary = ["collection_date", "depth",
+                    "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
+                    "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
+                ];
+            }else if (this.plot_type == 'profile'){
+                this.meta_annotation_to_key = {
+                    "profile": "name",
+                    "UID": "uid",
+                    "genera": "genera",
+                    "maj_seq": "maj_its2_seq",
+                    "associated species": "assoc_species",
+                    "local_abund": "local_abund",
+                    "db_abund": "db_abund",
+                    "seq_uids": "seq_uids",
+                    "seq_abund_string": "seq_abund_string"
+                };
+                this.meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
+                this.meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
+                    "seq_uids", "seq_abund_string"
+                ];
+            }
+        }
+        // The main method that is used to do the population of the meta information area
+        // TODO: we will have to see how similar the code is between the post-MED and profile instances
+        // of this class to see whether we can use this same method for both.
+        // Post-MED
+        populateMetaInfo() {
+            for (let i = 0; i < this.meta_info_annotation_order_array_primary.length; i++) {
+                let annotation = this.meta_info_annotation_order_array_primary[i];
+                if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation])) {
+                    // We want to put taxa on its own line because it is so big and the other two paris on the same line
+                    if (annotation == "taxa") {
+                        if (this.plot_type == 'post_med'){
+                            $(".primary_sample_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                        }else if (this.plot_type == 'profile'){
+                            $(".primary_profile_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                        }
+                    } else {
+                        if (this.plot_type == 'post_med'){
+                            $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                        }else if (this.plot_type == 'profile'){
+                            $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                        }
+                    }
+                }
+            }
+            for (let i = 0; i < this.meta_info_annotation_order_array_secondary.length; i++) {
+                let annotation = this.meta_info_annotation_order_array_secondary[i];
+                if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation])) {
+                    if (this.plot_type == 'post_med'){
+                        $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }else if (this.plot_type == 'profile'){
+                        $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }
                 }
             }
         }
-        for (let i = 0; i < sample_meta_info_annotation_order_array_secondary.length; i++) {
-            let annotation = sample_meta_info_annotation_order_array_secondary[i];
-            if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
-                $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
-            }
+
+        _make_name_to_uid_dict(){
+            let temp_dict = {};
+            let meta_info = this.meta_info;
+            Object.keys(meta_info).forEach(function (uid) {
+                temp_dict[meta_info[uid]["name"]] = +uid;
+            })
+            return temp_dict;
         }
-    })();
+    };
 
+    // The post-MED meta info populator
+    const post_med_meta_info_populator = new PopulatePlotMetaInfo(meta_info_method=getSampleMetaInfo, plot_type='post_med');
+    post_med_meta_info_populator.populateMetaInfo()
+
+    // The profile meta info populator
+    let profile_meta_info_populator;
     if (analysis){
-        // Profile meta info
-        let available_profile_meta_info = Object.keys(profile_meta_info);
-        let profile_meta_annotation_to_key = {
-            "profile": "name",
-            "UID": "uid",
-            "genera": "genera",
-            "maj_seq": "maj_its2_seq",
-            "associated species": "assoc_species",
-            "local_abund": "local_abund",
-            "db_abund": "db_abund",
-            "seq_uids": "seq_uids",
-            "seq_abund_string": "seq_abund_string"
-        };
-        let profile_meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
-        let profile_meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
-            "seq_uids", "seq_abund_string"
-        ];
-
-        //populate the profile_meta_info_holders
-        (function populateProfileMetaInfoHolders() {
-            for (let i = 0; i < profile_meta_info_annotation_order_array_primary.length; i++) {
-                let annotation = profile_meta_info_annotation_order_array_primary[i];
-                $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
-            }
-            for (let i = 0; i < profile_meta_info_annotation_order_array_secondary.length; i++) {
-                let annotation = profile_meta_info_annotation_order_array_secondary[i];
-                $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
-            }
-        })();
+        profile_meta_info_populator = new PopulatePlotMetaInfo(meta_info_method=getProfileMetaInfo, plot_type='profile');
+        profile_meta_info_populator.populateMetaInfo()
     }
+    
+    
+    // // Get the sample and profile meta info
+    // let sample_meta_info = getSampleMetaInfo();
+    // let sample_name_to_uid_dict = (function () {
+    //     let temp_dict = {};
+    //     Object.keys(sample_meta_info).forEach(function (sample_uid) {
+    //         temp_dict[sample_meta_info[sample_uid]["name"]] = +sample_uid;
+    //     })
+    //     return temp_dict;
+    // })();
+    
+    // let profile_meta_info;
+    // let profile_name_to_uid_dict;
+    // if (analysis){ 
+    //     profile_meta_info = getProfileMetaInfo();
+    //     profile_name_to_uid_dict = (function () {
+    //         let temp_dict = {};
+    //         Object.keys(profile_meta_info).forEach(function (profile_uid) {
+    //             temp_dict[profile_meta_info[profile_uid]["name"]] = +profile_uid;
+    //         })
+    //         return temp_dict;
+    //     })();
+    // }
+    
+    // // Populate the area below the post-MED seq plot that hold the metainformation about the 
+    
+    // // sample that is currently being hovered over
+    // // Sequence meta info
+    // let available_sample_meta_info = Object.keys(sample_meta_info[Object.keys(sample_meta_info)[0]]);
+    // let sample_meta_annotation_to_key = {
+    //     "sample": "name",
+    //     "UID": "uid",
+    //     "taxa": "taxa_string",
+    //     "lat": "lat",
+    //     "lon": "lon",
+    //     "collection_date": "collection_date",
+    //     "depth": "collection_depth",
+    //     "clade_relative_abund": "clade_prop_string",
+    //     "clade_absolute_abund": "clade_abs_abund_string",
+    //     "raw_contigs": "raw_contigs",
+    //     "post_qc_absolute": "post_taxa_id_absolute_symbiodinium_seqs",
+    //     "post_qc_unique": "post_taxa_id_unique_symbiodinium_seqs",
+    //     "post_med_absolute": "post_med_absolute",
+    //     "post_med_unique": "post_med_unique",
+    //     "non_Symbiodiniaceae_absolute": "post_taxa_id_absolute_non_symbiodinium_seqs",
+    //     "non_Symbiodiniaceae_unique": "post_taxa_id_unique_non_symbiodinium_seqs"
+    // };
+    // let sample_meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
+    // let sample_meta_info_annotation_order_array_secondary = ["collection_date", "depth",
+    //     "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
+    //     "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
+    // ];
+
+    // //populate the sample_meta_info_holders
+    // populateSampleMetaInfoHolders()
+    // function populateSampleMetaInfoHolders() {
+    //     for (let i = 0; i < sample_meta_info_annotation_order_array_primary.length; i++) {
+    //         let annotation = sample_meta_info_annotation_order_array_primary[i];
+    //         if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
+    //             // We want to put taxa on its own line because it is so big and the other two paris on the same line
+    //             if (annotation == "taxa") {
+    //                 $(".primary_sample_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+    //             } else {
+    //                 $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+    //             }
+    //         }
+    //     }
+    //     for (let i = 0; i < sample_meta_info_annotation_order_array_secondary.length; i++) {
+    //         let annotation = sample_meta_info_annotation_order_array_secondary[i];
+    //         if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
+    //             $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
+    //         }
+    //     }
+    // }
+
+    // if (analysis){
+    //     // Profile meta info
+    //     let available_profile_meta_info = Object.keys(profile_meta_info);
+    //     let profile_meta_annotation_to_key = {
+    //         "profile": "name",
+    //         "UID": "uid",
+    //         "genera": "genera",
+    //         "maj_seq": "maj_its2_seq",
+    //         "associated species": "assoc_species",
+    //         "local_abund": "local_abund",
+    //         "db_abund": "db_abund",
+    //         "seq_uids": "seq_uids",
+    //         "seq_abund_string": "seq_abund_string"
+    //     };
+    //     let profile_meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
+    //     let profile_meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
+    //         "seq_uids", "seq_abund_string"
+    //     ];
+
+    //     //populate the profile_meta_info_holders
+    //     populateProfileMetaInfoHolders()
+    //     function populateProfileMetaInfoHolders() {
+    //         for (let i = 0; i < profile_meta_info_annotation_order_array_primary.length; i++) {
+    //             let annotation = profile_meta_info_annotation_order_array_primary[i];
+    //             $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
+    //         }
+    //         for (let i = 0; i < profile_meta_info_annotation_order_array_secondary.length; i++) {
+    //             let annotation = profile_meta_info_annotation_order_array_secondary[i];
+    //             $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
+    //         }
+    //     }
+    // }
     
 
     // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
@@ -285,11 +379,11 @@ $(document).ready(function () {
         })
     }
 
-    // DATA FOR PRE, POST MED and PROFILE
+    // DATA POST MED and PROFILE plots
     // POST MED BARS
-    let sorting_keys = Object.keys(getSampleSortedArrays());
     let sorted_sample_uid_arrays = getSampleSortedArrays();
-
+    let sorting_keys = Object.keys(sorted_sample_uid_arrays);
+    
     let svg_post_med = d3.select("#chart_post_med");
     let data_post_med_by_sample;
     let max_y_val_post_med;
@@ -590,12 +684,12 @@ $(document).ready(function () {
         let key_name = btwn_sample_c_cat_key[cat_name];
         //need to get the list of taxa string
         let cats_array = [];
-        Object.keys(sample_meta_info).forEach(function (k) {
+        Object.keys(post_med_meta_info_populator.meta_info).forEach(function (k) {
             let cat;
             if (cat_name == "location") {
-                cat = sample_meta_info[k]["lat"] + ';' + sample_meta_info[k]["lat"];
+                cat = post_med_meta_info_populator.meta_info[k]["lat"] + ';' + post_med_meta_info_populator.meta_info[k]["lat"];
             } else {
-                cat = sample_meta_info[k][key_name];
+                cat = post_med_meta_info_populator.meta_info[k][key_name];
             }
 
             if (!(cats_array.includes(cat))) {
@@ -611,8 +705,8 @@ $(document).ready(function () {
         let key_name = btwn_sample_c_cat_key[cat_name];
         //need to get the list of taxa string
         let values = [];
-        Object.keys(sample_meta_info).forEach(function (k) {
-            values.push(sample_meta_info[k][key_name]);
+        Object.keys(post_med_meta_info_populator.meta_info).forEach(function (k) {
+            values.push(post_med_meta_info_populator.meta_info[k][key_name]);
         });
         let max_val = Math.max(...values);
         let min_val = Math.min(...values);
@@ -656,8 +750,8 @@ $(document).ready(function () {
             let key_name = btwn_profile_c_cat_key[cat_name];
             //need to get the list of taxa string
             let values = [];
-            Object.keys(profile_meta_info).forEach(function (k) {
-                values.push(profile_meta_info[k][key_name]);
+            Object.keys(profile_meta_info_populator.meta_info).forEach(function (k) {
+                values.push(profile_meta_info_populator.meta_info[k][key_name]);
             });
             let max_val = Math.max(...values);
             let min_val = Math.min(...values);
@@ -668,7 +762,7 @@ $(document).ready(function () {
 
         profile_local_abund_c_scale = make_quantitative_color_scale_btwn_profile("local_abundance");
         profile_db_abund_c_scale = make_quantitative_color_scale_btwn_profile("db_abundance");
-        profile_idenity_c_scale = d3.scaleOrdinal().domain(Object.keys(profile_meta_info)).range(Object.keys(profile_meta_info).map(k => profile_meta_info[k]["color"]));
+        profile_idenity_c_scale = d3.scaleOrdinal().domain(Object.keys(profile_meta_info_populator.meta_info)).range(Object.keys(profile_meta_info_populator.meta_info).map(k => profile_meta_info_populator.meta_info[k]["color"]));
     }
 
     //DATA for btwn sample
@@ -993,7 +1087,7 @@ $(document).ready(function () {
         let data_by_sample;
         let delay = 0.1;
         let col_scale;
-        let x_key = sample_meta_info[col_sample]["name"];
+        let x_key = post_med_meta_info_populator.meta_info[col_sample]["name"];
         if (pre_post_profile == "post-modal") {
             data_by_sample = data_post_med_by_sample;
             svg = svg_post_med_modal;
@@ -1055,7 +1149,7 @@ $(document).ready(function () {
             }).attr("width", x.bandwidth()).attr("height", function (d) {
                 return Math.max(y(+d["height_" + abbr]), 1);
             }).attr("fill", function (d) {
-                return col_scale(profile_name_to_uid_dict[d.profile_name]);
+                return col_scale(profile_meta_info_populator.name_to_uid_dict[d.profile_name]);
             }).delay(function (d, i) {
                 return (i * delay)
             });
@@ -1067,7 +1161,7 @@ $(document).ready(function () {
             }).attr("width", x.bandwidth()).attr("height", function (d) {
                 return Math.max(y(0) - y(+d["height_" + abbr]), 1);
             }).attr("fill", function (d) {
-                return col_scale(profile_name_to_uid_dict[d.profile_name]);
+                return col_scale(profile_meta_info_populator.name_to_uid_dict[d.profile_name]);
             }).delay(function (d, i) {
                 return (i * delay)
             });
@@ -1097,8 +1191,8 @@ $(document).ready(function () {
                 }).attr("y", y(0)).on('mouseover', function (d) {
                     tip_profiles.show(d);
                     d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                    let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
-                    let profile_data_series = profile_meta_info[profile_uid.toString()];
+                    let profile_uid = profile_meta_info_populator.name_to_uid_dict[d["profile_name"]];
+                    let profile_data_series = profile_meta_info_populator.meta_info[profile_uid.toString()];
                     $(this).closest(".plot_item").find(".profile_meta_item").each(function () {
                         $(this).text(profile_data_series[$(this).attr("data-key")]);
                     });
@@ -1112,7 +1206,7 @@ $(document).ready(function () {
                 }).attr("width", x.bandwidth()).attr("height", function (d) {
                     return Math.max(y(0) - y(+d["height_" + abbr]), 1);
                 }).attr("fill", function (d) {
-                    return col_scale(profile_name_to_uid_dict[d.profile_name]);
+                    return col_scale(profile_meta_info_populator.name_to_uid_dict[d.profile_name]);
                 });
         } else if (pre_post_profile == "profile-modal") {
             bars.enter().append("rect")
@@ -1121,8 +1215,8 @@ $(document).ready(function () {
                 }).attr("y", y(0)).on('mouseover', function (d) {
                     tip_profiles.show(d);
                     d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                    let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
-                    let profile_data_series = profile_meta_info[profile_uid.toString()];
+                    let profile_uid = profile_meta_info_populator.name_to_uid_dict[d["profile_name"]];
+                    let profile_data_series = profile_meta_info_populator.meta_info[profile_uid.toString()];
                     $(this).closest(".plot_item").find(".profile_meta_item").each(function () {
                         $(this).text(profile_data_series[$(this).attr("data-key")]);
                     });
@@ -1136,7 +1230,7 @@ $(document).ready(function () {
                 }).attr("width", x.bandwidth()).attr("height", function (d) {
                     return Math.max(y(+d["height_" + abbr]), 1);
                 }).attr("fill", function (d) {
-                    return col_scale(profile_name_to_uid_dict[d.profile_name]);
+                    return col_scale(profile_meta_info_populator.name_to_uid_dict[d.profile_name]);
                 });
         } else {
             bars.enter().append("rect")
@@ -1189,7 +1283,7 @@ $(document).ready(function () {
             // if tanslate value, then do translate to center.
             // else, do ellipse logic.
             // We also have to do the ellipse shortening here
-            let sample_names = sample_list_modal.map(sample_uid => sample_meta_info[sample_uid]["name"]);  // your text here
+            let sample_names = sample_list_modal.map(sample_uid => post_med_meta_info_populator.meta_info[sample_uid]["name"]);  // your text here
             svg_post_med_modal.append('g').attr("class", '.dummyTextG')
                 .selectAll('.dummyText')
                 .data(sample_names)
@@ -1247,7 +1341,7 @@ $(document).ready(function () {
             .style("text-anchor", "start");
             // Set the values we need to here dynamically according to the dict that we worked out above. but still need to find some way of linking.
             //This has a data node.
-            let sample_name = sample_meta_info[this.__data__]["name"];
+            let sample_name = post_med_meta_info_populator.meta_info[this.__data__]["name"];
             // Available width is the margin - 9 for the displacement of the sequence tick and -2 for displacement of the profile tick
             // So figure out if our text is larger than the available space. If it is larger, then ellipse until smaller
             // If its smaller, center
@@ -1282,7 +1376,7 @@ $(document).ready(function () {
             // Has callback to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
                 .call(d3.axisBottom(x).tickFormat(function(d) {
-                    let sample_name = sample_meta_info[d]["name"];
+                    let sample_name = post_med_meta_info_populator.meta_info[d]["name"];
                     if (sample_name_width_obj[sample_name]["ellipse"]){
                         return sample_name_width_obj[sample_name]["ellipse_text"];
                     }else{return sample_name;}
@@ -1291,7 +1385,7 @@ $(document).ready(function () {
             // The regular axis with ticks and text below
             // no call back to center the labels
             d3.selectAll(x_axis_id).transition().duration(speed)
-                .call(d3.axisBottom(x).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
+                .call(d3.axisBottom(x).tickFormat(d => post_med_meta_info_populator.meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
                 .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
                 .style("text-anchor", "start").on("end", ellipse_axis_labels);
         }
@@ -1303,7 +1397,7 @@ $(document).ready(function () {
                 d3.select(d1).on("mouseover", function () {
                     d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
                     let sample_uid = this.__data__;
-                    let sample_data_series = sample_meta_info[sample_uid];
+                    let sample_data_series = post_med_meta_info_populator.meta_info[sample_uid];
                     $(this).closest(".plot_item").find(".sample_meta_item").each(function () {
                         $(this).text(sample_data_series[$(this).attr("data-key")]);
                     })
@@ -1361,8 +1455,8 @@ $(document).ready(function () {
                 coords = btwn_sample_genera_coords_data[genera];
                 x_scale = x_btwn_sample;
                 y_scale = y_btwn_sample;
-                meta_look_up_dict = sample_meta_info;
-                uid_to_name_dict = sample_name_to_uid_dict;
+                meta_look_up_dict = post_med_meta_info_populator.meta_info;
+                uid_to_name_dict = post_med_meta_info_populator.name_to_uid_dict;
                 meta_item_type = ".sample_meta_item"
                 // Get the correct btwn sample c_scale to be used. We get this from the
                 col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
@@ -1400,8 +1494,8 @@ $(document).ready(function () {
                 coords = btwn_profile_genera_coords_data[genera];
                 x_scale = x_btwn_profile;
                 y_scale = y_btwn_profile;
-                meta_look_up_dict = profile_meta_info;
-                uid_to_name_dict = profile_name_to_uid_dict;
+                meta_look_up_dict = profile_meta_info_populator.meta_info;
+                uid_to_name_dict = profile_meta_info_populator.name_to_uid_dict;
                 meta_item_type = ".profile_meta_item"
                 // Get the correct btwn profile c_scale to be used. We get this from the
                 col_key = $(dist_plot_id).closest(".plot_item").find(".color_select_button").attr("data-color");
@@ -1913,7 +2007,7 @@ $(document).ready(function () {
         $("#map_helper_text").text("Click markers for site details")
         
         let unique_site_set = new Set();
-        let sample_meta_info_keys = Object.keys(sample_meta_info);
+        let sample_meta_info_keys = Object.keys(post_med_meta_info_populator.meta_info);
         // Create and init the site to sample uid dict. we will use this similar to a python defualtdict(list)
         let site_to_sample_uid_dict = {};
         // Keep track of the largest and smallest lat and long so that we can work out an average to center the map on
@@ -1925,7 +2019,7 @@ $(document).ready(function () {
         // Need to take into account that samples with bad or no lat lon details will have been set to the 
         // default value of 999
         for (let i = 0; i < sample_meta_info_keys.length; i++) {
-            let sample_obj = sample_meta_info[sample_meta_info_keys[i]];
+            let sample_obj = post_med_meta_info_populator.meta_info[sample_meta_info_keys[i]];
             let numeric_lat = +sample_obj['lat'];
             let numeric_lon = +sample_obj['lon'];
             if (numeric_lat == 999 || numeric_lon == 999) {
@@ -2030,12 +2124,12 @@ $(document).ready(function () {
                         let sample_uid = site_to_sample_uid_dict[site_loc_str][j];
                         $tr = $('<tr></tr>');
                         $tr.appendTo($tbody);
-                        $tr.append(`<td>${sample_meta_info[sample_uid]["name"]}</td>`);
+                        $tr.append(`<td>${post_med_meta_info_populator.meta_info[sample_uid]["name"]}</td>`);
                         // The full taxa string is really too long here so get the last element that isn't NoData
-                        let tax_str = sample_meta_info[sample_uid]["taxa_string"];
+                        let tax_str = post_med_meta_info_populator.meta_info[sample_uid]["taxa_string"];
                         let short_tax = getShortTaxStr(tax_str);
                         $tr.append(`<td>${short_tax}</td>`);
-                        $tr.append(`<td>${sample_meta_info[sample_uid]["collection_depth"]}</td>`);
+                        $tr.append(`<td>${post_med_meta_info_populator.meta_info[sample_uid]["collection_depth"]}</td>`);
                     }
                     // Here we should have the info window content built and stored in the variable $content_object
                     // Now put the info window together
