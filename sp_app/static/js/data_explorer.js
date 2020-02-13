@@ -291,6 +291,11 @@ $(document).ready(function () {
             // Create and call the tool tip
             this.tips = this._init_tips();
             this.svg.call(this.tips);
+            
+            this.color_scale = this._init_color_scale();
+
+            // Whether the plot is currently displaying absolute or relative abundances
+            this.absolute_relative = this._init_absolute_realtive();
         }
 
         // Private init methods
@@ -377,6 +382,51 @@ $(document).ready(function () {
             }
             return tips
         }
+        _init_color_scale(){
+            if (this.plot_type == 'post_med'){
+                // We can set both the range and domain of this as these are invariable between absolute and relative
+                // data types
+                // If we ran the data loading or analysis using the --no_pre_med_seqs flag
+                // then the getSeqColor method will not have been output.
+                // However the getSeqColorPostMED function should have been output and we will
+                // use this instead
+                let seq_color;
+                try{
+                    seq_color = getSeqColor();
+                }
+                catch(err){
+                    seq_color = getSeqColorPostMED();
+                }
+                let seq_names = Object.keys(seq_color);
+                let seq_colors = seq_names.map(function (seq_name) {
+                    return seq_color[seq_name]
+                });
+                return d3.scaleOrdinal().domain(seq_names).range(seq_colors);
+            }else if (this.plot_type == 'profile'){
+                let prof_color = getProfColor();
+                let prof_names = Object.keys(prof_color);
+                let prof_colors = prof_names.map(function (prof_name) {
+                    return prof_color[prof_name]
+                });
+                return d3.scaleOrdinal().domain(prof_names).range(prof_colors);
+            }
+            
+        }
+        _init_absolute_realtive(){
+            if (this.plot_type == 'post_med'){
+                if ($("#PostMEDAbsDType").hasClass("btn-primary")) {
+                    return 'absolute';
+                } else if ($("#PostMEDRelDType").hasClass("btn-primary")) {
+                    return 'relative';
+                }
+            }else if (this.plot_type == 'profile'){
+                if ($("#ProfileMEDAbsDType").hasClass("btn-primary")) {
+                    return 'absolute';
+                } else if ($("#ProfileMEDRelDType").hasClass("btn-primary")) {
+                    return 'relative';
+                }
+            }
+        }
     };
 
     class ModalStackedBarPlot{
@@ -411,6 +461,10 @@ $(document).ready(function () {
             this.post_med_tips, this.profile_tips = _init_tips();
             this.post_med_svg.call(this.post_med_tips);
             this.profile_svg.call(this.profile_tips);
+            this.post_med_color_scale, this.profile_color_scale = this._init_color_scale();
+            // Whether the plot is currently displaying absolute or relative abundances
+            
+            this.absolute_relative = this._init_absolute_realtive();
         }
 
         // Private init methods
@@ -522,6 +576,42 @@ $(document).ready(function () {
 
             })
             return data;
+        }
+        _init_color_scale(){
+            
+            // We can set both the range and domain of this as these are invariable between absolute and relative
+            // data types
+            // If we ran the data loading or analysis using the --no_pre_med_seqs flag
+            // then the getSeqColor method will not have been output.
+            // However the getSeqColorPostMED function should have been output and we will
+            // use this instead
+            let seq_color;
+            try{
+                seq_color = getSeqColor();
+            }
+            catch(err){
+                seq_color = getSeqColorPostMED();
+            }
+            let seq_names = Object.keys(seq_color);
+            let seq_colors = seq_names.map(function (seq_name) {
+                return seq_color[seq_name]
+            });
+            let post_med_color_scale =  d3.scaleOrdinal().domain(seq_names).range(seq_colors);
+        
+            let prof_color = getProfColor();
+            let prof_names = Object.keys(prof_color);
+            let prof_colors = prof_names.map(function (prof_name) {
+                return prof_color[prof_name]
+            });
+            let profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);          
+            return post_med_color_scale, profile_color_scale;
+        }
+        _init_absolute_realtive(){
+            if ($("#ModalAbsDType").hasClass("btn-primary")) {
+                return 'absolute';
+            } else if ($("#ModalRelDType").hasClass("btn-primary")) {
+                return 'relative';
+            }
         }
     };
 
@@ -1107,49 +1197,43 @@ $(document).ready(function () {
     }
 
 
-    // Set the colour scale
-    // We can set both the range and domain of this as these are invariable between absolute and relative
-    // data types
-    //TODO synchronise the colour scales between the pre- and post-med seqs.
-    // The fill colours of the rect objects are now already in the array of objects
-    //TODO we will need to have color scales for the distance plots as these will vary depending on
-    // the property that we are colouring by.
-
-    // If we ran the data loading or analysis using the --no_pre_med_seqs flag
-    // then the getSeqColor method will not have been output.
-    // However the getSeqColorPostMED function should have been output and we will
-    // use this instead
-    let seq_color;
-    try{
-        seq_color = getSeqColor();
-    }
-    catch(err){
-        seq_color = getSeqColorPostMED();
-    }
-    let seq_names = Object.keys(seq_color);
-    let seq_colors = seq_names.map(function (seq_name) {
-        return seq_color[seq_name]
-    });
-    let sequence_color_scale = d3.scaleOrdinal().domain(seq_names).range(seq_colors);
+    // // Set the colour scale
+    // // We can set both the range and domain of this as these are invariable between absolute and relative
+    // // data types
+    // // If we ran the data loading or analysis using the --no_pre_med_seqs flag
+    // // then the getSeqColor method will not have been output.
+    // // However the getSeqColorPostMED function should have been output and we will
+    // // use this instead
+    // let seq_color;
+    // try{
+    //     seq_color = getSeqColor();
+    // }
+    // catch(err){
+    //     seq_color = getSeqColorPostMED();
+    // }
+    // let seq_names = Object.keys(seq_color);
+    // let seq_colors = seq_names.map(function (seq_name) {
+    //     return seq_color[seq_name]
+    // });
+    // let sequence_color_scale = d3.scaleOrdinal().domain(seq_names).range(seq_colors);
     
-    let profile_color_scale;
-    if (analysis){
-        let prof_color = getProfColor();
-        let prof_names = Object.keys(prof_color);
-        let prof_colors = prof_names.map(function (prof_name) {
-            return prof_color[prof_name]
-        });
-        profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);
-    }
+    // let profile_color_scale;
+    // if (analysis){
+    //     let prof_color = getProfColor();
+    //     let prof_names = Object.keys(prof_color);
+    //     let prof_colors = prof_names.map(function (prof_name) {
+    //         return prof_color[prof_name]
+    //     });
+    //     profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);
+    // }
     
-
     // INIT the post-MED and profile plots modal and normal.
-    let data_type;
-    if ($("#PostMEDAbsDType").hasClass("btn-primary")) {
-        data_type = 'absolute';
-    } else if ($("#PostMEDRelDType").hasClass("btn-primary")) {
-        data_type = 'relative';
-    }
+    // let data_type;
+    // if ($("#PostMEDAbsDType").hasClass("btn-primary")) {
+    //     data_type = 'absolute';
+    // } else if ($("#PostMEDRelDType").hasClass("btn-primary")) {
+    //     data_type = 'relative';
+    // }
 
     // We have to init the modal plots once the modal has been opened (see listener below)
     // So that we can get the size of the label text and adjust the text accordingly.
@@ -1878,7 +1962,6 @@ $(document).ready(function () {
         });
     }
 
-
     //Listening for opening of seq-profile modal
     $("#seq-prof-modal").on("shown.bs.modal", function (e) {
         // POST-MED-MODAL INIT
@@ -1939,56 +2022,6 @@ $(document).ready(function () {
         }
     });
 
-    // Listening for INIT of pre-MED seqs plot
-    // We want to have a listener for the Pre-MED header opening up. When this happens, we will want to plot the
-    // pre-med plot, we will also want to remove the rendering the pre-MED seqs text. Also a good idea will be to have
-    // a spinner set off in the top right corner.
-    $('#pre_med_svg_collapse').on('show.bs.collapse', function () {
-        // First check to see if the pre-MED svg has already been initiated. If so then there is nothing
-        // to do here.
-        //TODO implement the spinner and get rid of the text when open
-        if (!$("#chart_pre_med").hasClass("init")) {
-            $("#chart_pre_med").attr("class", "init");
-            //Plot as relative or absolute abundances according to which button is currently primary
-            if ($("#PreMEDRelDType").hasClass("btn-primary")) {
-                let data_type = "relative";
-            } else {
-                let data_type = "absolute";
-            }
-
-            //Now do the init of the pre-MED svg
-            svg_pre_med = d3.select("#chart_pre_med");
-
-            // Set the x range that will be used for the x val of the bars
-            x_pre_med = d3.scaleBand()
-                .range([margin.left, seq_prof_width - margin.right])
-                .padding(0.1)
-
-            // Set the y range
-            y_pre_med = d3.scaleLinear()
-                .rangeRound([seq_prof_height - margin.bottom, margin.top])
-
-            //Set up the svg element in which we will call the axis objects
-            xAxis_pre_med = svg_pre_med.append("g")
-                .attr("transform", `translate(0,${seq_prof_height - margin.bottom})`)
-                .attr("id", "x_axis_pre_med")
-
-            yAxis_pre_med = svg_pre_med.append("g")
-                .attr("transform", `translate(${margin.left},0)`)
-                .attr("id", "y_axis_pre_med")
-
-            //Add a g to the svgs that we will use for the bars
-            //We will have a seperate g for each of the samples so that we can hopefully plot column by column
-            sample_list_pre.forEach(function (sample) {
-                svg_pre_med.append("g").attr("class", "s" + sample)
-            });
-
-            update_bar_plot_by_sample(data_type, "pre", sample_list_pre, pre_med_init_by_sample_interval)
-
-
-        }
-
-    });
 
     // Listening for the bar chart sorting button clicks
     $(".svg_sort_by a").click(function () {
