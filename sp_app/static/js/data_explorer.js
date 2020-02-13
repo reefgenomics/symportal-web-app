@@ -126,24 +126,6 @@ $(document).ready(function () {
     }
     
 
-
-    // Create Tooltips
-    let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
-        .html(function (d) {
-            let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
-                '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
-                '</div>';
-            return content;
-        });
-    let tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
-        .html(function (d) {
-            let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
-                '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
-                '</div>';
-            return content;
-        });
-
-
     /* Declare a class that takes care of the annotation of the meta information that is populated below 
     the post-MED plot and below the profiles plot */
     class PopulatePlotMetaInfo{
@@ -261,318 +243,263 @@ $(document).ready(function () {
         profile_meta_info_populator.populateMetaInfo()
     }
     
-    
-    // // Get the sample and profile meta info
-    // let sample_meta_info = getSampleMetaInfo();
-    // let sample_name_to_uid_dict = (function () {
-    //     let temp_dict = {};
-    //     Object.keys(sample_meta_info).forEach(function (sample_uid) {
-    //         temp_dict[sample_meta_info[sample_uid]["name"]] = +sample_uid;
-    //     })
-    //     return temp_dict;
-    // })();
-    
-    // let profile_meta_info;
-    // let profile_name_to_uid_dict;
-    // if (analysis){ 
-    //     profile_meta_info = getProfileMetaInfo();
-    //     profile_name_to_uid_dict = (function () {
-    //         let temp_dict = {};
-    //         Object.keys(profile_meta_info).forEach(function (profile_uid) {
-    //             temp_dict[profile_meta_info[profile_uid]["name"]] = +profile_uid;
-    //         })
-    //         return temp_dict;
-    //     })();
-    // }
-    
-    // // Populate the area below the post-MED seq plot that hold the metainformation about the 
-    
-    // // sample that is currently being hovered over
-    // // Sequence meta info
-    // let available_sample_meta_info = Object.keys(sample_meta_info[Object.keys(sample_meta_info)[0]]);
-    // let sample_meta_annotation_to_key = {
-    //     "sample": "name",
-    //     "UID": "uid",
-    //     "taxa": "taxa_string",
-    //     "lat": "lat",
-    //     "lon": "lon",
-    //     "collection_date": "collection_date",
-    //     "depth": "collection_depth",
-    //     "clade_relative_abund": "clade_prop_string",
-    //     "clade_absolute_abund": "clade_abs_abund_string",
-    //     "raw_contigs": "raw_contigs",
-    //     "post_qc_absolute": "post_taxa_id_absolute_symbiodinium_seqs",
-    //     "post_qc_unique": "post_taxa_id_unique_symbiodinium_seqs",
-    //     "post_med_absolute": "post_med_absolute",
-    //     "post_med_unique": "post_med_unique",
-    //     "non_Symbiodiniaceae_absolute": "post_taxa_id_absolute_non_symbiodinium_seqs",
-    //     "non_Symbiodiniaceae_unique": "post_taxa_id_unique_non_symbiodinium_seqs"
-    // };
-    // let sample_meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
-    // let sample_meta_info_annotation_order_array_secondary = ["collection_date", "depth",
-    //     "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
-    //     "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
-    // ];
+    /* Create the plot objects via class abstraction
+    The post-MED and profile plots share a lot in common and can easily be represented
+    as a single classs. However, the  modal stacked bar plot is much more complicated.
+    It has basically double of everything that the simple stacked bar plots have.
+    I don't think its a good idea to work with a base class is extended. It will be to 
+    complicated and the abstraction will not be clear. Instead I think it will be
+    easiest and clearest to have a seperate class. We can call the classes
+    SimpleStackedBarPlot and ModalStackedBarPlot.*/
+    class SimpleStackedBarPlot{
+        constructor(name_of_html_svg_object, get_data_method, plot_type){
+            // Get the object that has the sorting parameter as key
+            // and a sorted list of the uids (either samples or profiles) as value
+            this.plot_type = plot_type;
+            this.sorted_uid_arrays = getSampleSortedArrays();
+            this.sorted_keys = Object.keys(this.sorted_uid_arrays);
+            this.svg = d3.select(name_of_html_svg_object);
+            // The object containing the rectangle data to be plotted
+            this.data = get_data_method();
+            // The maximum absolute count for a given sample
+            // This is used to scale the y axis
+            this.max_y = get_max_y_val_method();
+            // The array that contains the current order of the samples
+            // This will changed based on the parameter that is sorting the plot
+            // If profile_based is available (i.e. if there was an analysis) start
+            // with this. Else start with similarity.
+            this.current_sample_order_array = this._init_current_sample_order_array();
+            this.margin = this._init_margin();
+            this.plot_speed = this._init_plot_speed();
+            this.width, this.height = this._init_width_and_height();
+            this.x_scale, this.y_scale = this._init_scales();
+            // Init the axis group
+            //NB the axis no need translating down or left in the direction they orientate.
+            // I.e. x axis doesn't need to be translated right (only down)
+            // and yaxis doesn't need translating down (only right).
+            // This is because they apparently use their ranges to set their positions
+            this.x_axis, this.y_axis = this._init_axes();
+            
+            // INIT the drop down with the sample sorting categories we have available
+            this._init_sorting_drop_down_menus();
+        
+            // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
+            // We will have a seperate g for each of the samples so that we can plot column by column
+            // The pre-med plot will not get init until later.
+            this._add_sample_groups_to_bar_svgs();
+            
+            // Create and call the tool tip
+            this.tips = this._init_tips();
+            this.svg.call(this.tips);
+        }
 
-    // //populate the sample_meta_info_holders
-    // populateSampleMetaInfoHolders()
-    // function populateSampleMetaInfoHolders() {
-    //     for (let i = 0; i < sample_meta_info_annotation_order_array_primary.length; i++) {
-    //         let annotation = sample_meta_info_annotation_order_array_primary[i];
-    //         if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
-    //             // We want to put taxa on its own line because it is so big and the other two paris on the same line
-    //             if (annotation == "taxa") {
-    //                 $(".primary_sample_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
-    //             } else {
-    //                 $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
-    //             }
-    //         }
-    //     }
-    //     for (let i = 0; i < sample_meta_info_annotation_order_array_secondary.length; i++) {
-    //         let annotation = sample_meta_info_annotation_order_array_secondary[i];
-    //         if (available_sample_meta_info.includes(sample_meta_annotation_to_key[annotation])) {
-    //             $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${sample_meta_annotation_to_key[annotation]}>--</span></div>`);
-    //         }
-    //     }
-    // }
-
-    // if (analysis){
-    //     // Profile meta info
-    //     let available_profile_meta_info = Object.keys(profile_meta_info);
-    //     let profile_meta_annotation_to_key = {
-    //         "profile": "name",
-    //         "UID": "uid",
-    //         "genera": "genera",
-    //         "maj_seq": "maj_its2_seq",
-    //         "associated species": "assoc_species",
-    //         "local_abund": "local_abund",
-    //         "db_abund": "db_abund",
-    //         "seq_uids": "seq_uids",
-    //         "seq_abund_string": "seq_abund_string"
-    //     };
-    //     let profile_meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
-    //     let profile_meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
-    //         "seq_uids", "seq_abund_string"
-    //     ];
-
-    //     //populate the profile_meta_info_holders
-    //     populateProfileMetaInfoHolders()
-    //     function populateProfileMetaInfoHolders() {
-    //         for (let i = 0; i < profile_meta_info_annotation_order_array_primary.length; i++) {
-    //             let annotation = profile_meta_info_annotation_order_array_primary[i];
-    //             $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
-    //         }
-    //         for (let i = 0; i < profile_meta_info_annotation_order_array_secondary.length; i++) {
-    //             let annotation = profile_meta_info_annotation_order_array_secondary[i];
-    //             $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${profile_meta_annotation_to_key[annotation]}>--</span></div>`);
-    //         }
-    //     }
-    // }
-    
-
-    // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
-    // We will have a seperate g for each of the samples so that we can plot column by column
-    // The pre-med plot will not get init until later.
-    function add_sample_groups_to_bar_svgs(svg_element, sample_list) {
-        sample_list.forEach(function (sample) {
-            svg_element.append("g").attr("class", "s" + sample);
-        })
-    }
-
-    // DATA POST MED and PROFILE plots
-    // POST MED BARS
-    let sorted_sample_uid_arrays = getSampleSortedArrays();
-    let sorting_keys = Object.keys(sorted_sample_uid_arrays);
-    
-    let svg_post_med = d3.select("#chart_post_med");
-    let data_post_med_by_sample;
-    let max_y_val_post_med;
-    let sample_list_post;
-    let post_med_bars_exists = false;
-    let post_med_init_by_sample_interval = 1;
-    //INIT margins, widths and heights for the bar plots
-    let margin = {
-        top: 30,
-        left: 35,
-        bottom: 60,
-        right: 0
-    };
-    let seq_prof_width;
-    let seq_prof_height;
-    
-    // margin used for the inverted profile_modal plot
-    let inv_prof_margin = {
-        top: 5,
-        left: 35,
-        bottom: 5,
-        right: 0
+        // Private init methods
+        _init_current_sample_order_array(){
+            if (this.sorting_keys.includes('profile_based')) {
+                return this.sorted_uid_arrays['profile_based'];
+            } else {
+                return this.sorted_uid_arrays['similarity'];
+            }
+        }
+        _init_margin(){return {top: 30, left: 35, bottom: 60, right: 0};}  
+        _init_plot_speed(){
+            // Set the speed at which transitions will happen
+            if (plot_type == 'post_med'){
+                return 1;
+            }else if (plot_type == 'profile'){
+                return 10;
+            }
+        }
+        _init_width_and_height(){
+            this.svg.attr("width", ((sample_list_post.length * 13) + 70).toString());
+            let width = +this.svg.attr("width") - this.margin.left - this.margin.right;
+            let height = +this.svg.attr("height") - this.margin.top - this.margin.bottom;
+            return width, height;
+        }
+        _init_scales(){
+            let x_scale = d3.scaleBand()
+                .range([this.margin.left, this.width + this.margin.left])
+                .padding(0.1);
+            let y_scale = d3.scaleLinear()
+                .rangeRound([this.height + this.margin.top, this.margin.top]);
+            return x_scale, y_scale;
+        }
+        _init_axes(){
+            let x_axis;
+            let y_axis;
+            if (this.plot_type == 'post_med'){
+                x_axis = this.svg.append("g")
+                    .attr("transform", `translate(0,${this.height + this.margin.top})`)
+                    .attr("id", "x_axis_post_med");
+                y_axis = this.svg.append("g")
+                    .attr("transform", `translate(${this.margin.left},0)`)
+                    .attr("id", "y_axis_post_med");
+            }else if (this.plot_type == 'profile'){
+                x_axis = this.svg.append("g")
+                    .attr("transform", `translate(0,${this.height + this.margin.top})`)
+                    .attr("id", "x_axis_profile");
+                y_axis = this.svg.append("g")
+                    .attr("transform", `translate(${this.margin.left},0)`)
+                    .attr("id", "y_axis_profile");
+            }
+            return x_axis, y_axis;
+        }
+        _init_sorting_drop_down_menus(){
+            let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
+            for (let i = 0; i < this.sorting_keys.length; i++) {
+                sort_dropdown_to_populate.append(`<a class="dropdown-item" >${this.sorting_keys[i]}</a>`);
+            }
+        }
+        _add_sample_groups_to_bar_svgs() {
+            let svg = this.svg;
+            this.current_sample_order_array.forEach(function (sample) {
+                svg.append("g").attr("class", "s" + sample);
+            })
+        }
+        _init_tips(){
+            let tips;
+            if (this.plot_type == 'post_med'){
+                tips = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+                    .html(function (d) {
+                        let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+                            '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
+                            '</div>';
+                        return content;
+                    });
+            }else if (this.plot_type == 'profile'){
+                tips = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+                    .html(function (d) {
+                        let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+                            '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
+                            '</div>';
+                        return content;
+                    });
+            }
+            return tips
+        }
     };
 
-    let dist_margin = {top: 35, left: 35, bottom: 20, right: 0};
-    let x_post_med;
-    let y_post_med;
-    let xAxis_post_med;
-    let yAxis_post_med;
-    if (typeof getRectDataPostMEDBySample === "function") {
-        data_post_med_by_sample = getRectDataPostMEDBySample();
-        post_med_bars_exists = true;
-        max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
-        if (sorting_keys.includes('profile_based')) {
-            sample_list_post = sorted_sample_uid_arrays['profile_based'];
-        } else {
-            sample_list_post = sorted_sample_uid_arrays['similarity'];
+    class ModalStackedBarPlot{
+        // Given that there will only be the one instance of the class we 
+        // can be quite explicit, rather than dynamic, about defining its
+        // attributes.
+        constructor(){
+            this.sorted_uid_arrays = getSampleSortedArrays();
+            this.sorted_keys = Object.keys(this.sorted_uid_arrays);
+            this.post_med_svg = d3.select("#chart_post_med_modal");
+            this.profile_svg = d3.select("#chart_profile_modal");
+            this.post_med_data = getRectDataPostMEDBySample();
+            this.post_med_max_y = getRectDataPostMEDBySampleMaxSeq();
+            // Because this dataset is going to be used in the inverted modal plot we need to
+            // remove the cummulative y values that have been added to the above
+            this.inv_profile_data = _get_inv_profile_data();
+            this.inv_profile_max_y = getRectDataProfileBySampleMaxSeq();
+            // The array that contains the current order of the samples
+            // This will changed based on the parameter that is sorting the plot
+            // If profile_based is available (i.e. if there was an analysis) start
+            // with this. Else start with similarity.
+            this.current_sample_order_array = this._init_current_sample_order_array();
+            this.post_med_plot_speed, this.profile_plot_speed = this._init_plot_speed();
+            this.margin, this.inv_margin = this._init_margin();
+            // Same width for both of the chart areas but difference widths
+            this.width, this.post_med_height, this.profile_height = this._init_width_and_height();
+            this.x_scale, this.post_med_y_scale, this.profile_y_scale = this._init_scales();
+            this.post_med_x_axis, this.post_med_y_axis = this._init_post_med_axes();
+            this.profile_x_axis, this.profile_y_axis = this._init_profile_axes();
+            this._init_sorting_drop_down_menus();
+            this._add_sample_groups_to_bar_svgs();
+            this.post_med_tips, this.profile_tips = _init_tips();
+            this.post_med_svg.call(this.post_med_tips);
+            this.profile_svg.call(this.profile_tips);
         }
-        // INIT the width and height of the chart
-        $("#post_med_card").find(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString());
-        seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
-        seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
-        // Init x and y scales
-        x_post_med = d3.scaleBand()
-            .range([margin.left, seq_prof_width + margin.left])
-            .padding(0.1);
-        y_post_med = d3.scaleLinear()
-            .rangeRound([seq_prof_height + margin.top, margin.top]);
-        // Init the axis group
-        //NB the axis no need translating down or left in the direction they orientate.
-        // I.e. x axis doesn't need to be translated right (only down)
-        // and yaxis doesn't need translating down (only right).
-        // This is because they apparently use their ranges to set their positions
-        xAxis_post_med = svg_post_med.append("g")
-            .attr("transform", `translate(0,${seq_prof_height + margin.top})`)
-            .attr("id", "x_axis_post_med");
-        yAxis_post_med = svg_post_med.append("g")
-            .attr("transform", `translate(${margin.left},0)`)
-            .attr("id", "y_axis_post_med");
-        // INIT the drop down with the sample sorting categories we have available
-        let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
-        for (let i = 0; i < sorting_keys.length; i++) {
-            sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+
+        // Private init methods
+        _init_current_sample_order_array(){
+            if (this.sorting_keys.includes('profile_based')) {
+                return this.sorted_uid_arrays['profile_based'];
+            } else {
+                return this.sorted_uid_arrays['similarity'];
+            }
         }
-        // Add the groups per sample for plotting in
-        add_sample_groups_to_bar_svgs(svg_post_med, sample_list_post);
-        // Call the tool tip
-        svg_post_med.call(tip_seqs);
-    } else {
-        // Hide the card if the data to populate it doesn't exist
-        $("#post_med_card").css("display", "none");
-    }
-
-
-
-
-    //PROFILE BARS
-    let svg_profile = d3.select("#chart_profile");
-    let svg_post_med_modal = d3.select("#chart_post_med_modal");
-    let svg_profile_modal = d3.select("#chart_profile_modal");
-    let data_profile_by_sample;
-    let sample_list_modal;
-    let max_y_val_profile;
-    let sample_list_profile;
-    let profile_bars_exists = false;
-    let profile_init_by_sample_interval = 10;
-    let x_profile;
-    let y_profile;
-    let y_profile_modal;
-    let xAxis_profile;
-    let xAxis_post_med_modal;
-    let xAxis_profile_modal;
-    let seq_height_modal;
-    let prof_height_modal;
-    let data_profile_inv_by_sample;
-    if (typeof getRectDataProfileBySample === "function") {
-        data_profile_by_sample = getRectDataProfileBySample();
-        profile_bars_exists = true;
-        max_y_val_profile = getRectDataProfileBySampleMaxSeq();
-        if (sorting_keys.includes('profile_based')) {
-            sample_list_profile = sorted_sample_uid_arrays['profile_based'];
-            sample_list_modal = sorted_sample_uid_arrays['profile_based'];
-        } else {
-            sample_list_profile = sorted_sample_uid_arrays['similarity'];
-            sample_list_modal = sorted_sample_uid_arrays['similarity'];
+        _init_plot_speed(){return 1, 10;}
+        _init_margin(){return {top: 30, left: 35, bottom: 60, right: 0}, {top: 5, left: 35, bottom: 5, right: 0};}
+        _init_width_and_height(){
+            this.post_med_svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
+            this.profile_med_svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
+            let width = +this.svg.attr("width") - this.margin.left - this.margin.right;
+            let post_med_svg_height = 0.30 * window.innerHeight;
+            let profile_svg_height = post_med_svg_height - this.margin.bottom;
+            this.post_med_svg.attr("height", post_med_svg_height);
+            this.profile_svg.attr("height", profile_svg_height);
+            let post_med_plot_height = +this.post_med_svg.attr("height") - this.margin.top - this.margin.bottom;
+            let profile_plot_height = +this.profile_svg.attr("height") - this.inv_margin.top - this.inv_margin.bottom;
+            return width, post_med_plot_height, profile_plot_height;
         }
-        $("#profile_card").find(".seq_prof_chart").attr("width", ((sample_list_profile.length * 13) + 70).toString());
-        // Init the width of the modal chart too if we have profile data
-        $("#seq-prof-modal").find(".seq_prof_chart").attr("width", ((sample_list_modal.length * 13) + 70).toString());
-        // Need to manually calculate the pixels for height as we rely on returning these pixels for the scales
-        // Viewport height
-        let vp_height = window.innerHeight;
-        // 30% of this
-        let height_for_seq_modal_svg = 0.30 * vp_height;
-        let height_for_profile_modal_svg = height_for_seq_modal_svg - margin.bottom;
-        $("#chart_post_med_modal").attr("height", height_for_seq_modal_svg);
-        $("#chart_profile_modal").attr("height", height_for_profile_modal_svg);
-        seq_height_modal = +svg_post_med_modal.attr("height") - margin.top - margin.bottom;
-        prof_height_modal = +svg_profile_modal.attr("height") - inv_prof_margin.top - inv_prof_margin.bottom;
-        // We want to make tha actual plot areas the same height for the seq modal and the profile modal.
-        // Because the seq modal has to incorporate the labels in its height as well we will reduce the 
-        // profile modal by this height (i.e. bottom margin)
-
-        // Init x and y scales
-        x_profile = d3.scaleBand()
-            .range([margin.left, seq_prof_width + margin.left])
-            .padding(0.1);
-        x_modal = d3.scaleBand()
-            .range([margin.left, seq_prof_width + margin.left])
-            .padding(0.1);
-        y_profile = d3.scaleLinear()
-            .rangeRound([seq_prof_height + margin.top, margin.top]);
-        // Y is inverted for the inverted profile plot
-        y_post_modal = d3.scaleLinear()
-            .rangeRound([seq_height_modal + margin.top, margin.top]);
-        y_profile_modal = d3.scaleLinear()
-            .rangeRound([inv_prof_margin.top, prof_height_modal + inv_prof_margin.top]);
-        // Set up the axes groups
-        // Profile
-        xAxis_profile = svg_profile.append("g")
-            .attr("transform", `translate(0,${seq_prof_height + margin.top})`)
-            .attr("id", "x_axis_profile");
-        yAxis_profile = svg_profile.append("g")
-            .attr("transform", `translate(${margin.left},0)`)
-            .attr("id", "y_axis_profile");
-        // Post-MED modal
-        xAxis_post_med_modal = svg_post_med_modal.append("g")
-            .attr("transform", `translate(0,${seq_height_modal + margin.top})`)
-            .attr("id", "x_axis_post_med_modal");
-        yAxis_post_med_modal = svg_post_med_modal.append("g")
-            .attr("transform", `translate(${margin.left},0)`)
-            .attr("id", "y_axis_post_med_modal");
-        // Profile modal
-        // inverted profile modal plot is axis is only moved down by top margin
-        xAxis_profile_modal = svg_profile_modal.append("g")
-            .attr("transform", `translate(0,${inv_prof_margin.top})`)
-            .attr("id", "x_axis_profile_modal");
-        // This should also be moved down by the top axis
-        yAxis_profile_modal = svg_profile_modal.append("g")
-            .attr("transform", `translate(${margin.left}, 0)`)
-            .attr("id", "y_axis_profile_modal");
-
-        // INIT the drop down with the sample sorting categories we have available
-        let sort_dropdown_to_populate_profile = $("#profile_card").find(".svg_sort_by");
-        let sort_dropdown_to_populate_modal = $("#seq-prof-modal").find(".svg_sort_by");
-        for (let i = 0; i < sorting_keys.length; i++) {
-            sort_dropdown_to_populate_profile.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
-            sort_dropdown_to_populate_modal.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+        _init_scales(){
+            let x_scale = d3.scaleBand()
+                .range([this.margin.left, this.width + this.margin.left])
+                .padding(0.1);
+            let post_med_y_scale = d3.scaleLinear()
+                .rangeRound([this.post_med_height + this.margin.top, this.margin.top]);
+            let profile_y_scale = d3.scaleLinear()
+            .rangeRound([this.inv_margin.top, this.profile_height + this.inv_margin.top]);
+            return x_scale, post_med_y_scale, profile_y_scale;
         }
-        // Add the groups per sample for plotting in
-        add_sample_groups_to_bar_svgs(svg_profile, sample_list_profile);
-        add_sample_groups_to_bar_svgs(svg_profile_modal, sample_list_modal);
-        add_sample_groups_to_bar_svgs(svg_post_med_modal, sample_list_modal);
-        // Call tool tips
-        svg_post_med_modal.call(tip_seqs);
-        svg_profile.call(tip_profiles);
-        svg_profile_modal.call(tip_profiles);
-
-        //INIT inv profile data for the modal
-        //TODO we can work with this for the time being and see how long it takes to process on the
-        // large test dataset. If it takes too long then we can switch to the already having the inv values
-        // calculated. If it is fast then we no longer need to output the inv values and can save some space
-        // DATA for profile inverted
-        // Because this dataset is going to be used in the inverted modal plot we need to
-        // remove the cummulative y values that have been added to the above
-        data_profile_inv_by_sample = getRectDataProfileBySample();
-
-        function processProfileInvData(data) {
-            // For each sample in the data
+        _init_post_med_axes(){
+            let post_med_x_axis = this.post_med_svg.append("g")
+                .attr("transform", `translate(0,${this.post_med_height + this.margin.top})`)
+                .attr("id", "x_axis_post_med_modal");
+            let post_med_y_axis = this.post_med_svg.append("g")
+                .attr("transform", `translate(${this.margin.left},0)`)
+                .attr("id", "y_axis_post_med_modal");
+            return post_med_x_axis, post_med_y_axis;
+        }
+        _init_profile_axes(){
+            // inverted profile modal plot is axis is only moved down by top margin
+            let profile_x_axis = this.profile_svg.append("g")
+                .attr("transform", `translate(0,${this.inv_margin.top})`)
+                .attr("id", "x_axis_profile_modal");
+            // This should also be moved down by the top axis
+            let profile_y_axis = this.profile_svg.append("g")
+                .attr("transform", `translate(${this.margin.left}, 0)`)
+                .attr("id", "y_axis_profile_modal");
+            return profile_x_axis, profile_y_axis;
+        }
+        _init_sorting_drop_down_menus(){
+            let sort_dropdown_to_populate_modal = $("#seq-prof-modal").find(".svg_sort_by");
+            for (let i = 0; i < this.sorting_keys.length; i++) {
+                sort_dropdown_to_populate_modal.append(`<a class="dropdown-item" >${this.sorting_keys[i]}</a>`);
+            }
+        }
+        _add_sample_groups_to_bar_svgs() {
+            let post_med_svg = this.post_med_svg;
+            this.current_sample_order_array.forEach(function (sample) {
+                post_med_svg.append("g").attr("class", "s" + sample);
+            })
+            let profile_svg = this.profile_svg;
+            this.current_sample_order_array.forEach(function (sample) {
+                profile_svg.append("g").attr("class", "s" + sample);
+            })
+        }
+        _init_tips(){
+            let post_med_tips = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+                .html(function (d) {
+                    let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+                        '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
+                        '</div>';
+                    return content;
+                });
+            let profile_tips = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+                .html(function (d) {
+                    let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+                        '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
+                        '</div>';
+                    return content;
+                });
+            return post_med_tips, profile_tips;
+        }
+        _get_inv_profile_data(){
+            let data = getRectDataProfileBySample();
             Object.keys(data).forEach(function (dkey) {
                 // First check to see if there are any rectangles for this sample
                 if (data[dkey].length == 0) {
@@ -594,8 +521,24 @@ $(document).ready(function () {
                 }
 
             })
+            return data;
         }
-        processProfileInvData(data_profile_inv_by_sample);
+    };
+
+    const post_med_stacked_bar_plot = new SimpleStackedBarPlot(
+        name_of_html_svg_object="#chart_post_med", 
+        get_data_method=getRectDataPostMEDBySample, get_max_y_val_method=getRectDataPostMEDBySampleMaxSeq,
+        plot_type='post_med'
+    );
+
+    let profile_stacked_bar_plot;
+    let modal_stacked_bar_plot;
+    if (analysis){
+        profile_stacked_bar_plot= new SimpleStackedBarPlot(
+            name_of_html_svg_object="#chart_profile", get_data_method=getRectDataProfileBySample, 
+            get_max_y_val_method=getRectDataProfileBySampleMaxSeq, plot_type='profile'
+        );
+        modal_stacked_bar_plot = new ModalStackedBarPlot();
     } else {
         // Hide the card if the data to populate it doesn't exist
         $("#profile_card").css("display", "none");
@@ -603,44 +546,255 @@ $(document).ready(function () {
         // the modal buttons.
         $(".viewer_link_seq_prof").remove();
     }
+    
+    
+    //     // Create Tooltips
+    // let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+    //     .html(function (d) {
+    //         let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+    //             '<span style="margin-left: 2.5px;"><b>' + d.seq_name + '</b></span><br>' +
+    //             '</div>';
+    //         return content;
+    //     });
+    // let tip_profiles = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
+    //     .html(function (d) {
+    //         let content = '<div style="background-color:rgba(255,255,255,0.9);">' +
+    //             '<span style="margin-left: 2.5px;"><b>' + d.profile_name + '</b></span><br>' +
+    //             '</div>';
+    //         return content;
+    //     });
+    
+
+    // // Add a g to the bar plot svgs that we will use for the bars on a sample by sample basis
+    // // We will have a seperate g for each of the samples so that we can plot column by column
+    // // The pre-med plot will not get init until later.
+    // function add_sample_groups_to_bar_svgs(svg_element, sample_list) {
+    //     sample_list.forEach(function (sample) {
+    //         svg_element.append("g").attr("class", "s" + sample);
+    //     })
+    // }
+
+    // // DATA POST MED and PROFILE plots
+    // // POST MED BARS
+    // let sorted_sample_uid_arrays = getSampleSortedArrays();
+    // let sorting_keys = Object.keys(sorted_sample_uid_arrays);
+    // let svg_post_med = d3.select("#chart_post_med");
+    // let data_post_med_by_sample;
+    // let max_y_val_post_med;
+    // let sample_list_post;
+    // let post_med_init_by_sample_interval = 1;
+    // //INIT margins, widths and heights for the bar plots
+    // let margin = {
+    //     top: 30,
+    //     left: 35,
+    //     bottom: 60,
+    //     right: 0
+    // };
+    // let seq_prof_width;
+    // let seq_prof_height;
+    
+    // // margin used for the inverted profile_modal plot
+    // let inv_prof_margin = {
+    //     top: 5,
+    //     left: 35,
+    //     bottom: 5,
+    //     right: 0
+    // };
+
+    // let dist_margin = {top: 35, left: 35, bottom: 20, right: 0};
+    // let x_post_med;
+    // let y_post_med;
+    // let xAxis_post_med;
+    // let yAxis_post_med;
+    // if (typeof getRectDataPostMEDBySample === "function") {
+    //     data_post_med_by_sample = getRectDataPostMEDBySample();
+    //     max_y_val_post_med = getRectDataPostMEDBySampleMaxSeq();
+    //     if (sorting_keys.includes('profile_based')) {
+    //         sample_list_post = sorted_sample_uid_arrays['profile_based'];
+    //     } else {
+    //         sample_list_post = sorted_sample_uid_arrays['similarity'];
+    //     }
+    //     // INIT the width and height of the chart
+    //     $("#post_med_card").find(".seq_prof_chart").attr("width", ((sample_list_post.length * 13) + 70).toString());
+    //     seq_prof_width = +svg_post_med.attr("width") - margin.left - margin.right;
+    //     seq_prof_height = +svg_post_med.attr("height") - margin.top - margin.bottom;
+    //     // Init x and y scales
+    //     x_post_med = d3.scaleBand()
+    //         .range([margin.left, seq_prof_width + margin.left])
+    //         .padding(0.1);
+    //     y_post_med = d3.scaleLinear()
+    //         .rangeRound([seq_prof_height + margin.top, margin.top]);
+    //     // Init the axis group
+    //     //NB the axis no need translating down or left in the direction they orientate.
+    //     // I.e. x axis doesn't need to be translated right (only down)
+    //     // and yaxis doesn't need translating down (only right).
+    //     // This is because they apparently use their ranges to set their positions
+    //     xAxis_post_med = svg_post_med.append("g")
+    //         .attr("transform", `translate(0,${seq_prof_height + margin.top})`)
+    //         .attr("id", "x_axis_post_med");
+    //     yAxis_post_med = svg_post_med.append("g")
+    //         .attr("transform", `translate(${margin.left},0)`)
+    //         .attr("id", "y_axis_post_med");
+    //     // INIT the drop down with the sample sorting categories we have available
+    //     let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
+    //     for (let i = 0; i < sorting_keys.length; i++) {
+    //         sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+    //     }
+    //     // Add the groups per sample for plotting in
+    //     add_sample_groups_to_bar_svgs(svg_post_med, sample_list_post);
+    //     // Call the tool tip
+    //     svg_post_med.call(tip_seqs);
+    // } else {
+    //     // Hide the card if the data to populate it doesn't exist
+    //     $("#post_med_card").css("display", "none");
+    // }
 
 
 
-    //PRE-MED BARS
-    let data_pre_med_by_sample;
-    let max_y_val_pre_med;
-    let sample_list_pre;
-    let pre_med_bars_exists = false;
-    let pre_med_init_by_sample_interval = 50;
-    let svg_pre_med;
-    let x_pre_med;
-    let y_pre_med;
-    let xAxis_pre_med;
-    let yAxis_pre_med;
-    if (typeof getRectDataPreMEDBySample === "function") {
-        data_pre_med_by_sample = getRectDataPreMEDBySample();
-        pre_med_bars_exists = true;
-        max_y_val_pre_med = getRectDataPreMEDBySampleMaxSeq();
-        if (sorting_keys.includes('profile_based')) {
-            sample_list_pre = sorted_sample_uid_arrays['profile_based'];
-        } else {
-            sample_list_pre = sorted_sample_uid_arrays['similarity'];
-        }
-        if (sorting_keys.includes('profile_based')) {
-            sample_list_pre = sorted_sample_uid_arrays['profile_based'];
-        } else {
-            sample_list_pre = sorted_sample_uid_arrays['similarity'];
-        }
-        $("#pre_med_card").find(".seq_prof_chart").attr("width", ((sample_list_pre.length * 13) + 70).toString());
-        // INIT the drop down with the sample sorting categories we have available
-        let sort_dropdown_to_populate = $("#pre_med_card").find(".svg_sort_by");
-        for (let i = 0; i < sorting_keys.length; i++) {
-            sort_dropdown_to_populate.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
-        }
-    } else {
-        // Hide the card if the data to populate it doesn't exist
-        $("#pre_med_card").css("display", "none");
-    }
+
+    // //PROFILE BARS
+    // // let svg_profile = d3.select("#chart_profile");
+    // let svg_post_med_modal = d3.select("#chart_post_med_modal");
+    // let svg_profile_modal = d3.select("#chart_profile_modal");
+    // let data_profile_by_sample;
+    // let sample_list_modal;
+    // let max_y_val_profile;
+    // let sample_list_profile;
+    // let profile_bars_exists = false;
+    // let profile_init_by_sample_interval = 10;
+    // let x_profile;
+    // let y_profile;
+    // let y_profile_modal;
+    // let xAxis_profile;
+    // let xAxis_post_med_modal;
+    // let xAxis_profile_modal;
+    // let seq_height_modal;
+    // let prof_height_modal;
+    // let data_profile_inv_by_sample;
+    // if (typeof getRectDataProfileBySample === "function") {
+    //     data_profile_by_sample = getRectDataProfileBySample();
+    //     profile_bars_exists = true;
+    //     max_y_val_profile = getRectDataProfileBySampleMaxSeq();
+    //     if (sorting_keys.includes('profile_based')) {
+    //         sample_list_profile = sorted_sample_uid_arrays['profile_based'];
+    //         sample_list_modal = sorted_sample_uid_arrays['profile_based'];
+    //     } else {
+    //         sample_list_profile = sorted_sample_uid_arrays['similarity'];
+    //         sample_list_modal = sorted_sample_uid_arrays['similarity'];
+    //     }
+    //     $("#profile_card").find(".seq_prof_chart").attr("width", ((sample_list_profile.length * 13) + 70).toString());
+    //     // Init the width of the modal chart too if we have profile data
+    //     $("#seq-prof-modal").find(".seq_prof_chart").attr("width", ((sample_list_modal.length * 13) + 70).toString());
+    //     // Need to manually calculate the pixels for height as we rely on returning these pixels for the scales
+    //     // Viewport height
+    //     let vp_height = window.innerHeight;
+    //     // 30% of this
+    //     let height_for_seq_modal_svg = 0.30 * vp_height;
+    //     let height_for_profile_modal_svg = height_for_seq_modal_svg - margin.bottom;
+    //     $("#chart_post_med_modal").attr("height", height_for_seq_modal_svg);
+    //     $("#chart_profile_modal").attr("height", height_for_profile_modal_svg);
+    //     seq_height_modal = +svg_post_med_modal.attr("height") - margin.top - margin.bottom;
+    //     prof_height_modal = +svg_profile_modal.attr("height") - inv_prof_margin.top - inv_prof_margin.bottom;
+    //     // We want to make tha actual plot areas the same height for the seq modal and the profile modal.
+    //     // Because the seq modal has to incorporate the labels in its height as well we will reduce the 
+    //     // profile modal by this height (i.e. bottom margin)
+        
+    //     // Init x and y scales
+    //     x_profile = d3.scaleBand()
+    //         .range([margin.left, seq_prof_width + margin.left])
+    //         .padding(0.1);
+    //     x_modal = d3.scaleBand()
+    //         .range([margin.left, seq_prof_width + margin.left])
+    //         .padding(0.1);
+    //     y_profile = d3.scaleLinear()
+    //         .rangeRound([seq_prof_height + margin.top, margin.top]);
+    //     // Y is inverted for the inverted profile plot
+    //     y_post_modal = d3.scaleLinear()
+    //         .rangeRound([seq_height_modal + margin.top, margin.top]);
+    //     y_profile_modal = d3.scaleLinear()
+    //         .rangeRound([inv_prof_margin.top, prof_height_modal + inv_prof_margin.top]);
+    //     // Set up the axes groups
+    //     // Profile
+    //     xAxis_profile = svg_profile.append("g")
+    //         .attr("transform", `translate(0,${seq_prof_height + margin.top})`)
+    //         .attr("id", "x_axis_profile");
+    //     yAxis_profile = svg_profile.append("g")
+    //         .attr("transform", `translate(${margin.left},0)`)
+    //         .attr("id", "y_axis_profile");
+    //     // Post-MED modal
+    //     xAxis_post_med_modal = svg_post_med_modal.append("g")
+    //         .attr("transform", `translate(0,${seq_height_modal + margin.top})`)
+    //         .attr("id", "x_axis_post_med_modal");
+    //     yAxis_post_med_modal = svg_post_med_modal.append("g")
+    //         .attr("transform", `translate(${margin.left},0)`)
+    //         .attr("id", "y_axis_post_med_modal");
+    //     // Profile modal
+    //     // inverted profile modal plot is axis is only moved down by top margin
+    //     xAxis_profile_modal = svg_profile_modal.append("g")
+    //         .attr("transform", `translate(0,${inv_prof_margin.top})`)
+    //         .attr("id", "x_axis_profile_modal");
+    //     // This should also be moved down by the top axis
+    //     yAxis_profile_modal = svg_profile_modal.append("g")
+    //         .attr("transform", `translate(${margin.left}, 0)`)
+    //         .attr("id", "y_axis_profile_modal");
+
+    //     // INIT the drop down with the sample sorting categories we have available
+    //     let sort_dropdown_to_populate_profile = $("#profile_card").find(".svg_sort_by");
+    //     let sort_dropdown_to_populate_modal = $("#seq-prof-modal").find(".svg_sort_by");
+    //     for (let i = 0; i < sorting_keys.length; i++) {
+    //         sort_dropdown_to_populate_profile.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+    //         sort_dropdown_to_populate_modal.append(`<a class="dropdown-item" >${sorting_keys[i]}</a>`);
+    //     }
+    //     // Add the groups per sample for plotting in
+    //     add_sample_groups_to_bar_svgs(svg_profile, sample_list_profile);
+    //     add_sample_groups_to_bar_svgs(svg_profile_modal, sample_list_modal);
+    //     add_sample_groups_to_bar_svgs(svg_post_med_modal, sample_list_modal);
+    //     // Call tool tips
+    //     svg_post_med_modal.call(tip_seqs);
+    //     svg_profile.call(tip_profiles);
+    //     svg_profile_modal.call(tip_profiles);
+
+    //     //INIT inv profile data for the modal
+    //     //TODO we can work with this for the time being and see how long it takes to process on the
+    //     // large test dataset. If it takes too long then we can switch to the already having the inv values
+    //     // calculated. If it is fast then we no longer need to output the inv values and can save some space
+    //     // DATA for profile inverted
+    //     // Because this dataset is going to be used in the inverted modal plot we need to
+    //     // remove the cummulative y values that have been added to the above
+    //     data_profile_inv_by_sample = getRectDataProfileBySample();
+
+    //     function processProfileInvData(data) {
+    //         // For each sample in the data
+    //         Object.keys(data).forEach(function (dkey) {
+    //             // First check to see if there are any rectangles for this sample
+    //             if (data[dkey].length == 0) {
+    //                 return;
+    //             }
+
+    //             // Go through each element removing the cummulative y
+    //             // we can do this by setting the y to 0 for the first element and then
+    //             // for each next element we can set it to the y of the element that is n-1
+    //             new_y_rel = 0;
+    //             new_y_abs = 0;
+    //             for (j = 0; j < data[dkey].length; j++) {
+    //                 old_y_rel = data[dkey][j]["y_rel"];
+    //                 old_y_abs = data[dkey][j]["y_abs"];
+    //                 data[dkey][j]["y_rel"] = new_y_rel;
+    //                 data[dkey][j]["y_abs"] = new_y_abs;
+    //                 new_y_rel = old_y_rel;
+    //                 new_y_abs = old_y_abs;
+    //             }
+
+    //         })
+    //     }
+    //     processProfileInvData(data_profile_inv_by_sample);
+    // } else {
+    //     // Hide the card if the data to populate it doesn't exist
+    //     $("#profile_card").css("display", "none");
+    //     // if the profile data doesn't exist then we don't have need for the modal so we should hide
+    //     // the modal buttons.
+    //     $(".viewer_link_seq_prof").remove();
+    // }
    
 
     // Distance colors
