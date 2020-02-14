@@ -276,13 +276,13 @@ $(document).ready(function () {
             this.margin = this._init_margin();
             this.plot_speed = this._init_plot_speed();
             [this.width, this.height] = this._init_width_and_height();
-            this.x_scale, this.y_scale = this._init_scales();
+            [this.x_scale, this.y_scale] = this._init_scales();
             // Init the axis group
             //NB the axis no need translating down or left in the direction they orientate.
             // I.e. x axis doesn't need to be translated right (only down)
             // and yaxis doesn't need translating down (only right).
             // This is because they apparently use their ranges to set their positions
-            this.x_axis, this.y_axis = this._init_axes();
+            [this.x_axis, this.y_axis] = this._init_axes();
             
             // INIT the drop down with the sample sorting categories we have available
             this._init_sorting_drop_down_menus();
@@ -303,8 +303,8 @@ $(document).ready(function () {
         }
 
         // Base level plotting functions
-        _ellipse_axis_labels(){
-            var self = d3.select(this),
+        _ellipse_axis_labels(text_obj){
+            var self = d3.select(text_obj),
             textLength = self.node().getComputedTextLength(),
             text = self.text(),
             current_x = self.attr("x");
@@ -345,7 +345,7 @@ $(document).ready(function () {
                 .padding(0.1);
             let y_scale = d3.scaleLinear()
                 .rangeRound([this.height + this.margin.top, this.margin.top]);
-            return x_scale, y_scale;
+            return [x_scale, y_scale];
         }
         _init_axes(){
             let x_axis;
@@ -365,7 +365,7 @@ $(document).ready(function () {
                     .attr("transform", `translate(${this.margin.left},0)`)
                     .attr("id", "y_axis_profile");
             }
-            return x_axis, y_axis;
+            return [x_axis, y_axis];
         }
         _init_sorting_drop_down_menus(){
             let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
@@ -463,9 +463,10 @@ $(document).ready(function () {
             
             // Code that does the majoirty of the replotting
             let cumulative_time = 0;
-            for (let i = 0; i < sample_list.length; i++) {
+            for (let i = 0; i < this.current_sample_order_array.length; i++) {
                 setTimeout(
-                    this._replot_data, 
+                    //https://stackoverflow.com/questions/5911211/settimeout-inside-javascript-class-using-this
+                    this._replot_data.bind(this), 
                     i * this.plot_speed, 
                     this.current_sample_order_array[i],
                 );
@@ -474,7 +475,7 @@ $(document).ready(function () {
             
             // Now draw the axis last so that they are on top of the bars
             // we can then use a transition .on event to call the centering of the labels
-            setTimeout(this._update_axes, cumulative_time);
+            setTimeout(this._update_axes.bind(this), cumulative_time);
         }
         _update_axes_domains(){
             if (this.absolute_relative == 'absolute'){
@@ -487,7 +488,7 @@ $(document).ready(function () {
         _replot_data(sample_uid){
             
             // Bars is the join that we will call exit
-            let bars = svg.select("g.s" + sample_uid).selectAll("rect").data(data_by_sample[sample_uid], function (d) {
+            let bars = this.svg.select("g.s" + sample_uid).selectAll("rect").data(this.data[sample_uid], function (d) {
                 return d.seq_name; 
             });
 
@@ -495,16 +496,21 @@ $(document).ready(function () {
             bars.exit().remove()
             
             // Transitions
-            let absolute_relative = this.absolute_relative;
+            let abs_rel;
+            if (this.absolute_relative == 'absolute'){
+                abs_rel = 'abs';
+            }else if (this.absolute_relative == 'relative'){
+                abs_rel = 'rel';
+            }
             let color_scale = this.color_scale;
             let x_scale = this.x_scale;
             let y_scale = this.y_scale;
             bars.transition().duration(this.plot_speed).attr("x", function (d) {
                 return x_scale(sample_uid);
             }).attr("y", function (d) {
-                return y_scale(+d["y_" + absolute_relative]);
+                return y_scale(+d["y_" + abs_rel]);
             }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
-                return Math.max(y_scale(0) - y_scale(+d["height_" + absolute_relative]), 1);
+                return Math.max(y_scale(0) - y_scale(+d["height_" + abs_rel]), 1);
             }).attr("fill", function (d) {
                 return color_scale(d.seq_name);
             }).delay(function (d, i) {
@@ -515,18 +521,18 @@ $(document).ready(function () {
             let tips = this.tips;
             bars.enter().append("rect")
                 .attr("x", function (d) {
-                    return x(sample_uid);
-                }).attr("y", y(0)).on('mouseover', function (d) {
-                    tip_seqs.show(d);
+                    return x_scale(sample_uid);
+                }).attr("y", y_scale(0)).on('mouseover', function (d) {
+                    tips.show(d);
                     d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
                 })
                 .on('mouseout', function (d) {
                     tips.hide(d);
                     d3.select(this).attr("style", null);
                 }).transition().duration(1000).attr("y", function (d) {
-                    return x_scale(+d["y_" + absolute_relative]);
-                }).attr("width", x.bandwidth()).attr("height", function (d) {
-                    return Math.max(y_scale(0) - y_scale(+d["height_" + absolute_relative]), 1);
+                    return y_scale(+d["y_" + abs_rel]);
+                }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                    return Math.max(y_scale(0) - y_scale(+d["height_" + abs_rel]), 1);
                 }).attr("fill", function (d) {
                     return color_scale(d.seq_name);
                 });
@@ -536,13 +542,28 @@ $(document).ready(function () {
             d3.select("#y_axis_post_med")
             .transition()
             .duration(1000)
-            .call(d3.axisLeft(this.y_scale).ticks(null, "s"));
+            .call(
+                d3.axisLeft(this.y_scale).ticks(null, "s")
+                );
 
             // x axis
+            let self = this;
             d3.selectAll("#x_axis_post_med").transition().duration(1000)
             .call(d3.axisBottom(this.x_scale).tickFormat(d => post_med_meta_info_populator.meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
             .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-            .style("text-anchor", "start").on("end", this._ellipse_axis_labels);
+            .style("text-anchor", "start").on(
+                "end", function(){
+                    // This is a little tricky. The .on method is being called
+                    // on th text object and therefore in this scope here
+                    // the 'this' object is the text object.
+                    // So, to call the ellipse method of this class we have set
+                    // self to equal the class instance and becuase the class
+                    // instance is calling the _ellipse method, the 'this' object
+                    // will be callable from within the _ellipse method. However,
+                    // we still need access to the text object in this method so 
+                    // we will pass it in.
+                    self._ellipse_axis_labels(this);
+                });
 
             // Listener to highlight sample names on mouse over.
             d3.select("#x_axis_post_med").selectAll(".tick")._groups[0].forEach(function (d1) {
@@ -573,28 +594,27 @@ $(document).ready(function () {
             this.post_med_max_y = getRectDataPostMEDBySampleMaxSeq();
             // Because this dataset is going to be used in the inverted modal plot we need to
             // remove the cummulative y values that have been added to the above
-            this.inv_profile_data = _get_inv_profile_data();
+            this.inv_profile_data = this._get_inv_profile_data();
             this.inv_profile_max_y = getRectDataProfileBySampleMaxSeq();
             // The array that contains the current order of the samples
             // This will changed based on the parameter that is sorting the plot
             // If profile_based is available (i.e. if there was an analysis) start
             // with this. Else start with similarity.
             this.current_sample_order_array = this._init_current_sample_order_array();
-            this.post_med_plot_speed, this.profile_plot_speed = this._init_plot_speed();
-            this.margin, this.inv_margin = this._init_margin();
+            [this.post_med_plot_speed, this.profile_plot_speed] = this._init_plot_speed();
+            [this.margin, this.inv_margin] = this._init_margin();
             // Same width for both of the chart areas but difference widths
-            this.width, this.post_med_height, this.profile_height = this._init_width_and_height();
-            this.x_scale, this.post_med_y_scale, this.profile_y_scale = this._init_scales();
-            this.post_med_x_axis, this.post_med_y_axis = this._init_post_med_axes();
-            this.profile_x_axis, this.profile_y_axis = this._init_profile_axes();
+            [this.width, this.post_med_height, this.profile_height] = this._init_width_and_height();
+            [this.x_scale, this.post_med_y_scale, this.profile_y_scale] = this._init_scales();
+            [this.post_med_x_axis, this.post_med_y_axis] = this._init_post_med_axes();
+            [this.profile_x_axis, this.profile_y_axis] = this._init_profile_axes();
             this._init_sorting_drop_down_menus();
             this._add_sample_groups_to_bar_svgs();
-            this.post_med_tips, this.profile_tips = _init_tips();
+            [this.post_med_tips, this.profile_tips] = this._init_tips();
             this.post_med_svg.call(this.post_med_tips);
             this.profile_svg.call(this.profile_tips);
-            this.post_med_color_scale, this.profile_color_scale = this._init_color_scale();
+            [this.post_med_color_scale, this.profile_color_scale] = this._init_color_scale();
             // Whether the plot is currently displaying absolute or relative abundances
-            
             this.absolute_relative = this._init_absolute_realtive();
         }
 
@@ -606,19 +626,19 @@ $(document).ready(function () {
                 return this.sorted_uid_arrays['similarity'];
             }
         }
-        _init_plot_speed(){return 1, 10;}
-        _init_margin(){return {top: 30, left: 35, bottom: 60, right: 0}, {top: 5, left: 35, bottom: 5, right: 0};}
+        _init_plot_speed(){return [1, 10];}
+        _init_margin(){return [{top: 30, left: 35, bottom: 60, right: 0}, {top: 5, left: 35, bottom: 5, right: 0}];}
         _init_width_and_height(){
             this.post_med_svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
-            this.profile_med_svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
-            let width = +this.svg.attr("width") - this.margin.left - this.margin.right;
+            this.profile_svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
+            let width = +this.post_med_svg.attr("width") - this.margin.left - this.margin.right;
             let post_med_svg_height = 0.30 * window.innerHeight;
             let profile_svg_height = post_med_svg_height - this.margin.bottom;
             this.post_med_svg.attr("height", post_med_svg_height);
             this.profile_svg.attr("height", profile_svg_height);
             let post_med_plot_height = +this.post_med_svg.attr("height") - this.margin.top - this.margin.bottom;
             let profile_plot_height = +this.profile_svg.attr("height") - this.inv_margin.top - this.inv_margin.bottom;
-            return width, post_med_plot_height, profile_plot_height;
+            return [width, post_med_plot_height, profile_plot_height];
         }
         _init_scales(){
             let x_scale = d3.scaleBand()
@@ -628,7 +648,7 @@ $(document).ready(function () {
                 .rangeRound([this.post_med_height + this.margin.top, this.margin.top]);
             let profile_y_scale = d3.scaleLinear()
             .rangeRound([this.inv_margin.top, this.profile_height + this.inv_margin.top]);
-            return x_scale, post_med_y_scale, profile_y_scale;
+            return [x_scale, post_med_y_scale, profile_y_scale];
         }
         _init_post_med_axes(){
             let post_med_x_axis = this.post_med_svg.append("g")
@@ -637,7 +657,7 @@ $(document).ready(function () {
             let post_med_y_axis = this.post_med_svg.append("g")
                 .attr("transform", `translate(${this.margin.left},0)`)
                 .attr("id", "y_axis_post_med_modal");
-            return post_med_x_axis, post_med_y_axis;
+            return [post_med_x_axis, post_med_y_axis];
         }
         _init_profile_axes(){
             // inverted profile modal plot is axis is only moved down by top margin
@@ -648,7 +668,7 @@ $(document).ready(function () {
             let profile_y_axis = this.profile_svg.append("g")
                 .attr("transform", `translate(${this.margin.left}, 0)`)
                 .attr("id", "y_axis_profile_modal");
-            return profile_x_axis, profile_y_axis;
+            return [profile_x_axis, profile_y_axis];
         }
         _init_sorting_drop_down_menus(){
             let sort_dropdown_to_populate_modal = $("#seq-prof-modal").find(".svg_sort_by");
@@ -681,7 +701,7 @@ $(document).ready(function () {
                         '</div>';
                     return content;
                 });
-            return post_med_tips, profile_tips;
+            return [post_med_tips, profile_tips];
         }
         _get_inv_profile_data(){
             let data = getRectDataProfileBySample();
@@ -694,9 +714,11 @@ $(document).ready(function () {
                 // Go through each element removing the cummulative y
                 // we can do this by setting the y to 0 for the first element and then
                 // for each next element we can set it to the y of the element that is n-1
-                new_y_rel = 0;
-                new_y_abs = 0;
-                for (j = 0; j < data[dkey].length; j++) {
+                let new_y_rel = 0;
+                let new_y_abs = 0;
+                let old_y_rel;
+                let old_y_abs;
+                for (let j = 0; j < data[dkey].length; j++) {
                     old_y_rel = data[dkey][j]["y_rel"];
                     old_y_abs = data[dkey][j]["y_abs"];
                     data[dkey][j]["y_rel"] = new_y_rel;
@@ -735,7 +757,7 @@ $(document).ready(function () {
                 return prof_color[prof_name]
             });
             let profile_color_scale = d3.scaleOrdinal().domain(prof_names).range(prof_colors);          
-            return post_med_color_scale, profile_color_scale;
+            return [post_med_color_scale, profile_color_scale];
         }
         _init_absolute_realtive(){
             if ($("#ModalAbsDType").hasClass("btn-primary")) {
