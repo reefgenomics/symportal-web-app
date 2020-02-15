@@ -282,6 +282,7 @@ $(document).ready(function () {
             // I.e. x axis doesn't need to be translated right (only down)
             // and yaxis doesn't need translating down (only right).
             // This is because they apparently use their ranges to set their positions
+            [this.x_axis_id_string, this.y_axis_id_string] = this._init_axes_ids();
             [this.x_axis, this.y_axis] = this._init_axes();
             
             // INIT the drop down with the sample sorting categories we have available
@@ -303,6 +304,150 @@ $(document).ready(function () {
         }
 
         // Base level plotting functions
+        // Plotting methods
+        update_plot(){
+            //First update the x_scale and y_scale domains
+            this._update_axes_domains();
+            
+            // Code that does the majoirty of the replotting
+            let cumulative_time = 0;
+            for (let i = 0; i < this.current_sample_order_array.length; i++) {
+                setTimeout(
+                    //https://stackoverflow.com/questions/5911211/settimeout-inside-javascript-class-using-this
+                    this._replot_data.bind(this), 
+                    i * this.plot_speed, 
+                    this.current_sample_order_array[i],
+                );
+                cumulative_time += this.plot_speed;
+            }
+            
+            // Now draw the axis last so that they are on top of the bars
+            // we can then use a transition .on event to call the centering of the labels
+            setTimeout(this._update_axes.bind(this), cumulative_time);
+        }
+        _update_axes_domains(){
+            if (this.absolute_relative == 'absolute'){
+                this.y_scale.domain([0, this.max_y]).nice();
+            }else if (this.aboslute_relative == 'relative'){
+                this.y_scale([0,1]).nice();
+            }
+            this.x_scale.domain(this.current_sample_order_array);
+        }
+        _replot_data(profile_uid){
+            
+            // Bars is the join that we will call exit
+            let bars = this.svg.select("g.s" + profile_uid).selectAll("rect").data(this.data[profile_uid], function (d) {
+                if (this.plot_type == 'post_med'){
+                    return d.seq_name;
+                }else if (this.plot_type == 'profile'){
+                    return d.profile_name;
+                }
+            });
+
+            // Remove any data points from the plot that don't exist
+            bars.exit().remove()
+            
+            // Transitions
+            let abs_rel;
+            if (this.absolute_relative == 'absolute'){
+                abs_rel = 'abs';
+            }else if (this.absolute_relative == 'relative'){
+                abs_rel = 'rel';
+            }
+            let color_scale = this.color_scale;
+            let x_scale = this.x_scale;
+            let y_scale = this.y_scale;
+            let plot_type = this.plot_type;
+            bars.transition().duration(this.plot_speed).attr("x", function (d) {
+                return x_scale(profile_uid);
+            }).attr("y", function (d) {
+                return y_scale(+d["y_" + abs_rel]);
+            }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                return Math.max(y_scale(0) - y_scale(+d["height_" + abs_rel]), 1);
+            }).attr("fill", function (d) {
+                if (plot_type == 'post_med'){
+                    return color_scale(d.seq_name);
+                }else if (plot_type == 'profile'){
+                    return color_scale(rofile_meta_info_populator.name_to_uid_dict[d.profile_name])
+                }
+            }).delay(function (d, i) {
+                return (i * 0.1)
+            });
+
+            // New objects to be created (enter phase)
+            let tips = this.tips;
+            bars.enter().append("rect")
+                .attr("x", function (d) {
+                    return x_scale(profile_uid);
+                }).attr("y", y_scale(0)).on('mouseover', function (d) {
+                    tips.show(d);
+                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                    if (plot_type == 'profile'){
+                        let profile_uid = profile_meta_info_populator.name_to_uid_dict[d["profile_name"]];
+                        let profile_data_series = profile_meta_info_populator.meta_info[profile_uid.toString()];
+                        $(this).closest(".plot_item").find(".profile_meta_item").each(function () {
+                            $(this).text(profile_data_series[$(this).attr("data-key")]);
+                        });
+                        $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
+                    }
+                })
+                .on('mouseout', function (d) {
+                    tips.hide(d);
+                    d3.select(this).attr("style", null);
+                }).transition().duration(1000).attr("y", function (d) {
+                    return y_scale(+d["y_" + abs_rel]);
+                }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                    return Math.max(y_scale(0) - y_scale(+d["height_" + abs_rel]), 1);
+                }).attr("fill", function (d) {
+                    if (plot_type == 'post_med'){
+                        return color_scale(d.seq_name);
+                    }else if (plot_type == 'profile'){
+                        return color_scale(profile_meta_info_populator.name_to_uid_dict[d.profile_name]);
+                    }
+                });
+        }
+        _update_axes(){
+            // y axis
+            d3.select("#" + this.y_axis_id_string)
+            .transition()
+            .duration(1000)
+            .call(
+                d3.axisLeft(this.y_scale).ticks(null, "s")
+            );
+
+            // x axis
+            let self = this;
+            d3.selectAll("#" + this.x_axis_id_string).transition().duration(1000)
+            .call(d3.axisBottom(this.x_scale).tickFormat(d => post_med_meta_info_populator.meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
+            .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
+            .style("text-anchor", "start").on(
+                "end", function(){
+                    // This is a little tricky. The .on method is being called
+                    // on th text object and therefore in this scope here
+                    // the 'this' object is the text object.
+                    // So, to call the ellipse method of this class we have set
+                    // self to equal the class instance and becuase the class
+                    // instance is calling the _ellipse method, the 'this' object
+                    // will be callable from within the _ellipse method. However,
+                    // we still need access to the text object in this method so 
+                    // we will pass it in.
+                    self._ellipse_axis_labels(this);
+                });
+
+            // Listener to highlight sample names on mouse over.
+            d3.select("#" + this.x_axis_id_string).selectAll(".tick")._groups[0].forEach(function (d1) {
+                d3.select(d1).on("mouseover", function () {
+                    d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
+                    let sample_uid = this.__data__;
+                    let sample_data_series = post_med_meta_info_populator.meta_info[sample_uid];
+                    $(this).closest(".plot_item").find(".sample_meta_item").each(function () {
+                        $(this).text(sample_data_series[$(this).attr("data-key")]);
+                    })
+                }).on("mouseout", function () {
+                    d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
+                })
+            })
+        }
         _ellipse_axis_labels(text_obj){
             var self = d3.select(text_obj),
             textLength = self.node().getComputedTextLength(),
@@ -332,7 +477,6 @@ $(document).ready(function () {
                 return 10;
             }
         }
-        // TODO 
         _init_width_and_height(){
             this.svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
             let width = +this.svg.attr("width") - this.margin.left - this.margin.right;
@@ -347,24 +491,20 @@ $(document).ready(function () {
                 .rangeRound([this.height + this.margin.top, this.margin.top]);
             return [x_scale, y_scale];
         }
-        _init_axes(){
-            let x_axis;
-            let y_axis;
+        _init_axes_ids(){
             if (this.plot_type == 'post_med'){
-                x_axis = this.svg.append("g")
-                    .attr("transform", `translate(0,${this.height + this.margin.top})`)
-                    .attr("id", "x_axis_post_med");
-                y_axis = this.svg.append("g")
-                    .attr("transform", `translate(${this.margin.left},0)`)
-                    .attr("id", "y_axis_post_med");
+                return ["x_axis_post_med", "y_axis_post_med"];
             }else if (this.plot_type == 'profile'){
-                x_axis = this.svg.append("g")
-                    .attr("transform", `translate(0,${this.height + this.margin.top})`)
-                    .attr("id", "x_axis_profile");
-                y_axis = this.svg.append("g")
-                    .attr("transform", `translate(${this.margin.left},0)`)
-                    .attr("id", "y_axis_profile");
+                return ["x_axis_profile", "y_axis_profile"];
             }
+        }
+        _init_axes(){
+            let x_axis = this.svg.append("g")
+                .attr("transform", `translate(0,${this.height + this.margin.top})`)
+                .attr("id", this.x_axis_id_string);
+            let y_axis = this.svg.append("g")
+                .attr("transform", `translate(${this.margin.left},0)`)
+                .attr("id", this.y_axis_id_string);
             return [x_axis, y_axis];
         }
         _init_sorting_drop_down_menus(){
@@ -447,140 +587,6 @@ $(document).ready(function () {
         }
     };
 
-    class PostMEDStackedBarPlot extends SimpleStackedBarPlot{
-        // This extension of the SimpleStackedBarPlot will contain 
-        // the logic for doing the plotting. This is because almost
-        // all of the plotting logic is dependent on plot_type
-        // so it makes sense to have the plotting logic seperate for
-        // each of the post_med and profile stacked plots
-        constructor(name_of_html_svg_object, get_data_method, get_max_y_val_method, plot_type){
-            super(name_of_html_svg_object, get_data_method, get_max_y_val_method, plot_type);
-        }
-        // Plotting methods
-        update_plot(){
-            //First update the x_scale and y_scale domains
-            this._update_axes_domains();
-            
-            // Code that does the majoirty of the replotting
-            let cumulative_time = 0;
-            for (let i = 0; i < this.current_sample_order_array.length; i++) {
-                setTimeout(
-                    //https://stackoverflow.com/questions/5911211/settimeout-inside-javascript-class-using-this
-                    this._replot_data.bind(this), 
-                    i * this.plot_speed, 
-                    this.current_sample_order_array[i],
-                );
-                cumulative_time += this.plot_speed;
-            }
-            
-            // Now draw the axis last so that they are on top of the bars
-            // we can then use a transition .on event to call the centering of the labels
-            setTimeout(this._update_axes.bind(this), cumulative_time);
-        }
-        _update_axes_domains(){
-            if (this.absolute_relative == 'absolute'){
-                this.y_scale.domain([0, this.max_y]).nice();
-            }else if (this.aboslute_relative == 'relative'){
-                this.y_scale([0,1]).nice();
-            }
-            this.x_scale.domain(this.current_sample_order_array);
-        }
-        _replot_data(sample_uid){
-            
-            // Bars is the join that we will call exit
-            let bars = this.svg.select("g.s" + sample_uid).selectAll("rect").data(this.data[sample_uid], function (d) {
-                return d.seq_name; 
-            });
-
-            // Remove any data points from the plot that don't exist
-            bars.exit().remove()
-            
-            // Transitions
-            let abs_rel;
-            if (this.absolute_relative == 'absolute'){
-                abs_rel = 'abs';
-            }else if (this.absolute_relative == 'relative'){
-                abs_rel = 'rel';
-            }
-            let color_scale = this.color_scale;
-            let x_scale = this.x_scale;
-            let y_scale = this.y_scale;
-            bars.transition().duration(this.plot_speed).attr("x", function (d) {
-                return x_scale(sample_uid);
-            }).attr("y", function (d) {
-                return y_scale(+d["y_" + abs_rel]);
-            }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
-                return Math.max(y_scale(0) - y_scale(+d["height_" + abs_rel]), 1);
-            }).attr("fill", function (d) {
-                return color_scale(d.seq_name);
-            }).delay(function (d, i) {
-                return (i * 0.1)
-            });
-
-            // New objects to be created (enter phase)
-            let tips = this.tips;
-            bars.enter().append("rect")
-                .attr("x", function (d) {
-                    return x_scale(sample_uid);
-                }).attr("y", y_scale(0)).on('mouseover', function (d) {
-                    tips.show(d);
-                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
-                })
-                .on('mouseout', function (d) {
-                    tips.hide(d);
-                    d3.select(this).attr("style", null);
-                }).transition().duration(1000).attr("y", function (d) {
-                    return y_scale(+d["y_" + abs_rel]);
-                }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
-                    return Math.max(y_scale(0) - y_scale(+d["height_" + abs_rel]), 1);
-                }).attr("fill", function (d) {
-                    return color_scale(d.seq_name);
-                });
-        }
-        _update_axes(){
-            // y axis
-            d3.select("#y_axis_post_med")
-            .transition()
-            .duration(1000)
-            .call(
-                d3.axisLeft(this.y_scale).ticks(null, "s")
-                );
-
-            // x axis
-            let self = this;
-            d3.selectAll("#x_axis_post_med").transition().duration(1000)
-            .call(d3.axisBottom(this.x_scale).tickFormat(d => post_med_meta_info_populator.meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
-            .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
-            .style("text-anchor", "start").on(
-                "end", function(){
-                    // This is a little tricky. The .on method is being called
-                    // on th text object and therefore in this scope here
-                    // the 'this' object is the text object.
-                    // So, to call the ellipse method of this class we have set
-                    // self to equal the class instance and becuase the class
-                    // instance is calling the _ellipse method, the 'this' object
-                    // will be callable from within the _ellipse method. However,
-                    // we still need access to the text object in this method so 
-                    // we will pass it in.
-                    self._ellipse_axis_labels(this);
-                });
-
-            // Listener to highlight sample names on mouse over.
-            d3.select("#x_axis_post_med").selectAll(".tick")._groups[0].forEach(function (d1) {
-                d3.select(d1).on("mouseover", function () {
-                    d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
-                    let sample_uid = this.__data__;
-                    let sample_data_series = post_med_meta_info_populator.meta_info[sample_uid];
-                    $(this).closest(".plot_item").find(".sample_meta_item").each(function () {
-                        $(this).text(sample_data_series[$(this).attr("data-key")]);
-                    })
-                }).on("mouseout", function () {
-                    d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
-                })
-            })
-        }
-    }
-
     class ModalStackedBarPlot{
         // Given that there will only be the one instance of the class we 
         // can be quite explicit, rather than dynamic, about defining its
@@ -617,6 +623,8 @@ $(document).ready(function () {
             // Whether the plot is currently displaying absolute or relative abundances
             this.absolute_relative = this._init_absolute_realtive();
         }
+
+        // Plotting methods
 
         // Private init methods
         _init_current_sample_order_array(){
@@ -768,7 +776,7 @@ $(document).ready(function () {
         }
     };
 
-    const post_med_stacked_bar_plot = new PostMEDStackedBarPlot(
+    const post_med_stacked_bar_plot = new SimpleStackedBarPlot(
         name_of_html_svg_object="#chart_post_med", 
         get_data_method=getRectDataPostMEDBySample, get_max_y_val_method=getRectDataPostMEDBySampleMaxSeq,
         plot_type='post_med'
@@ -791,7 +799,7 @@ $(document).ready(function () {
         // the modal buttons.
         $(".viewer_link_seq_prof").remove();
     }
-    
+    profile_stacked_bar_plot.update_plot();
     
     //     // Create Tooltips
     // let tip_seqs = d3.tip().attr('class', 'd3-tip').direction('e').offset([0, 5])
