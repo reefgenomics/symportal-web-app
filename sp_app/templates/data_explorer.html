@@ -115,13 +115,13 @@ Have a network window for when the sample is clicked on (this can be later)
                 <div class="bg-light p-2" >
                     <div class="d-flex">
                         <div class="btn-group btn-group-sm mr-auto" >
-                            <button id="PostMEDRelDType" class="btn btn-light dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
-                            <button id="PostMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
+                            <button id="PostMEDRelDType" class="btn btn-light dtype-btn" data-data-type="post_med" style="padding:2px 4px;font-size:0.7rem;border:1px solid lightgrey">relative</button>
+                            <button id="PostMEDAbsDType" class="btn btn-primary dtype-btn" data-data-type="post_med" style="padding:2px 4px;font-size:0.7rem;">absolute</button>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
                                    Sort by:
                                 </button>
-                                <div class="dropdown-menu svg_sort_by" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                <div class="dropdown-menu svg_sort_by" data-data-type="post_med" style="padding:2px 4px;font-size:0.7rem;">
                                     <!--populate at INIT if post-MED data available-->
                                     <!--<a class="dropdown-item" >sequencing depth</a>-->
                                     <!--<a class="dropdown-item" >sequencing similarity</a>-->
@@ -345,14 +345,14 @@ Have a network window for when the sample is clicked on (this can be later)
                                 <button type="button" class="btn btn-primary dropdown-toggle genera_select_button" data-toggle="dropdown" data-genera="Genera:" style="padding:2px 4px;font-size:0.7rem;">
                                    Genera:
                                 </button>
-                                <div class="dropdown-menu genera_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                <div class="dropdown-menu genera_select" data-data-type="post_med" style="padding:2px 4px;font-size:0.7rem;">
                                 </div>
                             </div>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle color_select_button" data-toggle="dropdown" data-color="no_color" style="padding:2px 4px;font-size:0.7rem;">
                                    no_color
                                 </button>
-                                <div class="dropdown-menu color_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                <div class="dropdown-menu color_select" data-data-type="post_med" style="padding:2px 4px;font-size:0.7rem;">
 
                                 </div>
                             </div>
@@ -403,14 +403,14 @@ Have a network window for when the sample is clicked on (this can be later)
                                 <button type="button" class="btn btn-primary dropdown-toggle genera_select_button" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
                                    Genera:
                                 </button>
-                                <div class="dropdown-menu genera_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                <div class="dropdown-menu genera_select" data-data-type="post_med" style="padding:2px 4px;font-size:0.7rem;">
                                 </div>
                             </div>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle color_select_button" data-toggle="dropdown" data-color="profile_identity" style="padding:2px 4px;font-size:0.7rem;">
                                    profile_identity
                                 </button>
-                                <div class="dropdown-menu color_select" data-data-type="post" style="padding:2px 4px;font-size:0.7rem;">
+                                <div class="dropdown-menu color_select" data-data-type="post_med" style="padding:2px 4px;font-size:0.7rem;">
 
                                 </div>
                             </div>
@@ -512,6 +512,9 @@ Have a network window for when the sample is clicked on (this can be later)
 <!--TODO to enable the marker clustering we will need to have the library on the server-->
 <!--<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">-->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/classes/PopulatePlotMetaInfo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/classes/SimpleStackedBarPlot.js') }}"></script>
+<script src="{{ url_for('static', filename='js/classes/ModalStackedBarPlot.js') }}"></script>
 <script src="{{ url_for('static', filename='js/data_explorer.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/bootstrap-slider.js"></script>
 

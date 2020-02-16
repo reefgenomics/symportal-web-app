@@ -48,6 +48,30 @@ class ModalStackedBarPlot{
         $("#seq-prof-modal").on("shown.bs.modal", function (e) {
             self.update_post_med_and_profile_plots();
         })
+        // Relative to Absolute data distplay toggle
+        $(".dtype-btn").click(function () {
+            // Check to see that the click happened on the modal button
+            if ($(this).attr('data-data-type') == 'post-profile'){
+                //If the button is of class btn light then it is not selected and this click should fire
+                // the change in datatype event for the relevant svg
+                if ($(this).hasClass("btn-light")) {
+                    //First change the button attributes so that it looks like we've registered the clicks
+                    $(this).parents(".btn-group").find('.dtype-btn').each(function () {
+                        if ($(this).hasClass("btn-light")) {
+                            //Switch around the btn styles so that light becomes primary and viceversa
+                            $(this).addClass("btn-primary").removeClass("btn-light")
+                        } else if ($(this).hasClass("btn-primary")) {
+                            $(this).addClass("btn-light").removeClass("btn-primary")
+                        }
+                    });
+                    //Second update the plot to represent the newly selected datatype
+                    // If one of the modal buttons then need to update both plots
+                    // else just the one plot.
+                    self._update_absolute_realtive();
+                    self.update_post_med_and_profile_plots();
+                }
+            }
+        });
     }
 
     // Plotting methods
@@ -90,9 +114,9 @@ class ModalStackedBarPlot{
         if (this.absolute_relative == 'absolute'){
             this.post_med_y_scale.domain([0, this.post_med_max_y]).nice();
             this.profile_y_scale.domain([0, this.inv_profile_max_y]).nice();
-        }else if (this.aboslute_relative == 'relative'){
-            this.post_med_y_scale([0,1]).nice();
-            this.profile_y_scale([0,1]).nice();
+        }else if (this.absolute_relative == 'relative'){
+            this.post_med_y_scale.domain([0,1]).nice();
+            this.profile_y_scale.domain([0,1]).nice();
         }
         this.x_scale.domain(this.current_sample_order_array);
     }
@@ -462,6 +486,13 @@ class ModalStackedBarPlot{
             return 'absolute';
         } else if ($("#ModalRelDType").hasClass("btn-primary")) {
             return 'relative';
+        }
+    }
+    _update_absolute_realtive(){
+        if ($("#ModalAbsDType").hasClass("btn-primary")) {
+            this.absolute_relative = 'absolute';
+        } else if ($("#ModalRelDType").hasClass("btn-primary")) {
+            this.absolute_relative = 'relative';
         }
     }
 };

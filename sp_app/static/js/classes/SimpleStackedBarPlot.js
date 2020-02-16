@@ -1,4 +1,3 @@
-console.log("this happened")
 /* Create the plot objects via class abstraction
 The post-MED and profile plots share a lot in common and can easily be represented
 as a single classs. However, the  modal stacked bar plot is much more complicated.
@@ -74,24 +73,28 @@ class SimpleStackedBarPlot{
         // Relative to Absolute data distplay toggle
         let self = this;
         $(".dtype-btn").click(function () {
-            //If the button is of class btn light then it is not selected and this click should fire
-            // the change in datatype event for the relevant svg
-            if ($(this).hasClass("btn-light")) {
-                //First change the button attributes so that it looks like we've registered the clicks
-                $(this).parents(".btn-group").find('.dtype-btn').each(function () {
-                    if ($(this).hasClass("btn-light")) {
-                        //Switch around the btn styles so that light becomes primary and viceversa
-                        $(this).addClass("btn-primary").removeClass("btn-light")
-                    } else if ($(this).hasClass("btn-primary")) {
-                        $(this).addClass("btn-light").removeClass("btn-primary")
-                    }
-                });
-                //Second update the plot to represent the newly selected datatype
-                // If one of the modal buttons then need to update both plots
-                // else just the one plot.
-                self._update_absolute_realtive
-                self.update_bar_plot_by_sample();
+            // Check to see that we are not dealing with the modal button
+            if ($(this).attr('data-data-type') == self.plot_type){
+                //If the button is of class btn light then it is not selected and this click should fire
+                // the change in datatype event for the relevant svg
+                if ($(this).hasClass("btn-light")) {
+                    //First change the button attributes so that it looks like we've registered the clicks
+                    $(this).parents(".btn-group").find('.dtype-btn').each(function () {
+                        if ($(this).hasClass("btn-light")) {
+                            //Switch around the btn styles so that light becomes primary and viceversa
+                            $(this).addClass("btn-primary").removeClass("btn-light")
+                        } else if ($(this).hasClass("btn-primary")) {
+                            $(this).addClass("btn-light").removeClass("btn-primary")
+                        }
+                    });
+                    //Second update the plot to represent the newly selected datatype
+                    // If one of the modal buttons then need to update both plots
+                    // else just the one plot.
+                    self._update_absolute_realtive();
+                    self.update_plot();
+                }
             }
+            
         });
 
         // Finally, init the plot for the very first time
@@ -123,8 +126,8 @@ class SimpleStackedBarPlot{
     _update_axes_domains(){
         if (this.absolute_relative == 'absolute'){
             this.y_scale.domain([0, this.max_y]).nice();
-        }else if (this.aboslute_relative == 'relative'){
-            this.y_scale([0,1]).nice();
+        }else if (this.absolute_relative == 'relative'){
+            this.y_scale.domain([0,1]).nice();
         }
         this.x_scale.domain(this.current_sample_order_array);
     }
@@ -153,6 +156,7 @@ class SimpleStackedBarPlot{
         let x_scale = this.x_scale;
         let y_scale = this.y_scale;
         let plot_type = this.plot_type;
+        let profile_name_to_uid_dict = this.profile_name_to_uid_dict;
         bars.transition().duration(this.plot_speed).attr("x", function (d) {
             return x_scale(sample_uid);
         }).attr("y", function (d) {
@@ -163,7 +167,7 @@ class SimpleStackedBarPlot{
             if (plot_type == 'post_med'){
                 return color_scale(d.seq_name);
             }else if (plot_type == 'profile'){
-                return color_scale(this.profile_name_to_uid_dict[d.profile_name])
+                return color_scale(profile_name_to_uid_dict[d.profile_name])
             }
         }).delay(function (d, i) {
             return (i * 0.1)
@@ -171,7 +175,6 @@ class SimpleStackedBarPlot{
 
         // New objects to be created (enter phase)
         let tips = this.tips;
-        let profile_name_to_uid_dict = this.profile_name_to_uid_dict;
         let profile_meta_info = this.profile_meta_info;
         bars.enter().append("rect")
             .attr("x", function (d) {
@@ -393,15 +396,15 @@ class SimpleStackedBarPlot{
     _update_absolute_realtive(){
         if (this.plot_type == 'post_med'){
             if ($("#PostMEDAbsDType").hasClass("btn-primary")) {
-                this.abs_rel = 'absolute';
+                this.absolute_relative = 'absolute';
             } else if ($("#PostMEDRelDType").hasClass("btn-primary")) {
-                this.abs_rel = 'relative';
+                this.absolute_relative = 'relative';
             }
         }else if (this.plot_type == 'profile'){
             if ($("#ProfileMEDAbsDType").hasClass("btn-primary")) {
-                this.abs_rel = 'absolute';
+                this.absolute_relative = 'absolute';
             } else if ($("#ProfileMEDRelDType").hasClass("btn-primary")) {
-                this.abs_rel = 'relative';
+                this.absolute_relative = 'relative';
             }
         }
     }

@@ -795,67 +795,6 @@ $(document).ready(function () {
         });
     }
 
-    //Listening for opening of seq-profile modal
-    $("#seq-prof-modal").on("shown.bs.modal", function (e) {
-        // POST-MED-MODAL INIT
-        update_bar_plot_by_sample(data_type, "post-modal", sample_list_modal, post_med_init_by_sample_interval);
-        // PROFILES-MODAL INIT
-        update_bar_plot_by_sample(data_type, "profile-modal", sample_list_modal, profile_init_by_sample_interval);
-    })
-
-    // LISTENERS RELATED TO CHARTING
-    // RELATIVE to ABSOLUTE switch
-    // When we change the modal or regular version we want these changes relected in the other.
-    $(".dtype-btn").click(function () {
-        //If the button is of class btn light then it is not selected and this click should fire
-        // the change in datatype event for the relevant svg
-        if ($(this).hasClass("btn-light")) {
-            //First change the button attributes so that it looks like we've registered the clicks
-            $(this).parents(".btn-group").find('.dtype-btn').each(function () {
-                if ($(this).hasClass("btn-light")) {
-                    //Switch around the btn styles so that light becomes primary and viceversa
-                    $(this).addClass("btn-primary").removeClass("btn-light")
-                } else if ($(this).hasClass("btn-primary")) {
-                    $(this).addClass("btn-light").removeClass("btn-primary")
-                }
-            });
-
-            //Second change update the plot to represent the newly selected datatype
-            // If one of the modal buttons then need to update both plots
-            // else just the one plot.
-            let pre_post_profile = $(this).attr("data-data-type")
-            let sample_list;
-            let init_speed;
-            if (pre_post_profile == "post-profile") {
-                // Update post modal
-                update_bar_plot_by_sample($(this).text(), "post-modal",
-                    sample_list_modal, post_med_init_by_sample_interval);
-                // Update profile modal
-                update_bar_plot_by_sample($(this).text(), "profile-modal",
-                    sample_list_modal, profile_init_by_sample_interval);
-            } else {
-                switch (pre_post_profile) {
-                    case "post":
-                        sample_list = sample_list_post;
-                        init_speed = post_med_init_by_sample_interval;
-                        break;
-                    case "pre":
-                        sample_list = sample_list_pre;
-                        init_speed = pre_med_init_by_sample_interval;
-                        break;
-                    case "profile":
-                        sample_list = sample_list_profile;
-                        init_speed = profile_init_by_sample_interval;
-                        break;
-                }
-                update_bar_plot_by_sample($(this).text(), pre_post_profile, sample_list, init_speed);
-            }
-
-
-        }
-    });
-
-
     // Listening for the bar chart sorting button clicks
     $(".svg_sort_by a").click(function () {
         let current_text = $(this).closest(".btn-group").find(".btn").text();
@@ -874,7 +813,6 @@ $(document).ready(function () {
                     pre_post_profile = $(this).attr("data-data-type");
                     data_type = $(this).text();
                 }
-
             });
 
             //TODO perform sorting here.
