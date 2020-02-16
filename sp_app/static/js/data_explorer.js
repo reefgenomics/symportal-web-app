@@ -150,9 +150,7 @@ $(document).ready(function () {
         get_max_y_val_method: getRectDataPostMEDBySampleMaxSeq, sample_meta_info_method: getSampleMetaInfo, 
         profile_meta_info_method: getProfileMetaInfo, plot_type: 'post_med'}
     );
-    // post_med_stacked_bar_plot.update_plot()
-    // TODO! At this point in the script we should basically be able to test some code
-    // Exciting. We can see if the post_med plot can be rendered.
+    
     if (analysis){
         const profile_stacked_bar_plot = new SimpleStackedBarPlot(
             {name_of_html_svg_object: "#chart_profile", get_data_method: getRectDataProfileBySample,
@@ -169,6 +167,29 @@ $(document).ready(function () {
     }
     // The modal plot will init itself once the lister for the modal opening is fired.
     
+    // Init the two distance plots
+    // First need to check to see if we are working with the bray curtis
+    // or the unifrac distance
+    // TODO this will need updating to incorporate all distance types
+    // For the time being we will leave the code as it is
+    // TODO we are here. Time for debugging.
+    if (typeof getBtwnSampleDistCoordsBC === "function") {
+        // use the braycurtis objects
+        const btwn_sample_plot = new DistancePlot({
+            name_of_html_svg_object: "#chart_btwn_sample", 
+            coord_data_method: getBtwnSampleDistCoordsBC, 
+            pc_variance_method: getBtwnSampleDistPCVariancesBC, 
+            available_pcs_method: getBtwnSampleDistPCAvailableBC, 
+            plot_type='sample'});
+    } else if (typeof getBtwnSampleDistCoordsUF === "function") {
+        // use the unifrac objects
+        const btwn_sample_plot = new DistancePlot({
+            name_of_html_svg_object: "#chart_btwn_sample", 
+            coord_data_method: getBtwnSampleDistCoordsUF, 
+            pc_variance_method: getBtwnSampleDistPCVariancesUF, 
+            available_pcs_method: getBtwnSampleDistPCAvailableUF, 
+            plot_type='sample'});
+    }
     
     // Distance colors
     // Process between samples first and then profiles because profiles may not exist and so may not need processing
@@ -363,7 +384,6 @@ $(document).ready(function () {
             .attr("height", dist_height - dist_margin.bottom - dist_margin.top)
             .attr("x", dist_margin.left)
             .attr("y", dist_margin.top);
-
         // This is the group where we will do the drawing and that has the above
         // clipping mask applied to it
         scatter_btwn_sample = svg_btwn_sample_dist.append('g')
@@ -372,8 +392,6 @@ $(document).ready(function () {
         // Call zoom
         svg_btwn_sample_dist.call(zoom);
     }
-
-
     //DATA for btwn profiles
     let svg_btwn_profile_dist = d3.select("#chart_btwn_profile");
     let btwn_profile_data_available = false;
@@ -640,7 +658,7 @@ $(document).ready(function () {
         //TODO we can add more info to the tool tip like absolute and relative abundances of the samples or profiles
         dots.enter().append("circle").attr("class", "dot").attr("r", 3.5).attr("cx", function (d) {
                 return x_scale(d.x);
-            }).attr("cy", d => y_scale(d.y)) //"rgba(0,0,0,0.5)"
+            }).attr("cy", d => y_scale(d.y))
             .style("fill", function (d) {
                 if (c_scale) {
                     if (c_property == "lat_lon") {
