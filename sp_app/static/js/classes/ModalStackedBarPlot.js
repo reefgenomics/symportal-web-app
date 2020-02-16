@@ -72,6 +72,22 @@ class ModalStackedBarPlot{
                 }
             }
         });
+        // Listening for the bar chart sorting button clicks
+        $(".svg_sort_by a").click(function () {
+            // Check to see that it is a click on the plot instance in question
+            if ($(this).closest(".btn-group").find(".svg_sort_by").attr("data-data-type") == 'post-profile'){
+                let current_text = $(this).closest(".btn-group").find(".btn").text();
+                let selected_text = $(this).text()
+                // Only proceed if the button text has changed
+                if (current_text !== selected_text) {
+                    // Update the text on the sort button
+                    $(this).closest(".btn-group").find(".btn").text(selected_text);
+                    // Update the current sample array
+                    self._update_current_sample_order_array(selected_text);
+                    self.update_post_med_and_profile_plots();
+                }
+            }
+        });
     }
 
     // Plotting methods
@@ -341,6 +357,9 @@ class ModalStackedBarPlot{
         } else {
             return this.sorted_uid_arrays['similarity'];
         }
+    }
+    _update_current_sample_order_array(sorting_key){
+        this.current_sample_order_array = this.sorted_uid_arrays[sorting_key];
     }
     _init_plot_speed(){return [1, 10];}
     _init_margin(){return [{top: 30, left: 35, bottom: 60, right: 0}, {top: 5, left: 35, bottom: 5, right: 0}];}

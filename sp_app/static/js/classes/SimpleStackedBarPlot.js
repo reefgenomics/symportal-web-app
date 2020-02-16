@@ -94,7 +94,23 @@ class SimpleStackedBarPlot{
                     self.update_plot();
                 }
             }
-            
+        });
+
+        // Listening for the bar chart sorting button clicks
+        $(".svg_sort_by a").click(function () {
+            // Check to see that it is a click on the plot instance in question
+            if ($(this).closest(".btn-group").find(".svg_sort_by").attr("data-data-type") == self.plot_type){
+                let current_text = $(this).closest(".btn-group").find(".btn").text();
+                let selected_text = $(this).text()
+                // Only proceed if the button text has changed
+                if (current_text !== selected_text) {
+                    // Update the text on the sort button
+                    $(this).closest(".btn-group").find(".btn").text(selected_text);
+                    // Update the current sample array
+                    self._update_current_sample_order_array(selected_text);
+                    self.update_plot();
+                }
+            }
         });
 
         // Finally, init the plot for the very first time
@@ -276,6 +292,9 @@ class SimpleStackedBarPlot{
             return this.sorted_uid_arrays['similarity'];
         }
     }
+    _update_current_sample_order_array(sorting_key){
+        this.current_sample_order_array = this.sorted_uid_arrays[sorting_key];
+    }
     _init_margin(){return {top: 30, left: 35, bottom: 60, right: 0};}  
     _init_plot_speed(){
         // Set the speed at which transitions will happen
@@ -316,7 +335,12 @@ class SimpleStackedBarPlot{
         return [x_axis, y_axis];
     }
     _init_sorting_drop_down_menus(){
-        let sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
+        let sort_dropdown_to_populate;
+        if (this.plot_type == 'post_med'){
+            sort_dropdown_to_populate = $("#post_med_card").find(".svg_sort_by");
+        }else if (this.plot_type == 'profile'){
+            sort_dropdown_to_populate = $("#profile_card").find(".svg_sort_by");
+        }
         for (let i = 0; i < this.sorting_keys.length; i++) {
             sort_dropdown_to_populate.append(`<a class="dropdown-item" >${this.sorting_keys[i]}</a>`);
         }
