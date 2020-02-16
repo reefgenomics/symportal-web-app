@@ -2,16 +2,47 @@
 //We will aim to abstract both the between sample and between profile
 //plots using this class
 class DistancePlot{
-    constructor({plot_type}){
+    constructor({name_of_html_svg_object, coord_data_method, pc_variance_method, available_pcs_method, plot_type}){
         this.plot_type = plot_type;
+        this.svg = d3.select(name_of_html_svg_object);
+        
         this.sorted_uid_arrays = getSampleSortedArrays();
         this.sorting_keys = Object.keys(this.sorted_uid_arrays);
+        this.data = coord_data_method();
+        this.pc_variances = pc_variance_method();
+        this.available_pcs = available_pcs_method();
+        this.genera_array = Object.keys(this.data);
+        this.genera_to_sample_array_dict = _init_genera_to_sample_array_dict();
+        this.margins = {top: 35, left: 35, bottom: 20, right: 0};
+        this.width = +this.svg.attr("width") - this.margin.left - this.margin.right;
+        this.height = +this.svg.attr("height") - this.margin.top - this.margin.bottom;
+        [this.x_scale, this.y_scale] = this._init_axis_scales();
+        [this.x_axis, this.y_axis] = this._init_axes();
+        // Add a clip
+        this.svg.append("defs").append("clipPath")
+            .attr("id", "sample_clip")
+            .append("rect")
+            .attr("width", this.width - this.margins.right - this.margins.left)
+            .attr("height", this.height - this.margins.bottom - this.margins.top)
+            .attr("x", this.margins.left)
+            .attr("y", this.margins.top);
+        // This is the group where we will do the drawing and that has the above
+        // clipping mask applied to it
+        this.scatter_group = this.svg.append('g').attr("clip-path", "url(#sample_clip)");
+        // Set up the zoom object (one for all dist plots)
+        this.zoom = d3.zoom().scaleExtent([.5, 20]).extent([[0, 0],[dist_width, dist_height]])
+            .on("zoom", update_dist_plot_zoom);
+        this.svg.call(zoom);
+        this.tip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("visibility", "hidden");
         // The object that holds the meta info for the samples
         this.sample_meta_info = getSampleMetaInfo();
         // Create a name to uid dictionary for the samples
         this.sample_name_to_uid_dict = this._make_name_to_uid_dict(this.sample_meta_info);
         this.profile_meta_info = getProfileMetaInfo();
         this.profile_name_to_uid_dict = this._make_name_to_uid_dict(this.profile_meta_info);
+
         // We gave the user-visible color categories different names to those
         // that act as keys for the data. The below color_category_to_color_key
         // is a dict that maps between the two.
@@ -33,14 +64,74 @@ class DistancePlot{
                 this.profile_identity_color_scale 
             ] = this._init_profile_color_scales();
         }
+        // init both the genus and pc available drop downs
+        this._init_dropdowns();
     }
-
+    _init_axes(){
+        let x_axis = this.svg.append("g").attr("class", "grey_axis")
+            .attr("transform", `translate(0,${this.height - this.margins.bottom})`)
+            .attr("id", "x_axis_btwn_sample");
+        let y_axis = this.svg.append("g").attr("class", "grey_axis")
+            .attr("transform", `translate(${this.margins.left},0)`)
+            .attr("id", "y_axis_btwn_sample");
+        return [x_axis, y_axis];
+    }
+    _init_axis_scales(){
+        x_axis_scale = d3.scaleLinear()
+            .range([dist_margin.left, dist_width - dist_margin.right]);
+        y_axis_scale = d3.scaleLinear()
+            .rangeRound([dist_height - dist_margin.bottom, dist_margin.top]);
+        return [x_axis_scale, y_axis_scale];
+    }
+    _init_genera_to_sample_array_dict(){
+        let temp_dict = {};
+        for (let i = 0; i < this.genera_array.length; i++) {
+            let genera = this.genera_array[i];
+            temp_dict[genera] = Object.keys(this.data[genera]);
+        }
+        return temp_dict;
+    }
     _make_name_to_uid_dict(meta_info_obj){
         let temp_dict = {};
         Object.keys(meta_info_obj).forEach(function (uid) {
             temp_dict[meta_info_obj[uid]["name"]] = +uid;
         })
         return temp_dict;
+    }
+    _init_dropdowns(){
+        let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
+        let card_element;
+        if (plot_type == 'sample'){
+            card_element = $("#between_sample_distances");
+        }else if (plot_type == 'profile'){
+            card_element = $("#between_profile_distances");
+        }
+        let first_genera_present;
+        for (let j = 0; j < genera_array.length; j++) {
+            // init the genera_indentifier with the first of the genera in the genera_array that we have data for
+            // We only want to do this for the first genera that we find so we check whether the data-genera attribute
+            // already has been set or not.
+            if (this.genera_array.includes(genera_array[j])) {
+                let attr = card_element.find(".genera_identifier").attr("data-genera");
+                if (typeof attr !== typeof undefined && attr !== false) {
+                    // then already set. just add genera link
+                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;" data-genera="${genera_array[j]}">${genera_array[j]}</a>`);
+                } else {
+                    // then genera_identifier not set
+                    card_element.find(".genera_identifier").text(genera_array[j]);
+                    card_element.find(".genera_identifier").attr("data-genera", genera_array[j]);
+                    card_element.find(".genera_select_button").text(genera_array[j]);
+                    card_element.find(".genera_select_button").attr("data-genera", genera_array[j]);
+                    card_element.find('.genera_select').append(`<a class="dropdown-item" style="font-style:italic;" data-genera="${genera_array[j]}">${genera_array[j]}</a>`);
+                    first_genera_present = genera_array[j];
+                }
+            }
+        }
+        let pcs_available_genera = this.available_pcs[first_genera_present];
+        // Skip the first PC as we don't want PC1 in the options
+        for (let j = 1; j < pcs_available_genera.length; j++) {
+            card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available_genera[j]}">${pcs_available_genera[j]}</a>`)
+        }
     }
     _init_color_by_categories(){
         if (this.plot_type == 'sample'){

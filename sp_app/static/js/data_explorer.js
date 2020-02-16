@@ -169,6 +169,7 @@ $(document).ready(function () {
     }
     // The modal plot will init itself once the lister for the modal opening is fired.
     
+    
     // Distance colors
     // Process between samples first and then profiles because profiles may not exist and so may not need processing
 
@@ -194,102 +195,99 @@ $(document).ready(function () {
         color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_sample_color_categories[i]}>${btwn_sample_color_categories[i]}</a>`);
     }
 
-    // Create the color scales for the above parameters
-    // We will need quantitative scales for the post_med_seqs_absolute, post_med_seqs_unique
-    // This will be the same sort of scale as we use for the axes of the dist and the y of the bar
-    // For the host and location we will need to use something different.
-    // For each we will need to have either the list of categorical variables (i.e. the taxa strings or lat long)
-    // Or we will need the max and min of the quantitative values
-    // go cat by cat
-    let host_c_scale;
-    let location_c_scale;
-    let post_med_absolute_c_scale;
-    let post_med_unique_c_scale;
+    // // Create the color scales for the above parameters
+    // // We will need quantitative scales for the post_med_seqs_absolute, post_med_seqs_unique
+    // // This will be the same sort of scale as we use for the axes of the dist and the y of the bar
+    // // For the host and location we will need to use something different.
+    // // For each we will need to have either the list of categorical variables (i.e. the taxa strings or lat long)
+    // // Or we will need the max and min of the quantitative values
+    // // go cat by cat
+    // let host_c_scale;
+    // let location_c_scale;
+    // let post_med_absolute_c_scale;
+    // let post_med_unique_c_scale;
 
-    function make_categorical_color_scale_btwn_sample(cat_name) {
-        let key_name = btwn_sample_c_cat_key[cat_name];
-        //need to get the list of taxa string
-        let cats_array = [];
-        Object.keys(sample_meta_info_populator.meta_info).forEach(function (k) {
-            let cat;
-            if (cat_name == "location") {
-                cat = sample_meta_info_populator.meta_info[k]["lat"] + ';' + sample_meta_info_populator.meta_info[k]["lat"];
-            } else {
-                cat = sample_meta_info_populator.meta_info[k][key_name];
-            }
+    // function make_categorical_color_scale_btwn_sample(cat_name) {
+    //     let key_name = btwn_sample_c_cat_key[cat_name];
+    //     //need to get the list of taxa string
+    //     let cats_array = [];
+    //     Object.keys(sample_meta_info_populator.meta_info).forEach(function (k) {
+    //         let cat;
+    //         if (cat_name == "location") {
+    //             cat = sample_meta_info_populator.meta_info[k]["lat"] + ';' + sample_meta_info_populator.meta_info[k]["lat"];
+    //         } else {
+    //             cat = sample_meta_info_populator.meta_info[k][key_name];
+    //         }
 
-            if (!(cats_array.includes(cat))) {
-                cats_array.push(cat);
-            }
-        });
-        // here we have a unique list of the 'host' values
-        // now create the colour scale for it
-        return c_var = d3.scaleOrdinal().domain(cats_array).range(d3.schemeSet3);
-    }
+    //         if (!(cats_array.includes(cat))) {
+    //             cats_array.push(cat);
+    //         }
+    //     });
+    //     // here we have a unique list of the 'host' values
+    //     // now create the colour scale for it
+    //     return c_var = d3.scaleOrdinal().domain(cats_array).range(d3.schemeSet3);
+    // }
 
-    function make_quantitative_color_scale_btwn_sample(cat_name) {
-        let key_name = btwn_sample_c_cat_key[cat_name];
-        //need to get the list of taxa string
-        let values = [];
-        Object.keys(sample_meta_info_populator.meta_info).forEach(function (k) {
-            values.push(sample_meta_info_populator.meta_info[k][key_name]);
-        });
-        let max_val = Math.max(...values);
-        let min_val = Math.min(...values);
-        // here we have a unique list of the 'host' values
-        // now create the colour scale for it
-        return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
-    }
+    // function make_quantitative_color_scale_btwn_sample(cat_name) {
+    //     let key_name = btwn_sample_c_cat_key[cat_name];
+    //     //need to get the list of taxa string
+    //     let values = [];
+    //     Object.keys(sample_meta_info_populator.meta_info).forEach(function (k) {
+    //         values.push(sample_meta_info_populator.meta_info[k][key_name]);
+    //     });
+    //     let max_val = Math.max(...values);
+    //     let min_val = Math.min(...values);
+    //     // here we have a unique list of the 'host' values
+    //     // now create the colour scale for it
+    //     return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
+    // }
 
-    if (btwn_sample_color_categories.includes("host")) {
-        host_c_scale = make_categorical_color_scale_btwn_sample("host");
-    }
-    if (btwn_sample_color_categories.includes("location")) {
-        location_c_scale = make_categorical_color_scale_btwn_sample("location");
-    }
-    post_med_absolute_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_absolute");
-    post_med_unique_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_unique");
+    // if (btwn_sample_color_categories.includes("host")) {
+    //     host_c_scale = make_categorical_color_scale_btwn_sample("host");
+    // }
+    // if (btwn_sample_color_categories.includes("location")) {
+    //     location_c_scale = make_categorical_color_scale_btwn_sample("location");
+    // }
+    // post_med_absolute_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_absolute");
+    // post_med_unique_c_scale = make_quantitative_color_scale_btwn_sample("post_med_seqs_unique");
 
-    // Now profiles
-    let btwn_profile_c_cat_key;
-    let profile_local_abund_c_scale;
-    let profile_db_abund_c_scale;
-    let profile_idenity_c_scale;
-    if (analysis){
+    // // Now profiles
+    // let btwn_profile_c_cat_key;
+    // let profile_local_abund_c_scale;
+    // let profile_db_abund_c_scale;
+    // let profile_idenity_c_scale;
+    // if (analysis){
         
-        let btwn_profile_color_categories = ["profile_identity", "local_abundance", "db_abundance"]
+    //     let btwn_profile_color_categories = ["profile_identity", "local_abundance", "db_abundance"]
         
-        btwn_profile_c_cat_key = {
-            "local_abundance": "local_abund",
-            "db_abundance": "db_abund"
-        };
+    //     btwn_profile_c_cat_key = {
+    //         "local_abundance": "local_abund",
+    //         "db_abundance": "db_abund"
+    //     };
 
-        color_dropdown_to_populate = $("#between_profile_distances").find(".color_select");
-        for (let i = 0; i < btwn_profile_color_categories.length; i++) {
-            color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_profile_color_categories[i]}>${btwn_profile_color_categories[i]}</a>`);
-        }
+    //     color_dropdown_to_populate = $("#between_profile_distances").find(".color_select");
+    //     for (let i = 0; i < btwn_profile_color_categories.length; i++) {
+    //         color_dropdown_to_populate.append(`<a class="dropdown-item" data-color=${btwn_profile_color_categories[i]}>${btwn_profile_color_categories[i]}</a>`);
+    //     }
 
-        
+    //     function make_quantitative_color_scale_btwn_profile(cat_name) {
+    //         let key_name = btwn_profile_c_cat_key[cat_name];
+    //         //need to get the list of taxa string
+    //         let values = [];
+    //         Object.keys(profile_meta_info_populator.meta_info).forEach(function (k) {
+    //             values.push(profile_meta_info_populator.meta_info[k][key_name]);
+    //         });
+    //         let max_val = Math.max(...values);
+    //         let min_val = Math.min(...values);
+    //         // here we have a unique list of the 'host' values
+    //         // now create the colour scale for it
+    //         return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
+    //     }
 
-        
-        function make_quantitative_color_scale_btwn_profile(cat_name) {
-            let key_name = btwn_profile_c_cat_key[cat_name];
-            //need to get the list of taxa string
-            let values = [];
-            Object.keys(profile_meta_info_populator.meta_info).forEach(function (k) {
-                values.push(profile_meta_info_populator.meta_info[k][key_name]);
-            });
-            let max_val = Math.max(...values);
-            let min_val = Math.min(...values);
-            // here we have a unique list of the 'host' values
-            // now create the colour scale for it
-            return d3.scaleLinear().domain([min_val, max_val]).range(["blue", "red"]);
-        }
-
-        profile_local_abund_c_scale = make_quantitative_color_scale_btwn_profile("local_abundance");
-        profile_db_abund_c_scale = make_quantitative_color_scale_btwn_profile("db_abundance");
-        profile_idenity_c_scale = d3.scaleOrdinal().domain(Object.keys(profile_meta_info_populator.meta_info)).range(Object.keys(profile_meta_info_populator.meta_info).map(k => profile_meta_info_populator.meta_info[k]["color"]));
-    }
+    //     profile_local_abund_c_scale = make_quantitative_color_scale_btwn_profile("local_abundance");
+    //     profile_db_abund_c_scale = make_quantitative_color_scale_btwn_profile("db_abundance");
+    //     profile_idenity_c_scale = d3.scaleOrdinal().domain(Object.keys(profile_meta_info_populator.meta_info)).range(Object.keys(profile_meta_info_populator.meta_info).map(k => profile_meta_info_populator.meta_info[k]["color"]));
+    // }
 
     //DATA for btwn sample
     let svg_btwn_sample_dist = d3.select("#chart_btwn_sample");
