@@ -333,10 +333,10 @@ $(document).ready(function () {
             }
             this.x_scale.domain(this.current_sample_order_array);
         }
-        _replot_data(profile_uid){
+        _replot_data(sample_uid){
             
             // Bars is the join that we will call exit
-            let bars = this.svg.select("g.s" + profile_uid).selectAll("rect").data(this.data[profile_uid], function (d) {
+            let bars = this.svg.select("g.s" + sample_uid).selectAll("rect").data(this.data[sample_uid], function (d) {
                 if (this.plot_type == 'post_med'){
                     return d.seq_name;
                 }else if (this.plot_type == 'profile'){
@@ -359,7 +359,7 @@ $(document).ready(function () {
             let y_scale = this.y_scale;
             let plot_type = this.plot_type;
             bars.transition().duration(this.plot_speed).attr("x", function (d) {
-                return x_scale(profile_uid);
+                return x_scale(sample_uid);
             }).attr("y", function (d) {
                 return y_scale(+d["y_" + abs_rel]);
             }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
@@ -378,7 +378,7 @@ $(document).ready(function () {
             let tips = this.tips;
             bars.enter().append("rect")
                 .attr("x", function (d) {
-                    return x_scale(profile_uid);
+                    return x_scale(sample_uid);
                 }).attr("y", y_scale(0)).on('mouseover', function (d) {
                     tips.show(d);
                     d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
@@ -459,7 +459,6 @@ $(document).ready(function () {
                 textLength = self.node().getComputedTextLength();
             }
         }
-
         // Private init methods
         _init_current_sample_order_array(){
             if (this.sorting_keys.includes('profile_based')) {
@@ -612,6 +611,8 @@ $(document).ready(function () {
             // Same width for both of the chart areas but difference widths
             [this.width, this.post_med_height, this.profile_height] = this._init_width_and_height();
             [this.x_scale, this.post_med_y_scale, this.profile_y_scale] = this._init_scales();
+            [this.post_med_x_axis_id, this.post_med_y_axis_id] = this._init_post_med_axis_ids();
+            [this.profile_x_axis_id, this.profile_y_axis_id] = this._init_profile_axis_ids();
             [this.post_med_x_axis, this.post_med_y_axis] = this._init_post_med_axes();
             [this.profile_x_axis, this.profile_y_axis] = this._init_profile_axes();
             this._init_sorting_drop_down_menus();
@@ -622,10 +623,262 @@ $(document).ready(function () {
             [this.post_med_color_scale, this.profile_color_scale] = this._init_color_scale();
             // Whether the plot is currently displaying absolute or relative abundances
             this.absolute_relative = this._init_absolute_realtive();
+            //Listening for opening of seq-profile modal
+            let self = this;
+            $("#seq-prof-modal").on("shown.bs.modal", function (e) {
+                self.update_post_med_and_profile_plots();
+            })
         }
 
         // Plotting methods
+        update_post_med_and_profile_plots(){
+            // Unlike the simple stacked bar class, here we need to run the
+            // plot updates on both the profile and the post-med seqs
+            // each time an update is required. As such we will have this additional
+            // method that will call the methods of the simple stacked bar giving a
+            // argument that details which plot we are updating. This is alittle ugly
+            // as it brings us back almost to the original method format, but at least
+            // everything for the modal is within the class now.
+            this._update_plot()
+        }
 
+        _update_plot(){
+            //First update the x_scale and y_scale domains
+            this._update_axes_domains();
+            
+            // Code that does the majoirty of the replotting
+            let cumulative_time = 0;
+            for (let i = 0; i < this.current_sample_order_array.length; i++) {
+                setTimeout(
+                    //https://stackoverflow.com/questions/5911211/settimeout-inside-javascript-class-using-this
+                    this._replot_data.bind(this), 
+                    i * this.post_med_plot_speed, 
+                    this.current_sample_order_array[i],
+                );
+                cumulative_time += this.plot_speed;
+            }
+            
+            // Now draw the axis last so that they are on top of the bars
+            // we can then use a transition .on event to call the centering of the labels
+            // It makes sense to separate out the post_med axis update and the profile
+            // axis update as the post_med update is complex due to having to get the label
+            // sizes.
+            setTimeout(this._post_med_update_axes.bind(this), cumulative_time);
+            setTimeout(this._profile_update_axes.bind(this), cumulative_time);
+        }
+        _update_axes_domains(){
+            if (this.absolute_relative == 'absolute'){
+                this.post_med_y_scale.domain([0, this.post_med_max_y]).nice();
+                this.profile_y_scale.domain([0, this.inv_profile_max_y]).nice();
+            }else if (this.aboslute_relative == 'relative'){
+                this.post_med_y_scale([0,1]).nice();
+                this.profile_y_scale([0,1]).nice();
+            }
+            this.x_scale.domain(this.current_sample_order_array);
+        }
+        _replot_data(sample_uid){
+            
+            // Bars is the join that we will call exit
+            let post_med_bars = this.post_med_svg.select("g.s" + sample_uid).selectAll("rect").data(this.post_med_data[sample_uid], function (d) {
+                    return d.seq_name;
+            });
+            let profile_bars = this.profile_svg.select("g.s" + sample_uid).selectAll("rect").data(this.inv_profile_data[sample_uid], function (d) {
+                return d.profile_name;
+            });
+
+            // Remove any data points from the plot that don't exist
+            post_med_bars.exit().remove();
+            profile_bars.exit().remove();
+            
+            // Transitions
+            let abs_rel;
+            if (this.absolute_relative == 'absolute'){
+                abs_rel = 'abs';
+            }else if (this.absolute_relative == 'relative'){
+                abs_rel = 'rel';
+            }
+            let post_med_color_scale = this.post_med_color_scale;
+            let profile_color_scale = this.profile_color_scale;
+            let x_scale = this.x_scale;
+            let post_med_y_scale = this.post_med_y_scale;
+            let profile_y_scale = this.profile_y_scale;
+            // First do it for the post_med_bars
+            post_med_bars.transition().duration(this.post_med_plot_speed).attr("x", function (d) {
+                return x_scale(sample_uid);
+            }).attr("y", function (d) {
+                return post_med_y_scale(+d["y_" + abs_rel]);
+            }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                return Math.max(post_med_y_scale(0) - post_med_y_scale(+d["height_" + abs_rel]), 1);
+            }).attr("fill", function (d) {
+                return post_med_color_scale(d.seq_name);
+            }).delay(function (d, i) {
+                return (i * 0.1)
+            });
+            // Now for the profile bars
+            profile_bars.transition().duration(this.profile_plot_speed).attr("x", function (d) {
+                return x_scale(sample_uid);
+            }).attr("y", function (d) {
+                return profile_y_scale(+d["y_" + abs_rel]);
+            }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                return Math.max(profile_y_scale(+d["height_" + abbr]), 1);
+            }).attr("fill", function (d) {
+                return profile_color_scale(rofile_meta_info_populator.name_to_uid_dict[d.profile_name])
+            }).delay(function (d, i) {
+                return (i * 0.1)
+            });
+
+            // New objects to be created (enter phase)
+            let post_med_tips = this.post_med_tips;
+            post_med_bars.enter().append("rect")
+                .attr("x", function (d) {
+                    return x_scale(sample_uid);
+                }).attr("y", post_med_y_scale(0)).on('mouseover', function (d) {
+                    post_med_tips.show(d);
+                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                })
+                .on('mouseout', function (d) {
+                    post_med_tips.hide(d);
+                    d3.select(this).attr("style", null);
+                }).transition().duration(1000).attr("y", function (d) {
+                    return post_med_y_scale(+d["y_" + abs_rel]);
+                }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                    return Math.max(post_med_y_scale(0) - post_med_y_scale(+d["height_" + abs_rel]), 1);
+                }).attr("fill", function (d) {
+                    return post_med_color_scale(d.seq_name);
+                });
+            
+            // New objects to be created (enter phase)
+            let profile_tips = this.profile_tips;
+            profile_bars.enter().append("rect")
+                .attr("x", function (d) {
+                    return x_scale(sample_uid);
+                }).attr("y", profile_y_scale(0)).on('mouseover', function (d) {
+                    profile_tips.show(d);
+                    d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
+                    let profile_uid = profile_meta_info_populator.name_to_uid_dict[d["profile_name"]];
+                    let profile_data_series = profile_meta_info_populator.meta_info[profile_uid.toString()];
+                    $(this).closest(".plot_item").find(".profile_meta_item").each(function () {
+                        $(this).text(profile_data_series[$(this).attr("data-key")]);
+                    });
+                    $(this).closest(".plot_item").find(".meta_profile_name").text(d["profile_name"]);
+                })
+                .on('mouseout', function (d) {
+                    profile_tips.hide(d);
+                    d3.select(this).attr("style", null);
+                }).transition().duration(1000).attr("y", function (d) {
+                    return profile_y_scale(+d["y_" + abs_rel]);
+                }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
+                    return Math.max(profile_y_scale(+d["height_" + abs_rel]), 1);
+                }).attr("fill", function (d) {
+                    return profile_color_scale(profile_meta_info_populator.name_to_uid_dict[d.profile_name]);
+                });
+        }
+        _post_med_update_axes(){
+            // y axis
+            d3.select("#" + this.post_med_y_axis_id)
+            .transition()
+            .duration(1000)
+            .call(
+                d3.axisLeft(this.post_med_y_scale).ticks(null, "s")
+            );
+
+            // The variable that we will use to house the widths of the sample name objects
+            let sample_name_width_obj = {};
+            let sample_names = this.current_sample_order_array.map(sample_uid => post_med_meta_info_populator.meta_info[sample_uid]["name"]);
+            let margin = this.margin;
+            this.post_med_svg.append('g').attr("class", '.dummyTextG')
+                .selectAll('.dummyText')
+                .data(sample_names)
+                .enter()
+                .append("text")
+                .attr("style", "font-size:10px;")
+                .text(function(d) { return d})
+                .attr("x", "10")
+                .attr("y", "10")
+                .each(function(d,i) {
+                    let length_of_text = this.getComputedTextLength();
+                    let self = d3.select(this),
+                        text = self.text(),
+                        current_x = self.attr("x");
+                    let available_space = margin.bottom - current_x - 2;
+                    if (length_of_text > available_space){
+                        // Perform the ellipse shortening here
+                        while (length_of_text > (margin.bottom - current_x) && text.length > 0) {
+                            text = text.slice(0, -1);
+                            self.text(text + '...');
+                            length_of_text = self.node().getComputedTextLength();
+                        }
+                        sample_name_width_obj[d] = {"ellipse":true, "ellipse_text":self.text()};
+                    }else{
+                        sample_name_width_obj[d] = {"width":length_of_text, "ellipse":false};
+                    }
+                    this.remove();
+                })
+            $("#chart_post_med_modal").find(".dummyTextG").remove();
+
+            // x axis
+            let self = this;
+            d3.selectAll("#" + this.post_med_x_axis_id).transition().duration(this.post_med_plot_speed)
+            .call(d3.axisBottom(this.x_scale).tickFormat(function(d) {
+                let sample_name = post_med_meta_info_populator.meta_info[d]["name"];
+                if (sample_name_width_obj[sample_name]["ellipse"]){
+                    return sample_name_width_obj[sample_name]["ellipse_text"];
+                }else{return sample_name;}
+            }).tickSizeOuter(0)).selectAll("text").each(function(){
+                self._center_or_ellipse_axis_labels(this, sample_name_width_obj)
+            });
+            
+            // Listener to highlight sample names on mouse over.
+            d3.select("#" + this.post_med_x_axis_id).selectAll(".tick")._groups[0].forEach(function (d1) {
+                d3.select(d1).on("mouseover", function () {
+                    d3.select(this).select("text").attr("fill", "blue").attr("style", "cursor:pointer;text-anchor: start;");
+                    let sample_uid = this.__data__;
+                    let sample_data_series = post_med_meta_info_populator.meta_info[sample_uid];
+                    $(this).closest(".plot_item").find(".sample_meta_item").each(function () {
+                        $(this).text(sample_data_series[$(this).attr("data-key")]);
+                    })
+                }).on("mouseout", function () {
+                    d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
+                })
+            })
+        }
+        _profile_update_axes(){
+            // y axis
+            d3.select("#" + this.profile_y_axis_id)
+            .transition()
+            .duration(1000)
+            .call(
+                d3.axisLeft(this.profile_y_scale).ticks(null, "s")
+            );
+
+            // x axis
+            // Axis with ticks above and no text
+            d3.select(this.profile_x_axis_id)
+                .call(d3.axisTop(this.x_scale).tickSizeOuter(0));
+        }
+        _center_or_ellipse_axis_labels(text_obj, sample_name_width_obj){
+            // text has already been ellipsed. So we just need to do centering here.
+            d3.select(text_obj).attr("y", 0).attr("x", 9).attr("dy", "-0.35em").attr("style", "font-size:10px;").attr("transform", "rotate(90)")
+            .style("text-anchor", "start");
+            // Set the values we need to here dynamically according to the dict that we worked out above. but still need to find some way of linking.
+            //This has a data node.
+            let sample_name = post_med_meta_info_populator.meta_info[text_obj.__data__]["name"];
+            // Available width is the margin - 9 for the displacement of the sequence tick and -2 for displacement of the profile tick
+            // So figure out if our text is larger than the available space. If it is larger, then ellipse until smaller
+            // If its smaller, center
+            if (sample_name_width_obj[sample_name]["ellipse"]){
+                return;
+            }else{
+                // Then this needs centering
+                // Have to take into account the fact that the labels are already displaced by an amount x
+                // Also have to take into account that the ticks from the inv profile axis are protruding
+                // Into the space of the seq modal margin. To account for this we will adjust by 2 px
+                let current_x = +$(text_obj).attr("x");
+                let length_of_text = sample_name_width_obj[sample_name]["width"]
+                let translate_by = ((this.margin.bottom - (length_of_text+current_x))/2)-2;
+                $(text_obj).attr("x", `${current_x + translate_by}`);
+            }
+        }
         // Private init methods
         _init_current_sample_order_array(){
             if (this.sorting_keys.includes('profile_based')) {
@@ -658,24 +911,30 @@ $(document).ready(function () {
             .rangeRound([this.inv_margin.top, this.profile_height + this.inv_margin.top]);
             return [x_scale, post_med_y_scale, profile_y_scale];
         }
+        _init_post_med_axis_ids(){
+            return ["x_axis_post_med_modal", "y_axis_post_med_modal"];
+        }
+        _init_profile_axis_ids(){
+            return ["x_axis_profile_modal", "y_axis_profile_modal"];
+        }
         _init_post_med_axes(){
             let post_med_x_axis = this.post_med_svg.append("g")
                 .attr("transform", `translate(0,${this.post_med_height + this.margin.top})`)
-                .attr("id", "x_axis_post_med_modal");
+                .attr("id", this.post_med_x_axis_id);
             let post_med_y_axis = this.post_med_svg.append("g")
                 .attr("transform", `translate(${this.margin.left},0)`)
-                .attr("id", "y_axis_post_med_modal");
+                .attr("id", this.post_med_y_axis_id);
             return [post_med_x_axis, post_med_y_axis];
         }
         _init_profile_axes(){
             // inverted profile modal plot is axis is only moved down by top margin
             let profile_x_axis = this.profile_svg.append("g")
                 .attr("transform", `translate(0,${this.inv_margin.top})`)
-                .attr("id", "x_axis_profile_modal");
+                .attr("id", this.profile_x_axis_id);
             // This should also be moved down by the top axis
             let profile_y_axis = this.profile_svg.append("g")
                 .attr("transform", `translate(${this.margin.left}, 0)`)
-                .attr("id", "y_axis_profile_modal");
+                .attr("id", this.profile_y_axis_id);
             return [profile_x_axis, profile_y_axis];
         }
         _init_sorting_drop_down_menus(){
