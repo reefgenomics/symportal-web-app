@@ -83,14 +83,46 @@ class DistancePlot{
         // TODO change the default value of the between profiles to no_color.
         [this.selected_color_category, this.current_color_scale, this.current_color_key, this.selected_color_category_is_default] = this._get_current_color_settings();
         this.current_second_pc = this._get_second_pc();
+        // Assign the principal component section item to a instance variable so that we can
+        // easily access it
+        this.containing_card_id = this._init_containing_card_id();
+        this.$pc_select = $(this.containing_card_id).find(".pc_select");
 
         // Finally, plot init the distance plot
         this._update_plot();
+
+        // Listeners
+        // Listening for the Genera dropdown button change
+        let self = this;
+        $(".genera_select a").click(function () {
+            let genera_button = $(this).closest(".btn-group").find(".btn");
+            let current_genera = genera_button.attr("data-genera");
+            let selected_genera = $(this).attr("data-genera");
+            // Check to see whether this is the genera select button from this plot instance
+            if (self.plot_type == $(this).closest('.genera_select').attr('data-data-type')){
+                if (current_genera !== selected_genera) {
+                    genera_button.text(selected_genera);
+                    genera_button.attr("data-genera", selected_genera);
+    
+                    genera_button.closest('.plot_item').find(".genera_identifier").text(selected_genera);
+                    genera_button.closest('.plot_item').find(".genera_identifier").attr("data-genera", selected_genera);
+                    
+                    // Update the current selected genera
+                    self.current_genus = selected_genera;
+
+                    self._update_pc_dropd_on_genera_change()
+                    self._update_plot();
+                    self._init_pc_change_listener();
+                }
+            }
+        });
+        // Listerner for PC change. We init this via a function
+        // so that it can be reused
+        this._init_pc_change_listener();
     }
 
     //Plotting methods
     _update_plot(){
-        
         // Populate the data array that we will be using for plotting
         let data_to_plot = this._populate_data_array_to_plot();
 
@@ -137,7 +169,7 @@ class DistancePlot{
         // Update any changes to points that already exist
         dots.transition().duration(1000).attr("cx", d => x_scale(d.x)).attr("cy", d => y_scale(d.y))
             .style("fill", function (d) {
-                this._get_fill_color(d);
+                return self._get_fill_color(d);
             });
 
         // Remove points
@@ -161,7 +193,7 @@ class DistancePlot{
         let second_pc_variance = this.pc_variances[this.current_genus][this.available_pcs[this.current_genus].indexOf(this.current_second_pc)];
         if (y_axis_selection.length) {
             // Then the y axis title exists. Change the text of this axis
-            y_axis_selection.text(`${this.second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
+            y_axis_selection.text(`${this.current_second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
         } else {
             // yaxis doesn't exist. make from scratch
             this.svg.append("text").attr("class", "y_axis_title")
@@ -263,6 +295,48 @@ class DistancePlot{
         }
         return data_to_plot;
     }
+    _update_pc_dropd_on_genera_change() {
+        // When the genera changes, the PCs availabe need to change too.
+        this.$pc_select.empty()
+        // Skip PC1 in the for loop
+        for (let j = 1; j < this.available_pcs[this.current_genus].length; j++) {
+            this.$pc_select.append(`<a class="dropdown-item" data-pc="${this.available_pcs[this.current_genus][j]}">${this.available_pcs[this.current_genus][j]}</a>`);
+        }
+        // Then reset the button so that PC1 and PC2 will be used for the distance plot update
+        $(this.containing_card_id).find(".pc_selector").attr("data-pc", "PC2").html("PC2");    
+    }
+    // Init methods
+    _init_pc_change_listener(){
+        //When the genra drop down is created or changed we delete and repopulate the PC drop down menu
+        // according to the pcs that are available for the selected genus
+        // Upon doing so, we need to reinit the listener for the PC drop down click.
+        // Hence we have this method rather than just creating the listener once
+        // Listenting for the PC change on the distance plots
+        let self = this;
+        $(".pc_select a").click(function () {
+            // Check to see if this is the same pc select as the instances
+            if ($(this).closest('.pc_select').attr('data-data-type') == self.plot_type){
+                let pc_button = $(this).closest(".btn-group").find(".btn")
+                let current_pc = pc_button.attr("data-pc");
+                let selected_pc = $(this).attr("data-pc")
+                if (current_pc !== selected_pc) {
+                    pc_button.text(selected_pc);
+                    pc_button.attr("data-pc", selected_pc);
+                    // update the newly sected pc as the second pc so that the plotting has an effect
+                    self.current_second_pc = selected_pc;
+                    // Now update the plot
+                    self._update_plot();
+                }
+            }
+        });
+    }
+    _init_containing_card_id(){
+        if (this.plot_type == 'sample'){
+            return '#between_sample_distances';
+        }else if (this.plot_type == 'profile'){
+            return '#between_profile_distances';
+        }
+    }
     _init_axis_ids(){
         if (this.plot_type == 'sample'){
             let x_axis_id = "x_axis_btwn_sample";
@@ -274,7 +348,6 @@ class DistancePlot{
             return [x_axis_id, y_axis_id];
         }
     }
-    // Init methods
     _get_second_pc(){
         let pc_selector_text = $(this.svg_id).closest(".card-body").find(".pc_selector").attr("data-pc");
         if (pc_selector_text == "PC:") {
