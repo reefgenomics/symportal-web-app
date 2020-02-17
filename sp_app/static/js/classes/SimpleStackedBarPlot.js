@@ -13,7 +13,7 @@ class SimpleStackedBarPlot{
     // plots
     // We will use an extension of this for each of the post_med and 
     // profile plots that will contain the methods for doing the plotting
-    constructor({name_of_html_svg_object, get_data_method, get_max_y_val_method, sample_meta_info_method, profile_meta_info_method, plot_type}){
+    constructor({name_of_html_svg_object, get_data_method, get_max_y_val_method, plot_type}){
         // Get the object that has the sorting parameter as key
         // and a sorted list of the uids (either samples or profiles) as value
         this.plot_type = plot_type;
@@ -26,14 +26,14 @@ class SimpleStackedBarPlot{
         // This is used to scale the y axis
         this.max_y = get_max_y_val_method();
         // The object that holds the meta info for the samples
-        this.sample_meta_info = sample_meta_info_method();
+        this.sample_meta_info = getSampleMetaInfo();
         // Create a name to uid dictionary for the samples
         this.sample_name_to_uid_dict = this._make_name_to_uid_dict(this.sample_meta_info);
         if (this.plot_type == 'profile'){
             // If we are working with the profile plot instance
             // We will need a profile meta info dictionary as well and the corresponding
             // profile name to uid dictt
-            this.profile_meta_info = profile_meta_info_method();
+            this.profile_meta_info = getProfileMetaInfo();
             this.profile_name_to_uid_dict = this._make_name_to_uid_dict(this.profile_meta_info);
         }
         

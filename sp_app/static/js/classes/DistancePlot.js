@@ -145,6 +145,18 @@ class DistancePlot{
             }
             
         });
+
+        // Listening for the click of a more v button to show secondary sample meta info
+        $(".secondary_meta_info_collapser").click(function () {
+            // Change the text of the button div
+            if ($(this).attr("data-status") == "more") {
+                $(this).text('less ^');
+                $(this).attr("data-status", "less");
+            } else if ($(this).attr("data-status") == "less") {
+                $(this).text('more v');
+                $(this).attr("data-status", "more");
+            }
+        });
     }
 
     //Plotting methods

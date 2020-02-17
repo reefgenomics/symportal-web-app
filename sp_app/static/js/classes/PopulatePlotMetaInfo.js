@@ -1,5 +1,6 @@
 /* Declare a class that takes care of the annotation of the meta information that is populated below 
     the post-MED plot and below the profiles plot */
+    // TODO at some point this should probably be put into one of the plotting classes
     class PopulatePlotMetaInfo{
         constructor({meta_info_method, plot_type}){
             // Call the function that gets the meta info data object
