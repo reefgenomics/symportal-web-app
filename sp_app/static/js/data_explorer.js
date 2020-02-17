@@ -190,6 +190,23 @@ $(document).ready(function () {
             available_pcs_method: getBtwnSampleDistPCAvailableUF, 
             plot_type: 'sample'});
     }
+    if (typeof getBtwnProfileDistCoordsBC === "function") {
+        // use the braycurtis objects
+        const btwn_profile_plot = new DistancePlot({
+            name_of_html_svg_object: "#chart_btwn_profile", 
+            coord_data_method: getBtwnProfileDistCoordsBC, 
+            pc_variance_method: getBtwnProfileDistPCVariancesBC, 
+            available_pcs_method: getBtwnProfileDistPCAvailableBC, 
+            plot_type: 'profile'});
+    } else if (typeof getBtwnProfileDistCoordsUF === "function") {
+        // use the unifrac objects
+        const btwn_profile_plot = new DistancePlot({
+            name_of_html_svg_object: "#chart_btwn_profile", 
+            coord_data_method: getBtwnProfileDistCoordsUF, 
+            pc_variance_method: getBtwnProfileDistPCVariancesUF, 
+            available_pcs_method: getBtwnProfileDistPCAvailableUF, 
+            plot_type: 'profile'});
+    }
     
     // Distance colors
     // Process between samples first and then profiles because profiles may not exist and so may not need processing

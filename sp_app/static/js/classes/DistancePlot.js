@@ -21,6 +21,8 @@ class DistancePlot{
         [this.x_axis_id, this.y_axis_id] = this._init_axis_ids();
         [this.x_scale, this.y_scale] = this._init_axis_scales();
         [this.x_axis, this.y_axis] = this._init_axes();
+        // The string used to select the meta items info objects below the plot
+        this.meta_item_type = this._init_meta_item_type();
         // Add a clip
         this.svg.append("defs").append("clipPath")
             .attr("id", "sample_clip")
@@ -111,7 +113,7 @@ class DistancePlot{
 
         // create the data join
         let dots = this.scatter_group.selectAll("circle").data(data_to_plot, function (d) {
-            return d.data_object_value;
+            return d.data_object_key;
         });
 
         // Place any new scatter points
@@ -129,7 +131,7 @@ class DistancePlot{
             self._show_tool_tip(d, this);
         })
         .on("mouseout", function (d) {
-            dist_tooltip.transition().duration(500).style("visibility", "hidden");
+            self.tip.transition().duration(500).style("visibility", "hidden");
         });
 
         // Update any changes to points that already exist
@@ -190,9 +192,9 @@ class DistancePlot{
     }
     _show_tool_tip(d, outer_this){
         // Display the tool tip on the dist plot point
-        tip.transition().duration(200).style("visibility", "visible");
+        this.tip.transition().duration(200).style("visibility", "visible");
         // First we need to look at what the drop down currently says.
-        let data_series = this.object_meta_info[d.data_object_value.toString()];
+        let data_series = this.object_meta_info[d.data_object_key.toString()];
         let content;
         if (!this.selected_color_category_is_default) {
             // Then we can display additional info in the div
@@ -204,19 +206,19 @@ class DistancePlot{
         this.tip.html(content).style("left", (d3.event.pageX + 5) + "px").style("top", (d3.event.pageY - 28) + "px");
         // Apply the information in the sample/profile meta info area
         // First we need to get the genera/clade
-        $(outer_this).closest(".plot_item").find(meta_item_type).each(function () {
+        $(outer_this).closest(".plot_item").find(this.meta_item_type).each(function () {
             $(this).text(data_series[$(this).attr("data-key")]);
         });
     }
     _get_fill_color(d){
         if (this.current_color_scale) {
             if (this.current_color_key == "lat_lon") {
-                let lat_lon_str = this.object_meta_info[d.data_object_value]["lat"] + ';' + this.object_meta_info[d.data_object_value]["lon"];
+                let lat_lon_str = this.object_meta_info[d.data_object_key]["lat"] + ';' + this.object_meta_info[d.data_object_key]["lon"];
                 return this.current_color_scale(lat_lon_str);
             } else if (this.current_color_key == "profile_identity") {
-                return this.current_color_scale(d.data_object_value);
+                return this.current_color_scale(d.data_object_key);
             } else {
-                return this.current_color_scale(this.object_meta_info[d.data_object_value][this.current_color_key]);
+                return this.current_color_scale(this.object_meta_info[d.data_object_key][this.current_color_key]);
             }
         } else {
             return "rgba(0,0,0,0.5)";
@@ -323,6 +325,13 @@ class DistancePlot{
         let y_axis_scale = d3.scaleLinear()
             .rangeRound([this.height - this.margin.bottom, this.margin.top]);
         return [x_axis_scale, y_axis_scale];
+    }
+    _init_meta_item_type(){
+        if (this.plot_type == 'sample'){
+            return ".sample_meta_item";
+        }else if (this.plot_type == 'profile'){
+            return ".profile_meta_item";
+        }
     }
     _init_genera_to_obj_array_dict(){
         let temp_dict = {};
