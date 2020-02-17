@@ -119,6 +119,32 @@ class DistancePlot{
         // Listerner for PC change. We init this via a function
         // so that it can be reused
         this._init_pc_change_listener();
+
+        //Listening for the color dropdown button change
+        $(".color_select a").click(function () {
+            if ($(this).closest('.color_select').attr('data-data-type') == self.plot_type){
+                let color_button = $(this).closest(".btn-group").find(".btn")
+                let current_color = color_button.attr("data-color");
+                let selected_color = $(this).attr("data-color")
+
+                if (current_color !== selected_color) {
+                    color_button.text(selected_color);
+                    color_button.attr("data-color", selected_color);
+
+                    // We need to update the color settings for the distance plot instance
+                    [
+                        self.selected_color_category, 
+                        self.current_color_scale, 
+                        self.current_color_key, 
+                        self.selected_color_category_is_default
+                    ] = self._get_current_color_settings();
+                    
+                    // Then replot
+                    self._update_plot();
+                }
+            }
+            
+        });
     }
 
     //Plotting methods
@@ -367,7 +393,7 @@ class DistancePlot{
                 case "post_med_seqs_absolute":
                     return [selected_color, this.post_med_absolute_color_scale, this.color_category_to_color_key["post_med_seqs_absolute"], false];
                 case "post_med_seqs_unique":
-                    return [selected_color, this.post_med_unique_color_scale, btwn_sample_c_cat_key["post_med_seqs_unique"], false];
+                    return [selected_color, this.post_med_unique_color_scale, this.color_category_to_color_key["post_med_seqs_unique"], false];
                 case "no_color":
                     return [selected_color, false, 'no_color', true];
             }
