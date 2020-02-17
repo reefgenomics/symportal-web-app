@@ -180,7 +180,7 @@ $(document).ready(function () {
             coord_data_method: getBtwnSampleDistCoordsBC, 
             pc_variance_method: getBtwnSampleDistPCVariancesBC, 
             available_pcs_method: getBtwnSampleDistPCAvailableBC, 
-            plot_type='sample'});
+            plot_type: 'sample'});
     } else if (typeof getBtwnSampleDistCoordsUF === "function") {
         // use the unifrac objects
         const btwn_sample_plot = new DistancePlot({
@@ -188,7 +188,7 @@ $(document).ready(function () {
             coord_data_method: getBtwnSampleDistCoordsUF, 
             pc_variance_method: getBtwnSampleDistPCVariancesUF, 
             available_pcs_method: getBtwnSampleDistPCAvailableUF, 
-            plot_type='sample'});
+            plot_type: 'sample'});
     }
     
     // Distance colors
