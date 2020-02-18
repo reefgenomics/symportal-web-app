@@ -1,20 +1,47 @@
 //Class for abstracting the distance plots
 //We will aim to abstract both the between sample and between profile
 //plots using this class
+
+// TODO we are going to incorporate multiple ouputs with multiple distance methods and with
+// and without tranformations (sqrt) applied.
+// todo this we are going to add two new variables to the class that will be current dist method
+// and current sqrt. We will add a layer of keys to the data, pc_variances and available_pcs
+// that will be made up of a combination of the two new variables. We wil therefore be able to 
+// do plotting according to the state of these variables. We will need to add new listeners for their
+// selection and work on the plotting methods too most likely
+// This is going to be aweseome.
 class DistancePlot{
-    constructor({name_of_html_svg_object, coord_data_method, pc_variance_method, available_pcs_method, plot_type}){
+    constructor({name_of_html_svg_object, plot_type}){
         this.plot_type = plot_type;
         this.svg_id = name_of_html_svg_object;
         this.svg = d3.select(this.svg_id);
         this.sorted_uid_arrays = getSampleSortedArrays();
         this.sorting_keys = Object.keys(this.sorted_uid_arrays);
-        this.data = coord_data_method();
-        this.pc_variances = pc_variance_method();
-        this.available_pcs = available_pcs_method();
+        // Because there is the possibility that there are multiple distance type outputs
+        // with both sqrt and non_sqrt we must first dynamically search for which 
+        // methods and transformations are present and then and then we will 
+        // be able to create the data, pc_variances and available_pc variables
+        // using the combination of distance method and transformation as keys
+        // to each of these objects
+        // For the time being we will make the assumption that if there is no info on 
+        // whether a set of data has been sqrt transformed or not that it has been.
+        [
+            this.data, 
+            this.pc_variances, 
+            this.available_pcs, 
+            this.current_dist_method, 
+            this.current_sqrt,
+            this.genera_array,
+            this.genera_to_obj_array_dict,
+            this.data_sets_available_dict
+        ] = this._init_dist_data();
+        // this.data = coord_data_method();
+        // this.pc_variances = pc_variance_method();
+        // this.available_pcs = available_pcs_method();
         // For the between sample this will be a list of the samples
         // for between profiles it will be a lit of the profiles
-        this.genera_array = Object.keys(this.data);
-        this.genera_to_obj_array_dict = this._init_genera_to_obj_array_dict();
+        // this.genera_array = Object.keys(this.data);
+        // this.genera_to_obj_array_dict = this._init_genera_to_obj_array_dict();
         this.margin = {top: 35, left: 35, bottom: 20, right: 0};
         this.width = +this.svg.attr("width") - this.margin.left - this.margin.right;
         this.height = +this.svg.attr("height") - this.margin.top - this.margin.bottom;
@@ -72,7 +99,8 @@ class DistancePlot{
                 this.profile_identity_color_scale 
             ] = this._init_profile_color_scales();
         }
-        // init both the genus and pc available drop downs
+        this.containing_card_id = this._init_containing_card_id();
+        // init genus, pc, dist_method and sqrt drop downs
         this._init_dropdowns();
         // Get the current state of the objects. I.e. genus, color and second pc
         this.current_genus = $(this.svg_id).closest(".card").find(".genera_identifier").attr("data-genera");
@@ -85,7 +113,7 @@ class DistancePlot{
         this.current_second_pc = this._get_second_pc();
         // Assign the principal component section item to a instance variable so that we can
         // easily access it
-        this.containing_card_id = this._init_containing_card_id();
+        
         this.$pc_select = $(this.containing_card_id).find(".pc_select");
 
         // Finally, plot init the distance plot
@@ -110,12 +138,57 @@ class DistancePlot{
                     // Update the current selected genera
                     self.current_genus = selected_genera;
 
-                    self._update_pc_dropd_on_genera_change()
+                    self._update_pc_dropd_on_selector_change()
                     self._update_plot();
                     self._init_pc_change_listener();
                 }
             }
         });
+
+        // Listener for distance method change.
+        // We will have to reinit the PCs for both the distance method change and for the sqrt change
+        $(".distance_method_select a").click(function () {
+            let dist_button = $(this).closest(".btn-group").find(".btn");
+            let current_distance_method = dist_button.attr("data-dist");
+            let selected_distance_method = $(this).attr("data-dist");
+            // Check to see whether this is the genera select button from this plot instance
+            if (self.plot_type == $(this).closest('.distance_method_select').attr('data-data-type')){
+                if (current_distance_method !== selected_distance_method) {
+                    dist_button.text(selected_distance_method);
+                    dist_button.attr("data-dist", selected_distance_method);
+                    
+                    // Update the current selected distance method
+                    self.current_dist_method = selected_distance_method;
+
+                    self._update_pc_dropd_on_selector_change()
+                    self._update_plot();
+                    self._init_pc_change_listener();
+                }
+            }
+        });
+
+        // Listener for distance method change.
+        // We will have to reinit the PCs for both the distance method change and for the sqrt change
+        $(".sqrt_select a").click(function () {
+            let sqrt_button = $(this).closest(".btn-group").find(".btn");
+            let current_sqrt = sqrt_button.attr("data-sqrt");
+            let selected_sqrt = $(this).attr("data-sqrt");
+            // Check to see whether this is the genera select button from this plot instance
+            if (self.plot_type == $(this).closest('.sqrt_select').attr('data-data-type')){
+                if (current_sqrt !== selected_sqrt) {
+                    sqrt_button.text(selected_sqrt);
+                    sqrt_button.attr("data-sqrt", selected_sqrt);
+                    
+                    // Update the current selected distance method
+                    self.current_sqrt = selected_sqrt;
+
+                    self._update_pc_dropd_on_selector_change()
+                    self._update_plot();
+                    self._init_pc_change_listener();
+                }
+            }
+        });
+
         // Listerner for PC change. We init this via a function
         // so that it can be reused
         this._init_pc_change_listener();
@@ -227,8 +300,8 @@ class DistancePlot{
         let text_y = this.height / 2;
         let y_axis_selection = $(this.svg_id).find(".y_axis_title");
         // Get the variances of the PC1 and current second PC
-        let first_pc_variance = this.pc_variances[this.current_genus][this.available_pcs[this.current_genus].indexOf("PC1")];
-        let second_pc_variance = this.pc_variances[this.current_genus][this.available_pcs[this.current_genus].indexOf(this.current_second_pc)];
+        let first_pc_variance = this.pc_variances[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][this.current_genus].indexOf("PC1")];
+        let second_pc_variance = this.pc_variances[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][this.current_genus].indexOf(this.current_second_pc)];
         if (y_axis_selection.length) {
             // Then the y axis title exists. Change the text of this axis
             y_axis_selection.text(`${this.current_second_pc} - ${Number.parseFloat(second_pc_variance*100).toPrecision(2)}%`)
@@ -327,23 +400,124 @@ class DistancePlot{
             let obj_uid = object_array[i]
             data_to_plot.push({
                 data_object_key: obj_uid,
-                x: +this.data[this.current_genus][obj_uid]["PC1"],
-                y: +this.data[this.current_genus][obj_uid][this.current_second_pc]
+                x: +this.data[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][obj_uid]["PC1"],
+                y: +this.data[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][obj_uid][this.current_second_pc]
             })
         }
         return data_to_plot;
     }
-    _update_pc_dropd_on_genera_change() {
+    _update_pc_dropd_on_selector_change() {
         // When the genera changes, the PCs availabe need to change too.
         this.$pc_select.empty()
         // Skip PC1 in the for loop
-        for (let j = 1; j < this.available_pcs[this.current_genus].length; j++) {
-            this.$pc_select.append(`<a class="dropdown-item" data-pc="${this.available_pcs[this.current_genus][j]}">${this.available_pcs[this.current_genus][j]}</a>`);
+        for (let j = 1; j < this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][this.current_genus].length; j++) {
+            this.$pc_select.append(`<a class="dropdown-item" data-pc="${this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][j]}">${this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][j]}</a>`);
         }
         // Then reset the button so that PC1 and PC2 will be used for the distance plot update
         $(this.containing_card_id).find(".pc_selector").attr("data-pc", "PC2").html("PC2");    
     }
     // Init methods
+    _init_dist_data(){
+        // Variable to distinguish between looking for btwn sample or btwn profile functions
+        let sample_profile;
+        if (this.plot_type == 'sample'){
+            sample_profile = 'Sample';
+        }else if (this.plot_type == 'profile'){
+            sample_profile = 'Profile'
+        }
+
+        // The varaibles that we will be returning
+        // THe object that will hold the coordinates
+        let data = {};
+        // THe object that will hold the variances of the principal coodinates
+        let pc_variances = {};
+        // The pcs principal coordinates that exist for a given PCoA.
+        let available_pcs = {};
+        // The current distance method that is being displayed by the plot
+        let current_dist_method;
+        // Whether the data that is being displayed as been sqrt transformed or not
+        let current_sqrt;
+        // This is simply an array of the genera for which there are data
+        let genera_array;
+        // This will be genus key to array of objects (either samples or profiles).
+        // The objects that are to be displayed will not change dependent on the distance method or transformation
+        // so we can set this from any one of the data objects. To keep the code simple we will set it everytime
+        // we find a new data function
+        let genera_to_obj_array_dict = {};
+        // This will be a dictionary where key is distance method (UF or BC) and the value is an array that contains
+        // Sqrt, NoSqrt, dependent on whether those transformations are available for the given distance method.
+        // We will use this object when populating the drop down menus
+        let data_sets_available_dict = {};
+        // The arrays of distance type and transformations that will be used for searching
+        // dynamically for the function
+        let dist_types = ['UF', 'BC'];
+        let sqrt_array = ['Sqrt', 'NoSqrt'];
+        // Search for the functions dynamically using eval
+        let dist_type;
+        let sqrt_type;
+        for (dist_type of dist_types){
+            // Here we can check to see if the non_sqrt identified function exists
+            // If it does, then log this as though it is sqrt transformed
+            // If we found this then the likelyhood is that we won't find any other distance
+            // methods, but it does no harm to let the remainder of this method finish searching
+            try {
+                data[dist_type + '_Sqrt'] = eval('getBtwn' + sample_profile + 'DistCoords' + dist_type)();
+                pc_variances[dist_type + '_Sqrt'] = eval('getBtwn' + sample_profile + 'DistPCVariances' + dist_type)();
+                available_pcs[dist_type + '_Sqrt'] = eval('getBtwn' + sample_profile + 'DistPCAvailable' + dist_type)();
+                genera_array = Object.keys(data[dist_type + '_Sqrt']);
+                // Populate the genera_to_obj_array_dict
+                for (let i = 0; i < genera_array.length; i++) {
+                    let genus = genera_array[i];
+                    genera_to_obj_array_dict[genus] = Object.keys(data[dist_type + '_Sqrt'][genus]);
+                }
+                // Populate the data_sets_available_dict
+                data_sets_available_dict[dist_type] = ['Sqrt'];
+            } catch (e) {
+                if (e instanceof ReferenceError) {
+                    // Do nothing
+                }
+            }
+            
+            for (sqrt_type of sqrt_array){
+                try {
+                    data[dist_type + '_' + sqrt_type] = eval('getBtwn' + sample_profile + 'DistCoords' + dist_type + sqrt_type)();
+                    pc_variances[dist_type + '_' + sqrt_type] = eval('getBtwn' + sample_profile + 'DistPCVariances' + dist_type + sqrt_type)();
+                    available_pcs[dist_type + '_' + sqrt_type] = eval('getBtwn' + sample_profile + 'DistPCAvailable' + dist_type + sqrt_type)();
+                    genera_array = Object.keys(data[dist_type + '_' + sqrt_type]);
+                    // Populate the genera_to_obj_array_dict
+                    for (let i = 0; i < genera_array.length; i++) {
+                        let genus = genera_array[i];
+                        genera_to_obj_array_dict[genus] = Object.keys(data[dist_type + '_' + sqrt_type][genus]);
+                    }
+                    // Populate the data_sets_available_dict
+                    if (dist_type in Object.keys(data_sets_available_dict)){
+                        current_array = data_sets_available_dict[dist_type];
+                        current_array.push(sqrt_type);
+                    }else{
+                        data_sets_available_dict[dist_type] = [sqrt_type];
+                    }
+                } catch (e) {
+                    if (e instanceof ReferenceError) {
+                        // Do nothing
+                    }
+                }
+            } 
+        }
+        // Here we should have the data, pc_variables and available_pcs objects populated
+        // We should also populate the current_dist_method and current_sqrt variables
+        // Its probably best if we chose the dist_method and sqrt to start with according to an order
+        // So lets cycle through the possibilites in order of UF over BC and sqrt over No sqrt.
+        for (dist_type of dist_types){
+            for (sqrt_type of sqrt_array){
+                if (Object.keys(data).includes(dist_type + '_' + sqrt_type)){
+                    current_dist_method = dist_type;
+                    current_sqrt = sqrt_type;
+                }
+            }
+        }
+        return [data, pc_variances, available_pcs, current_dist_method, current_sqrt, genera_array, genera_to_obj_array_dict, data_sets_available_dict];
+
+    }
     _init_pc_change_listener(){
         //When the genra drop down is created or changed we delete and repopulate the PC drop down menu
         // according to the pcs that are available for the selected genus
@@ -444,14 +618,6 @@ class DistancePlot{
             return ".profile_meta_item";
         }
     }
-    _init_genera_to_obj_array_dict(){
-        let temp_dict = {};
-        for (let i = 0; i < this.genera_array.length; i++) {
-            let genera = this.genera_array[i];
-            temp_dict[genera] = Object.keys(this.data[genera]);
-        }
-        return temp_dict;
-    }
     _make_name_to_uid_dict(meta_info_obj){
         let temp_dict = {};
         Object.keys(meta_info_obj).forEach(function (uid) {
@@ -460,13 +626,9 @@ class DistancePlot{
         return temp_dict;
     }
     _init_dropdowns(){
+        // init the gnus dropdown
         let genera_array = ['Symbiodinium', 'Breviolum', 'Cladocopium', 'Durusdinium'];
-        let card_element;
-        if (this.plot_type == 'sample'){
-            card_element = $("#between_sample_distances");
-        }else if (this.plot_type == 'profile'){
-            card_element = $("#between_profile_distances");
-        }
+        let card_element = $(this.containing_card_id);
         let first_genera_present;
         for (let j = 0; j < genera_array.length; j++) {
             // init the genera_indentifier with the first of the genera in the genera_array that we have data for
@@ -488,11 +650,52 @@ class DistancePlot{
                 }
             }
         }
-        let pcs_available_genera = this.available_pcs[first_genera_present];
+
+        // init the pcs_available drop down
+        let pcs_available_genera = this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][first_genera_present];
         // Skip the first PC as we don't want PC1 in the options
         for (let j = 1; j < pcs_available_genera.length; j++) {
             card_element.find(".pc_select").append(`<a class="dropdown-item" data-pc="${pcs_available_genera[j]}">${pcs_available_genera[j]}</a>`)
         }
+
+        // init the dist_method drop down
+        // set the data attribute and text to the current distance method
+        if (this.current_dist_method == 'UF'){
+            card_element.find(".distance_method_selector").attr("data-dist", 'UF');
+            card_element.find(".distance_method_selector").text("UniFrac");
+            // Add select dropdown item if data for the 'other' data_type exists
+            // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
+            if (Object.keys(this.data_sets_available_dict).length == 2){
+                card_element.find(".dist_select").append(`<a class="dropdown-item" data-pc="BC">BC</a>`)
+            }
+        }else if (this.current_dist_method == 'BC'){
+            card_element.find(".distance_method_selector").attr("data-dist", 'BC');
+            card_element.find(".distance_method_selector").text("BracyCurtis");
+            if (Object.keys(this.data_sets_available_dict).length == 2){
+                card_element.find(".dist_select").append(`<a class="dropdown-item" data-dist="UF">UF</a>`)
+            }
+        }
+
+        // init the sqrt drop down
+        // this will be dependent on the current distance method.
+        if (this.current_sqrt == 'Sqrt'){
+            card_element.find(".sqrt_selector").attr("data-sqrt", 'Sqrt');
+            card_element.find(".sqrt_selector").text("Sqrt");
+            // Add select dropdown item if data for the 'other' data_type exists
+            // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
+            if (this.data_sets_available_dict[this.current_dist_method].length == 2){
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">NoSqrt</a>`)
+            }
+        }else if (this.current_dist_method == 'NoSqrt'){
+            card_element.find(".sqrt_selector").attr("data-dist", 'NoSqrt');
+            card_element.find(".sqrt_selector").text("NoSqrt");
+            // Add select dropdown item if data for the 'other' data_type exists
+            // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
+            if (this.data_sets_available_dict[this.current_dist_method].length == 2){
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">Sqrt</a>`)
+            }
+        }
+        
     }
     _init_color_by_categories(){
         if (this.plot_type == 'sample'){

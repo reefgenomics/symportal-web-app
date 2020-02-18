@@ -291,10 +291,10 @@ Have a network window for when the sample is clicked on (this can be later)
                 <div class="genera_identifier" style="font-weight:bold;font-style: italic;"></div>
             </div>
             <div class="card-body p-0 collapse show" id="btwn_sample_dist_collapse">
-                <!--TODO implement selction for PC to view.-->
                 <div class="bg-light p-2" >
                     <div class="d-flex">
                         <div class="btn-group btn-group-sm mr-auto" >
+                            <!-- genus selector -->
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle genera_select_button" data-toggle="dropdown" data-genera="Genera:" style="padding:2px 4px;font-size:0.7rem;">
                                    Genera:
@@ -302,6 +302,7 @@ Have a network window for when the sample is clicked on (this can be later)
                                 <div class="dropdown-menu genera_select" data-data-type="sample" style="padding:2px 4px;font-size:0.7rem;">
                                 </div>
                             </div>
+                            <!-- color selector -->
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle color_select_button" data-toggle="dropdown" data-color="no_color" style="padding:2px 4px;font-size:0.7rem;">
                                    no_color
@@ -310,14 +311,31 @@ Have a network window for when the sample is clicked on (this can be later)
 
                                 </div>
                             </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-primary dropdown-toggle pc_selector" data-toggle="dropdown" data-pc="PC2" style="padding:2px 4px;font-size:0.7rem;">
-                               PC2
-                            </button>
-                            <div class="dropdown-menu pc_select" data-data-type='sample' style="padding:2px 4px;font-size:0.7rem;">
+                            <!-- pc selector -->
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle pc_selector" data-toggle="dropdown" data-pc="PC2" style="padding:2px 4px;font-size:0.7rem;">
+                                PC2
+                                </button>
+                                <div class="dropdown-menu pc_select" data-data-type='sample' style="padding:2px 4px;font-size:0.7rem;">
 
+                                </div>
                             </div>
-                        </div>
+                            <!-- distance method selector -->
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle distance_method_selector" data-toggle="dropdown" data-dist="none" style="padding:2px 4px;font-size:0.7rem;">
+                                   not initiated
+                                </button>
+                                <div class="dropdown-menu distance_method_select" data-data-type='sample' style="padding:2px 4px;font-size:0.7rem;">
+                                </div>
+                            </div>
+                            <!-- transformation selector -->
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle sqrt_selector" data-toggle="dropdown" data-trans="none" style="padding:2px 4px;font-size:0.7rem;">
+                                   not initiated
+                                </button>
+                                <div class="dropdown-menu sqrt_select" data-data-type='sample' style="padding:2px 4px;font-size:0.7rem;">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -353,6 +371,7 @@ Have a network window for when the sample is clicked on (this can be later)
                 <div class="bg-light p-2" >
                     <div class="d-flex">
                         <div class="btn-group btn-group-sm mr-auto" >
+                            <!-- genus selector -->
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle genera_select_button" data-toggle="dropdown" style="padding:2px 4px;font-size:0.7rem;">
                                    Genera:
@@ -360,6 +379,7 @@ Have a network window for when the sample is clicked on (this can be later)
                                 <div class="dropdown-menu genera_select" data-data-type="profile" style="padding:2px 4px;font-size:0.7rem;">
                                 </div>
                             </div>
+                            <!-- color selector -->
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle color_select_button" data-toggle="dropdown" data-color="profile_identity" style="padding:2px 4px;font-size:0.7rem;">
                                    profile_identity
@@ -368,11 +388,28 @@ Have a network window for when the sample is clicked on (this can be later)
 
                                 </div>
                             </div>
+                            <!-- pc selector -->
                             <div class="btn-group">
                                 <button type="button" class="btn btn-primary dropdown-toggle pc_selector" data-toggle="dropdown" data-pc="PC2" style="padding:2px 4px;font-size:0.7rem;">
                                    PC2
                                 </button>
                                 <div class="dropdown-menu pc_select" data-data-type='profile' style="padding:2px 4px;font-size:0.7rem;">
+                                </div>
+                            </div>
+                            <!-- distance method selector -->
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle distance_method_selector" data-toggle="dropdown" data-dist="none" style="padding:2px 4px;font-size:0.7rem;">
+                                   not initiated
+                                </button>
+                                <div class="dropdown-menu distance_method_select" data-data-type='profile' style="padding:2px 4px;font-size:0.7rem;">
+                                </div>
+                            </div>
+                            <!-- transformation selector -->
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle sqrt_selector" data-toggle="dropdown" data-trans="none" style="padding:2px 4px;font-size:0.7rem;">
+                                   not initiated
+                                </button>
+                                <div class="dropdown-menu sqrt_select" data-data-type='profile' style="padding:2px 4px;font-size:0.7rem;">
                                 </div>
                             </div>
                         </div>
