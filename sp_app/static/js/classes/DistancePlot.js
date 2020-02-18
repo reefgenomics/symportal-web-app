@@ -154,40 +154,23 @@ class DistancePlot{
             // Check to see whether this is the genera select button from this plot instance
             if (self.plot_type == $(this).closest('.distance_method_select').attr('data-data-type')){
                 if (current_distance_method !== selected_distance_method) {
-                    dist_button.text(selected_distance_method);
+                    dist_button.text((selected_distance_method === 'UF') ? "UniFrac" : "BrayCurtis");
                     dist_button.attr("data-dist", selected_distance_method);
                     
                     // Update the current selected distance method
                     self.current_dist_method = selected_distance_method;
-
+                    self._update_sqrt_dropd_on_selector_change();
                     self._update_pc_dropd_on_selector_change()
                     self._update_plot();
                     self._init_pc_change_listener();
+                    self._init_sqrt_change_listner();
                 }
             }
         });
 
-        // Listener for distance method change.
+        // Listener for sqrt method change.
         // We will have to reinit the PCs for both the distance method change and for the sqrt change
-        $(".sqrt_select a").click(function () {
-            let sqrt_button = $(this).closest(".btn-group").find(".btn");
-            let current_sqrt = sqrt_button.attr("data-sqrt");
-            let selected_sqrt = $(this).attr("data-sqrt");
-            // Check to see whether this is the genera select button from this plot instance
-            if (self.plot_type == $(this).closest('.sqrt_select').attr('data-data-type')){
-                if (current_sqrt !== selected_sqrt) {
-                    sqrt_button.text(selected_sqrt);
-                    sqrt_button.attr("data-sqrt", selected_sqrt);
-                    
-                    // Update the current selected distance method
-                    self.current_sqrt = selected_sqrt;
-
-                    self._update_pc_dropd_on_selector_change()
-                    self._update_plot();
-                    self._init_pc_change_listener();
-                }
-            }
-        });
+        this._init_sqrt_change_listner();
 
         // Listerner for PC change. We init this via a function
         // so that it can be reused
@@ -231,7 +214,55 @@ class DistancePlot{
             }
         });
     }
+    // Listener functions
+    _init_pc_change_listener(){
+        //When the genra drop down is created or changed we delete and repopulate the PC drop down menu
+        // according to the pcs that are available for the selected genus
+        // Upon doing so, we need to reinit the listener for the PC drop down click.
+        // Hence we have this method rather than just creating the listener once
+        // Listenting for the PC change on the distance plots
+        let self = this;
+        $(".pc_select a").click(function () {
+            // Check to see if this is the same pc select as the instances
+            if ($(this).closest('.pc_select').attr('data-data-type') == self.plot_type){
+                let pc_button = $(this).closest(".btn-group").find(".btn")
+                let current_pc = pc_button.attr("data-pc");
+                let selected_pc = $(this).attr("data-pc")
+                if (current_pc !== selected_pc) {
+                    pc_button.text(selected_pc);
+                    pc_button.attr("data-pc", selected_pc);
+                    // update the newly sected pc as the second pc so that the plotting has an effect
+                    self.current_second_pc = selected_pc;
+                    // Now update the plot
+                    self._update_plot();
+                }
+            }
+        });
+    }
+    _init_sqrt_change_listner(){
+        // Listener for sqrt method change.
+        // We will have to reinit the PCs for both the distance method change and for the sqrt change
+        let self = this;
+        $(".sqrt_select a").click(function () {
+            let sqrt_button = $(this).closest(".btn-group").find(".btn");
+            let current_sqrt = sqrt_button.attr("data-sqrt");
+            let selected_sqrt = $(this).attr("data-sqrt");
+            // Check to see whether this is the genera select button from this plot instance
+            if (self.plot_type == $(this).closest('.sqrt_select').attr('data-data-type')){
+                if (current_sqrt !== selected_sqrt) {
+                    sqrt_button.text(selected_sqrt);
+                    sqrt_button.attr("data-sqrt", selected_sqrt);
+                    
+                    // Update the current selected distance method
+                    self.current_sqrt = selected_sqrt;
 
+                    self._update_pc_dropd_on_selector_change()
+                    self._update_plot();
+                    self._init_pc_change_listener();
+                }
+            }
+        });
+    }
     //Plotting methods
     _update_plot(){
         // Populate the data array that we will be using for plotting
@@ -406,6 +437,37 @@ class DistancePlot{
         }
         return data_to_plot;
     }
+    _update_sqrt_dropd_on_selector_change(){
+        // When the distance method changes we need to update the sqrt selector
+        // init the sqrt drop down
+        // this will be dependent on the current distance method.
+        let card_element = $(this.containing_card_id);
+        card_element.find('.sqrt_select').empty();
+        if (this.current_sqrt == 'Sqrt'){
+            card_element.find(".sqrt_selector").attr("data-sqrt", 'Sqrt');
+            card_element.find(".sqrt_selector").text("Sqrt");
+            // Add select dropdown item if data for the 'other' data_type exists
+            // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
+            if (this.data_sets_available_dict[this.current_dist_method].length == 2){
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
+            }else{
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
+            }
+        }else if (this.current_sqrt == 'NoSqrt'){
+            card_element.find(".sqrt_selector").attr("data-sqrt", 'NoSqrt');
+            card_element.find(".sqrt_selector").text("NoSqrt");
+            // Add select dropdown item if data for the 'other' data_type exists
+            // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
+            if (this.data_sets_available_dict[this.current_dist_method].length == 2){
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
+            }else{
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
+            }
+        }
+        
+    }
     _update_pc_dropd_on_selector_change() {
         // When the genera changes, the PCs availabe need to change too.
         this.$pc_select.empty()
@@ -414,7 +476,8 @@ class DistancePlot{
             this.$pc_select.append(`<a class="dropdown-item" data-pc="${this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][j]}">${this.available_pcs[this.current_dist_method + '_' + this.current_sqrt][this.current_genus][j]}</a>`);
         }
         // Then reset the button so that PC1 and PC2 will be used for the distance plot update
-        $(this.containing_card_id).find(".pc_selector").attr("data-pc", "PC2").html("PC2");    
+        $(this.containing_card_id).find(".pc_selector").attr("data-pc", "PC2").html("PC2");
+        this.current_second_pc = "PC2";
     }
     // Init methods
     _init_dist_data(){
@@ -490,9 +553,10 @@ class DistancePlot{
                         genera_to_obj_array_dict[genus] = Object.keys(data[dist_type + '_' + sqrt_type][genus]);
                     }
                     // Populate the data_sets_available_dict
-                    if (dist_type in Object.keys(data_sets_available_dict)){
-                        current_array = data_sets_available_dict[dist_type];
+                    if (Object.keys(data_sets_available_dict).includes(dist_type)){
+                        let current_array = data_sets_available_dict[dist_type];
                         current_array.push(sqrt_type);
+                        data_sets_available_dict[dist_type] = current_array;
                     }else{
                         data_sets_available_dict[dist_type] = [sqrt_type];
                     }
@@ -507,40 +571,21 @@ class DistancePlot{
         // We should also populate the current_dist_method and current_sqrt variables
         // Its probably best if we chose the dist_method and sqrt to start with according to an order
         // So lets cycle through the possibilites in order of UF over BC and sqrt over No sqrt.
+        loop1:
         for (dist_type of dist_types){
             for (sqrt_type of sqrt_array){
                 if (Object.keys(data).includes(dist_type + '_' + sqrt_type)){
                     current_dist_method = dist_type;
                     current_sqrt = sqrt_type;
+                    break loop1;
                 }
             }
         }
         return [data, pc_variances, available_pcs, current_dist_method, current_sqrt, genera_array, genera_to_obj_array_dict, data_sets_available_dict];
 
     }
-    _init_pc_change_listener(){
-        //When the genra drop down is created or changed we delete and repopulate the PC drop down menu
-        // according to the pcs that are available for the selected genus
-        // Upon doing so, we need to reinit the listener for the PC drop down click.
-        // Hence we have this method rather than just creating the listener once
-        // Listenting for the PC change on the distance plots
-        let self = this;
-        $(".pc_select a").click(function () {
-            // Check to see if this is the same pc select as the instances
-            if ($(this).closest('.pc_select').attr('data-data-type') == self.plot_type){
-                let pc_button = $(this).closest(".btn-group").find(".btn")
-                let current_pc = pc_button.attr("data-pc");
-                let selected_pc = $(this).attr("data-pc")
-                if (current_pc !== selected_pc) {
-                    pc_button.text(selected_pc);
-                    pc_button.attr("data-pc", selected_pc);
-                    // update the newly sected pc as the second pc so that the plotting has an effect
-                    self.current_second_pc = selected_pc;
-                    // Now update the plot
-                    self._update_plot();
-                }
-            }
-        });
+    _get_current_dist_method_and_sqrt(){
+        
     }
     _init_containing_card_id(){
         if (this.plot_type == 'sample'){
@@ -660,19 +705,30 @@ class DistancePlot{
 
         // init the dist_method drop down
         // set the data attribute and text to the current distance method
+        // It is important that we add all distance methods (including the currently selected one)
+        // as drop down items. Same for the sqrt dropdown. This is because we other wise end up with
+        // circular referencing of clearing and recreating listener for the drop down
         if (this.current_dist_method == 'UF'){
             card_element.find(".distance_method_selector").attr("data-dist", 'UF');
             card_element.find(".distance_method_selector").text("UniFrac");
             // Add select dropdown item if data for the 'other' data_type exists
             // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
             if (Object.keys(this.data_sets_available_dict).length == 2){
-                card_element.find(".dist_select").append(`<a class="dropdown-item" data-pc="BC">BC</a>`)
+                // Make sure that both of the dist method options are available in the drop down
+                card_element.find(".distance_method_select").append(`<a class="dropdown-item" data-dist="BC">BrayCurtis</a>`);
+                card_element.find(".distance_method_select").append(`<a class="dropdown-item" data-dist="UF">UniFrac</a>`);
+            }else{
+                card_element.find(".distance_method_select").append(`<a class="dropdown-item" data-dist="UF">UniFrac</a>`);
             }
         }else if (this.current_dist_method == 'BC'){
             card_element.find(".distance_method_selector").attr("data-dist", 'BC');
             card_element.find(".distance_method_selector").text("BracyCurtis");
             if (Object.keys(this.data_sets_available_dict).length == 2){
-                card_element.find(".dist_select").append(`<a class="dropdown-item" data-dist="UF">UF</a>`)
+                // Make sure that both of the dist method options are available in the drop down
+                card_element.find(".distance_method_select").append(`<a class="dropdown-item" data-dist="BC">BrayCurtis</a>`);
+                card_element.find(".distance_method_select").append(`<a class="dropdown-item" data-dist="UF">UniFrac</a>`);
+            }else{
+                card_element.find(".distance_method_select").append(`<a class="dropdown-item" data-dist="BC">BrayCurtis</a>`);
             }
         }
 
@@ -684,15 +740,21 @@ class DistancePlot{
             // Add select dropdown item if data for the 'other' data_type exists
             // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
             if (this.data_sets_available_dict[this.current_dist_method].length == 2){
-                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">NoSqrt</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
+            }else{
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
             }
         }else if (this.current_dist_method == 'NoSqrt'){
-            card_element.find(".sqrt_selector").attr("data-dist", 'NoSqrt');
+            card_element.find(".sqrt_selector").attr("data-sqrt", 'NoSqrt');
             card_element.find(".sqrt_selector").text("NoSqrt");
             // Add select dropdown item if data for the 'other' data_type exists
             // We can look to see how many keys there are in the data_sets_available_dict as a proxy for this
             if (this.data_sets_available_dict[this.current_dist_method].length == 2){
-                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">Sqrt</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
+            }else{
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
             }
         }
         
