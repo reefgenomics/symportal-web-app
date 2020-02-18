@@ -71,6 +71,16 @@ class SimpleStackedBarPlot{
         // Whether the plot is currently displaying absolute or relative abundances
         this.absolute_relative = this._init_absolute_realtive();
 
+        //Variables for initiating the meta information below the plots
+        [
+            this.meta_annotation_to_key, 
+            this.meta_info_annotation_order_array_primary, 
+            this.meta_info_annotation_order_array_secondary,
+            this.available_meta_info
+        ] = this._init_meta_info_vars();
+        // Then populate the info containers below the plots
+        this._init_plot_meta_info_holders();
+
         // Listeners
         // Relative to Absolute data distplay toggle
         let self = this;
@@ -280,6 +290,87 @@ class SimpleStackedBarPlot{
     }
 
     // Private init methods
+    _init_plot_meta_info_holders(){
+        // Init the primary info
+        for (let i = 0; i < this.meta_info_annotation_order_array_primary.length; i++) {
+            let annotation = this.meta_info_annotation_order_array_primary[i];
+            if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation])) {
+                // We want to put taxa on its own line because it is so big and the other two paris on the same line
+                if (annotation == "taxa") {
+                    if (this.plot_type == 'post_med'){
+                        $(".primary_sample_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }else if (this.plot_type == 'profile'){
+                        $(".primary_profile_meta").append(`<div style="width:100%;"><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }
+                } else {
+                    if (this.plot_type == 'post_med'){
+                        $(".primary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }else if (this.plot_type == 'profile'){
+                        $(".primary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }
+                }
+            }
+        }
+        
+        // Init the secondary info
+        for (let i = 0; i < this.meta_info_annotation_order_array_secondary.length; i++) {
+            let annotation = this.meta_info_annotation_order_array_secondary[i];
+            if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation])) {
+                if (this.plot_type == 'post_med'){
+                    $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                }else if (this.plot_type == 'profile'){
+                    $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                }
+            }
+        }
+    }
+    _init_meta_info_vars(){
+        if (this.plot_type == 'post_med'){
+            let meta_annotation_to_key = {
+            "sample": "name",
+            "UID": "uid",
+            "taxa": "taxa_string",
+            "lat": "lat",
+            "lon": "lon",
+            "collection_date": "collection_date",
+            "depth": "collection_depth",
+            "clade_relative_abund": "clade_prop_string",
+            "clade_absolute_abund": "clade_abs_abund_string",
+            "raw_contigs": "raw_contigs",
+            "post_qc_absolute": "post_taxa_id_absolute_symbiodinium_seqs",
+            "post_qc_unique": "post_taxa_id_unique_symbiodinium_seqs",
+            "post_med_absolute": "post_med_absolute",
+            "post_med_unique": "post_med_unique",
+            "non_Symbiodiniaceae_absolute": "post_taxa_id_absolute_non_symbiodinium_seqs",
+            "non_Symbiodiniaceae_unique": "post_taxa_id_unique_non_symbiodinium_seqs"
+            };
+            let meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
+            let meta_info_annotation_order_array_secondary = ["collection_date", "depth",
+                "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
+                "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
+            ];
+            let available_meta_info = Object.keys(this.sample_meta_info[Object.keys(this.sample_meta_info)[0]]);
+            return [meta_annotation_to_key, meta_info_annotation_order_array_primary, meta_info_annotation_order_array_secondary, available_meta_info];
+        }else if (this.plot_type == 'profile'){
+            let meta_annotation_to_key = {
+                "profile": "name",
+                "UID": "uid",
+                "genera": "genera",
+                "maj_seq": "maj_its2_seq",
+                "associated species": "assoc_species",
+                "local_abund": "local_abund",
+                "db_abund": "db_abund",
+                "seq_uids": "seq_uids",
+                "seq_abund_string": "seq_abund_string"
+            };
+            let meta_info_annotation_order_array_primary = ["profile", "UID", "genera"];
+            let meta_info_annotation_order_array_secondary = ["maj_seq", "species", "local_abund", "db_abund",
+                "seq_uids", "seq_abund_string"
+            ];
+            let available_meta_info = Object.keys(this.profile_meta_info[Object.keys(this.profile_meta_info)[0]]);
+            return [meta_annotation_to_key, meta_info_annotation_order_array_primary, meta_info_annotation_order_array_secondary, available_meta_info];
+        }
+    }
     _make_name_to_uid_dict(meta_info_obj){
         let temp_dict = {};
         Object.keys(meta_info_obj).forEach(function (uid) {

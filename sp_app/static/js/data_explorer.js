@@ -15,18 +15,6 @@ $(document).ready(function () {
 
     const download_popualtor = new DownloadResourcesPopulator();
     download_popualtor.populate_downloads();
-
-    
-    // The post-MED meta info populator
-    const sample_meta_info_populator = new PopulatePlotMetaInfo({meta_info_method: getSampleMetaInfo, plot_type:'post_med'});
-    sample_meta_info_populator.populateMetaInfo()
-
-    // The profile meta info populator
-    let profile_meta_info_populator;
-    if (analysis){
-        profile_meta_info_populator = new PopulatePlotMetaInfo({meta_info_method: getProfileMetaInfo, plot_type: 'profile'});
-        profile_meta_info_populator.populateMetaInfo()
-    }
     
     // The post_med_stacked_bar_plot, profile_stacked_bar_plot and profile 
     /* Create the plot objects via class abstraction
