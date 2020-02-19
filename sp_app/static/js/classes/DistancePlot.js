@@ -452,7 +452,7 @@ class DistancePlot{
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
             }else{
-                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
             }
         }else if (this.current_sqrt == 'NoSqrt'){
             card_element.find(".sqrt_selector").attr("data-sqrt", 'NoSqrt');
@@ -463,7 +463,7 @@ class DistancePlot{
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
             }else{
-                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
             }
         }
         
@@ -743,7 +743,7 @@ class DistancePlot{
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
             }else{
-                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
             }
         }else if (this.current_dist_method == 'NoSqrt'){
             card_element.find(".sqrt_selector").attr("data-sqrt", 'NoSqrt');
@@ -754,7 +754,7 @@ class DistancePlot{
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
                 card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
             }else{
-                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="Sqrt">"Sqrt"</a>`)
+                card_element.find(".sqrt_select").append(`<a class="dropdown-item" data-sqrt="NoSqrt">"NoSqrt"</a>`)
             }
         }
         
