@@ -1,6 +1,5 @@
 $(document).ready(function () {
 
-    
     /* Populate the tabs that display the information on the DataSet, the DataAnalysis
     and the resources that can be downloaded */
     const data_set_info_populator = new DataSetInformationCardPopulator();

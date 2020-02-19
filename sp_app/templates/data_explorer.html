@@ -104,14 +104,19 @@ Have a network window for when the sample is clicked on (this can be later)
 
         <!--POST MED SVG HOLDER-->
         <div class="card mb-3 plot_item" id="post_med_card">
-
             <div class="card-header d-inline-flex" data-toggle="collapse" data-target="#post_med_svg_collapse">
                 <div class="mr-auto">Post-MED ITS2 sequences</div>
-
-
             </div>
 
             <div class="card-body p-0 collapse show" id="post_med_svg_collapse">
+                <div id="post_med_progress_bar_container" style="width:100%; height:16px; background-color:grey; position: relative; display:none;">
+                    <div id="post_med_progress_bar" style="width:0%; background-color:green; height:16px; display:block;">
+
+                    </div>
+                    <div id="post_med_progress_bar_text_holder" style="position:absolute; top:0px; left:0px; height:10px; font-size: 10px; font-weight:bold; color: white;">
+                        
+                    </div>
+                </div>
                 <div class="bg-light p-2" >
                     <div class="d-flex">
                         <div class="btn-group btn-group-sm mr-auto" >
@@ -229,6 +234,14 @@ Have a network window for when the sample is clicked on (this can be later)
             </div>
             <!--CARD BODY-->
             <div class="card-body p-0 collapse show" id="profile_svg_collapse">
+                <div id="profile_progress_bar_container" style="width:100%; height:16px; background-color:grey; position: relative; display:none;">
+                    <div id="profile_progress_bar" style="width:0%; background-color:green; height:16px; display:block;">
+
+                    </div>
+                    <div id="profile_progress_bar_text_holder" style="position:absolute; top:0px; left:0px; height:10px; font-size: 10px; font-weight:bold; color: white;">
+                        
+                    </div>
+                </div>
                 <div class="bg-light p-2" >
                     <div class="d-flex">
                         <div class="btn-group btn-group-sm mr-auto" >

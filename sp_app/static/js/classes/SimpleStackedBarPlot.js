@@ -20,6 +20,9 @@ class SimpleStackedBarPlot{
         this.sorted_uid_arrays = getSampleSortedArrays();
         this.sorting_keys = Object.keys(this.sorted_uid_arrays);
         this.svg = d3.select(name_of_html_svg_object);
+        [this.$progress_bar_container, this.$progress_bar, this.$progress_bar_text_holder] = this._init_progress_bar();
+        
+        
         // The object containing the rectangle data to be plotted
         this.data = get_data_method();
         // The maximum absolute count for a given sample
@@ -42,6 +45,7 @@ class SimpleStackedBarPlot{
         // If profile_based is available (i.e. if there was an analysis) start
         // with this. Else start with similarity.
         this.current_sample_order_array = this._init_current_sample_order_array();
+        this.progress_bar_increment = 100/this.current_sample_order_array.length;
         this.margin = this._init_margin();
         this.plot_speed = this._init_plot_speed();
         [this.width, this.height] = this._init_width_and_height();
@@ -132,17 +136,24 @@ class SimpleStackedBarPlot{
     // Base level plotting functions
     // Plotting methods
     update_plot(){
+        // First show the progress bar
+        this.$progress_bar_container.show();
+        // Init the text of the progress bar
+        this.$progress_bar_text_holder.text(`Plotting ${this.plot_type} stacked bar plots`);
+        
         //First update the x_scale and y_scale domains
         this._update_axes_domains();
         
         // Code that does the majoirty of the replotting
+        // TODO lets try to run this as a series of call backs and see where that gets us
+        // we can increment the i within the method and pass it back in and check if it is less than
+        // this.current_sample_order_array.length
+        
+        
+        // setTimeout(this._replot_data.bind(this), 0, 0);
         for (let i = 0; i < this.current_sample_order_array.length; i++) {
-            if (i == this.current_sample_order_array.length -1){
-                // Then we want to pass in the _update_axes method as a callback
-                this._replot_data([this.current_sample_order_array[i], true]);
-            }else{
-                this._replot_data([this.current_sample_order_array[i], false]);
-            }
+            // Then we want to pass in the _update_axes method as a callback
+            setTimeout(this._replot_data.bind(this), 0, i);            
         }
     }
     _update_axes_domains(){
@@ -153,8 +164,8 @@ class SimpleStackedBarPlot{
         }
         this.x_scale.domain(this.current_sample_order_array);
     }
-    _replot_data([sample_uid, should_update_axes]){
-        
+    _replot_data(index_int){
+        let sample_uid = this.current_sample_order_array[index_int]
         // Bars is the join that we will call exit
         let bars = this.svg.select("g.s" + sample_uid).selectAll("rect").data(this.data[sample_uid], function (d) {
             if (this.plot_type == 'post_med'){
@@ -225,10 +236,29 @@ class SimpleStackedBarPlot{
                     return color_scale(profile_name_to_uid_dict[d.profile_name]);
                 }
             });
-
-        // finally if the call aces method has been passed in then call it
-        if (should_update_axes) { 
+        
+        // TODO this is where we will do any code that is associated with incrementing the progress bar
+        // For the time being lets just aim to incrementally increase the progress bar
+        
+        // Get the current width of the progress bar
+        let current_width_of_prog_bar = (this.$progress_bar.width() / this.$progress_bar.parent().width()) * 100
+        let new_width = current_width_of_prog_bar + this.progress_bar_increment;
+        
+        // finally if the call axes method has been passed in then call it
+        if (index_int == this.current_sample_order_array.length - 1){
+            // Then we just plotted the last sample and we should now call axes
             this._update_axes();
+            this.$progress_bar.width("100%");
+            this.$progress_bar_text_holder.text(`Plotting complete. Rendering axes...`)
+        }else{
+            // There are more samples to plot and we should recall this method
+            // setTimeout(this._replot_data.bind(this), 0, index_int + 1);
+            if (new_width < 100){
+                this.$progress_bar.width(`${new_width}%`);
+                this.$progress_bar_text_holder.text(`Plotting sample ${index_int} outof ${this.current_sample_order_array.length}`)
+            }else{
+                this.$progress_bar.width("100%");
+            }
         }
         
     }
@@ -274,6 +304,16 @@ class SimpleStackedBarPlot{
                 d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
             })
         })
+
+        // Hide the progress bar
+        // TODO briefly write loading complete and then hide the progress bar using time out or something similar.
+        setTimeout(function (self){
+            self.$progress_bar_container.hide();
+        }, 2000, self);
+        // And reset the width to 0
+        setTimeout(function (self){
+            self.$progress_bar.width('0%');
+        }, 2000, self);
     }
     _ellipse_axis_labels(text_obj){
         var self = d3.select(text_obj),
@@ -288,6 +328,13 @@ class SimpleStackedBarPlot{
     }
 
     // Private init methods
+    _init_progress_bar(){
+        if (this.plot_type == 'post_med'){
+            return [$("#post_med_progress_bar_container"), $("#post_med_progress_bar"), $("#post_med_progress_bar_text_holder")]
+        }else if (this.plot_type == 'profile'){
+            return [$("#profile_progress_bar_container"), $("#profile_progress_bar"), $("#profile_progress_bar_text_holder")]
+        }
+    }
     _init_plot_meta_info_holders(){
         // Init the primary info
         for (let i = 0; i < this.meta_info_annotation_order_array_primary.length; i++) {
@@ -385,6 +432,7 @@ class SimpleStackedBarPlot{
     }
     _update_current_sample_order_array(sorting_key){
         this.current_sample_order_array = this.sorted_uid_arrays[sorting_key];
+        this.progress_bar_increment = 100/this.current_sample_order_array.length;
     }
     _init_margin(){return {top: 30, left: 35, bottom: 60, right: 0};}  
     _init_plot_speed(){
