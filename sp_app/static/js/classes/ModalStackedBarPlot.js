@@ -109,13 +109,12 @@ class ModalStackedBarPlot{
         // Code that does the majoirty of the replotting
         let cumulative_time = 0;
         for (let i = 0; i < this.current_sample_order_array.length; i++) {
-            setTimeout(
-                //https://stackoverflow.com/questions/5911211/settimeout-inside-javascript-class-using-this
-                this._replot_data.bind(this), 
-                i * this.post_med_plot_speed, 
-                this.current_sample_order_array[i],
-            );
-            cumulative_time += this.plot_speed;
+            if (i == this.current_sample_order_array.length -1){
+                // Then we want to pass in the _update_axes method as a callback
+                this._replot_data([this.current_sample_order_array[i], true]);
+            }else{
+                this._replot_data([this.current_sample_order_array[i], false]);
+            }
         }
         
         // Now draw the axis last so that they are on top of the bars
@@ -136,7 +135,7 @@ class ModalStackedBarPlot{
         }
         this.x_scale.domain(this.current_sample_order_array);
     }
-    _replot_data(sample_uid){
+    _replot_data([sample_uid, update_axes]){
         
         // Bars is the join that we will call exit
         let post_med_bars = this.post_med_svg.select("g.s" + sample_uid).selectAll("rect").data(this.post_med_data[sample_uid], function (d) {
@@ -234,6 +233,12 @@ class ModalStackedBarPlot{
             }).attr("fill", function (d) {
                 return profile_color_scale(profile_name_to_uid_dict[d.profile_name]);
             });
+
+        if (update_axes){
+            this._post_med_update_axes();
+            this._profile_update_axes();
+        }
+            
     }
     _post_med_update_axes(){
         // y axis

@@ -136,20 +136,14 @@ class SimpleStackedBarPlot{
         this._update_axes_domains();
         
         // Code that does the majoirty of the replotting
-        let cumulative_time = 0;
         for (let i = 0; i < this.current_sample_order_array.length; i++) {
-            setTimeout(
-                //https://stackoverflow.com/questions/5911211/settimeout-inside-javascript-class-using-this
-                this._replot_data.bind(this), 
-                i * this.plot_speed, 
-                this.current_sample_order_array[i],
-            );
-            cumulative_time += this.plot_speed;
+            if (i == this.current_sample_order_array.length -1){
+                // Then we want to pass in the _update_axes method as a callback
+                this._replot_data([this.current_sample_order_array[i], true]);
+            }else{
+                this._replot_data([this.current_sample_order_array[i], false]);
+            }
         }
-        
-        // Now draw the axis last so that they are on top of the bars
-        // we can then use a transition .on event to call the centering of the labels
-        setTimeout(this._update_axes.bind(this), cumulative_time);
     }
     _update_axes_domains(){
         if (this.absolute_relative == 'absolute'){
@@ -159,7 +153,7 @@ class SimpleStackedBarPlot{
         }
         this.x_scale.domain(this.current_sample_order_array);
     }
-    _replot_data(sample_uid){
+    _replot_data([sample_uid, should_update_axes]){
         
         // Bars is the join that we will call exit
         let bars = this.svg.select("g.s" + sample_uid).selectAll("rect").data(this.data[sample_uid], function (d) {
@@ -185,7 +179,7 @@ class SimpleStackedBarPlot{
         let y_scale = this.y_scale;
         let plot_type = this.plot_type;
         let profile_name_to_uid_dict = this.profile_name_to_uid_dict;
-        bars.transition().duration(this.plot_speed).attr("x", function (d) {
+        bars.transition().attr("x", function (d) {
             return x_scale(sample_uid);
         }).attr("y", function (d) {
             return y_scale(+d["y_" + abs_rel]);
@@ -197,8 +191,6 @@ class SimpleStackedBarPlot{
             }else if (plot_type == 'profile'){
                 return color_scale(profile_name_to_uid_dict[d.profile_name])
             }
-        }).delay(function (d, i) {
-            return (i * 0.1)
         });
 
         // New objects to be created (enter phase)
@@ -207,7 +199,7 @@ class SimpleStackedBarPlot{
         bars.enter().append("rect")
             .attr("x", function (d) {
                 return x_scale(sample_uid);
-            }).attr("y", y_scale(0)).on('mouseover', function (d) {
+            }).on('mouseover', function (d) {
                 tips.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
                 if (plot_type == 'profile'){
@@ -222,7 +214,7 @@ class SimpleStackedBarPlot{
             .on('mouseout', function (d) {
                 tips.hide(d);
                 d3.select(this).attr("style", null);
-            }).transition().duration(1000).attr("y", function (d) {
+            }).attr("y", function (d) {
                 return y_scale(+d["y_" + abs_rel]);
             }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
                 return Math.max(y_scale(0) - y_scale(+d["height_" + abs_rel]), 1);
@@ -233,6 +225,12 @@ class SimpleStackedBarPlot{
                     return color_scale(profile_name_to_uid_dict[d.profile_name]);
                 }
             });
+
+        // finally if the call aces method has been passed in then call it
+        if (should_update_axes) { 
+            this._update_axes();
+        }
+        
     }
     _update_axes(){
         // y axis
