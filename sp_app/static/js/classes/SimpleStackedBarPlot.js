@@ -165,7 +165,8 @@ class SimpleStackedBarPlot{
         this.x_scale.domain(this.current_sample_order_array);
     }
     _replot_data(index_int){
-        let sample_uid = this.current_sample_order_array[index_int]
+        let sample_uid = this.current_sample_order_array[index_int];
+        
         // Bars is the join that we will call exit
         let bars = this.svg.select("g.s" + sample_uid).selectAll("rect").data(this.data[sample_uid], function (d) {
             if (this.plot_type == 'post_med'){
@@ -237,8 +238,6 @@ class SimpleStackedBarPlot{
                 }
             });
         
-        // TODO this is where we will do any code that is associated with incrementing the progress bar
-        // For the time being lets just aim to incrementally increase the progress bar
         
         // Get the current width of the progress bar
         let current_width_of_prog_bar = (this.$progress_bar.width() / this.$progress_bar.parent().width()) * 100
@@ -251,8 +250,7 @@ class SimpleStackedBarPlot{
             this.$progress_bar.width("100%");
             this.$progress_bar_text_holder.text(`Plotting complete. Rendering axes...`)
         }else{
-            // There are more samples to plot and we should recall this method
-            // setTimeout(this._replot_data.bind(this), 0, index_int + 1);
+            // There are more samples to plot
             if (new_width < 100){
                 this.$progress_bar.width(`${new_width}%`);
                 this.$progress_bar_text_holder.text(`Plotting sample ${index_int} outof ${this.current_sample_order_array.length}`)
@@ -306,7 +304,6 @@ class SimpleStackedBarPlot{
         })
 
         // Hide the progress bar
-        // TODO briefly write loading complete and then hide the progress bar using time out or something similar.
         setTimeout(function (self){
             self.$progress_bar_container.hide();
         }, 2000, self);

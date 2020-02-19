@@ -7,6 +7,7 @@ class ModalStackedBarPlot{
         this.sorting_keys = Object.keys(this.sorted_uid_arrays);
         this.post_med_svg = d3.select("#chart_post_med_modal");
         this.profile_svg = d3.select("#chart_profile_modal");
+        [this.$progress_bar_container, this.$progress_bar, this.$progress_bar_text_holder] = this._init_progress_bar();
         this.post_med_data = getRectDataPostMEDBySample();
         this.post_med_max_y = getRectDataPostMEDBySampleMaxSeq();
         // Because this dataset is going to be used in the inverted modal plot we need to
@@ -26,6 +27,7 @@ class ModalStackedBarPlot{
         // If profile_based is available (i.e. if there was an analysis) start
         // with this. Else start with similarity.
         this.current_sample_order_array = this._init_current_sample_order_array();
+        this.progress_bar_increment = 100/this.current_sample_order_array.length;
         [this.post_med_plot_speed, this.profile_plot_speed] = this._init_plot_speed();
         [this.margin, this.inv_margin] = this._init_margin();
         // Same width for both of the chart areas but difference widths
@@ -103,27 +105,20 @@ class ModalStackedBarPlot{
     }
 
     _update_plot(){
+        // First show the progress bar
+        this.$progress_bar_container.show();
+        // Init the text of the progress bar
+        this.$progress_bar_text_holder.text(`Plotting modal stacked bar plots`);
+        
         //First update the x_scale and y_scale domains
         this._update_axes_domains();
         
         // Code that does the majoirty of the replotting
-        let cumulative_time = 0;
         for (let i = 0; i < this.current_sample_order_array.length; i++) {
-            if (i == this.current_sample_order_array.length -1){
-                // Then we want to pass in the _update_axes method as a callback
-                this._replot_data([this.current_sample_order_array[i], true]);
-            }else{
-                this._replot_data([this.current_sample_order_array[i], false]);
-            }
+            // Then we want to pass in the _update_axes method as a callback
+            setTimeout(this._replot_data.bind(this), 0, i);            
         }
         
-        // Now draw the axis last so that they are on top of the bars
-        // we can then use a transition .on event to call the centering of the labels
-        // It makes sense to separate out the post_med axis update and the profile
-        // axis update as the post_med update is complex due to having to get the label
-        // sizes.
-        setTimeout(this._post_med_update_axes.bind(this), cumulative_time);
-        setTimeout(this._profile_update_axes.bind(this), cumulative_time);
     }
     _update_axes_domains(){
         if (this.absolute_relative == 'absolute'){
@@ -135,7 +130,8 @@ class ModalStackedBarPlot{
         }
         this.x_scale.domain(this.current_sample_order_array);
     }
-    _replot_data([sample_uid, update_axes]){
+    _replot_data(index_int){
+        let sample_uid = this.current_sample_order_array[index_int];
         
         // Bars is the join that we will call exit
         let post_med_bars = this.post_med_svg.select("g.s" + sample_uid).selectAll("rect").data(this.post_med_data[sample_uid], function (d) {
@@ -234,9 +230,25 @@ class ModalStackedBarPlot{
                 return profile_color_scale(profile_name_to_uid_dict[d.profile_name]);
             });
 
-        if (update_axes){
+        // Get the current width of the progress bar
+        let current_width_of_prog_bar = (this.$progress_bar.width() / this.$progress_bar.parent().width()) * 100
+        let new_width = current_width_of_prog_bar + this.progress_bar_increment;
+        
+        // finally if the call axes method has been passed in then call it
+        if (index_int == this.current_sample_order_array.length - 1){
+            // Then we just plotted the last sample and we should now call axes
             this._post_med_update_axes();
             this._profile_update_axes();
+            this.$progress_bar.width("100%");
+            this.$progress_bar_text_holder.text(`Plotting complete. Rendering axes...`)
+        }else{
+            // There are more samples to plot
+            if (new_width < 100){
+                this.$progress_bar.width(`${new_width}%`);
+                this.$progress_bar_text_holder.text(`Plotting sample ${index_int} outof ${this.current_sample_order_array.length}`)
+            }else{
+                this.$progress_bar.width("100%");
+            }
         }
             
     }
@@ -309,6 +321,15 @@ class ModalStackedBarPlot{
                 d3.select(this).select("text").attr("fill", "black").attr("style", "cursor:auto;text-anchor: start;");
             })
         })
+
+        // Hide the progress bar
+        setTimeout(function (self){
+            self.$progress_bar_container.hide();
+        }, 2000, self);
+        // And reset the width to 0
+        setTimeout(function (self){
+            self.$progress_bar.width('0%');
+        }, 2000, self);
     }
     _profile_update_axes(){
         // y axis
@@ -349,6 +370,10 @@ class ModalStackedBarPlot{
         }
     }
     // Private init methods
+    _init_progress_bar(){
+        
+        return [$("#modal_progress_bar_container"), $("#modal_progress_bar"), $("#modal_progress_bar_text_holder")]
+    }
     _make_name_to_uid_dict(meta_info_obj){
         let temp_dict = {};
         Object.keys(meta_info_obj).forEach(function (uid) {
@@ -365,6 +390,7 @@ class ModalStackedBarPlot{
     }
     _update_current_sample_order_array(sorting_key){
         this.current_sample_order_array = this.sorted_uid_arrays[sorting_key];
+        this.progress_bar_increment = 100/this.current_sample_order_array.length;
     }
     _init_plot_speed(){return [1, 10];}
     _init_margin(){return [{top: 30, left: 35, bottom: 60, right: 0}, {top: 5, left: 35, bottom: 5, right: 0}];}
