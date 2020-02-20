@@ -165,8 +165,6 @@ class ModalStackedBarPlot{
             return Math.max(post_med_y_scale(0) - post_med_y_scale(+d["height_" + abs_rel]), 1);
         }).attr("fill", function (d) {
             return post_med_color_scale(d.seq_name);
-        }).delay(function (d, i) {
-            return (i * 0.1)
         });
         // Now for the profile bars
         let profile_name_to_uid_dict = this.profile_name_to_uid_dict;
@@ -178,8 +176,6 @@ class ModalStackedBarPlot{
             return Math.max(profile_y_scale(+d["height_" + abs_rel]), 1);
         }).attr("fill", function (d) {
             return profile_color_scale(profile_name_to_uid_dict[d.profile_name])
-        }).delay(function (d, i) {
-            return (i * 0.1)
         });
 
         // New objects to be created (enter phase)
