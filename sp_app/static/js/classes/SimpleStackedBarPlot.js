@@ -47,7 +47,6 @@ class SimpleStackedBarPlot{
         this.current_sample_order_array = this._init_current_sample_order_array();
         this.progress_bar_increment = 100/this.current_sample_order_array.length;
         this.margin = this._init_margin();
-        this.plot_speed = this._init_plot_speed();
         [this.width, this.height] = this._init_width_and_height();
         [this.x_scale, this.y_scale] = this._init_scales();
         // Init the axis group
@@ -191,7 +190,7 @@ class SimpleStackedBarPlot{
         let y_scale = this.y_scale;
         let plot_type = this.plot_type;
         let profile_name_to_uid_dict = this.profile_name_to_uid_dict;
-        bars.transition().attr("x", function (d) {
+        bars.attr("x", function (d) {
             return x_scale(sample_uid);
         }).attr("y", function (d) {
             return y_scale(+d["y_" + abs_rel]);
@@ -272,7 +271,7 @@ class SimpleStackedBarPlot{
         // x axis
         let self = this;
         let sample_meta_info = this.sample_meta_info;
-        d3.selectAll("#" + this.x_axis_id_string).transition().duration(1000)
+        d3.selectAll("#" + this.x_axis_id_string)
         .call(d3.axisBottom(this.x_scale).tickFormat(d => sample_meta_info[d]["name"]).tickSizeOuter(0)).selectAll("text")
         .attr("y", 0).attr("x", 9).attr("dy", ".35em").attr("transform", "rotate(90)")
         .style("text-anchor", "start").on(
@@ -432,14 +431,6 @@ class SimpleStackedBarPlot{
         this.progress_bar_increment = 100/this.current_sample_order_array.length;
     }
     _init_margin(){return {top: 30, left: 35, bottom: 60, right: 0};}  
-    _init_plot_speed(){
-        // Set the speed at which transitions will happen
-        if (this.plot_type == 'post_med'){
-            return 1;
-        }else if (this.plot_type == 'profile'){
-            return 10;
-        }
-    }
     _init_width_and_height(){
         this.svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
         let width = +this.svg.attr("width") - this.margin.left - this.margin.right;

@@ -28,7 +28,6 @@ class ModalStackedBarPlot{
         // with this. Else start with similarity.
         this.current_sample_order_array = this._init_current_sample_order_array();
         this.progress_bar_increment = 100/this.current_sample_order_array.length;
-        [this.post_med_plot_speed, this.profile_plot_speed] = this._init_plot_speed();
         [this.margin, this.inv_margin] = this._init_margin();
         // Same width for both of the chart areas but difference widths
         [this.width, this.post_med_height, this.profile_height] = this._init_width_and_height();
@@ -158,7 +157,7 @@ class ModalStackedBarPlot{
         let post_med_y_scale = this.post_med_y_scale;
         let profile_y_scale = this.profile_y_scale;
         // First do it for the post_med_bars
-        post_med_bars.transition().duration(this.post_med_plot_speed).attr("x", function (d) {
+        post_med_bars.attr("x", function (d) {
             return x_scale(sample_uid);
         }).attr("y", function (d) {
             return post_med_y_scale(+d["y_" + abs_rel]);
@@ -171,7 +170,7 @@ class ModalStackedBarPlot{
         });
         // Now for the profile bars
         let profile_name_to_uid_dict = this.profile_name_to_uid_dict;
-        profile_bars.transition().duration(this.profile_plot_speed).attr("x", function (d) {
+        profile_bars.attr("x", function (d) {
             return x_scale(sample_uid);
         }).attr("y", function (d) {
             return profile_y_scale(+d["y_" + abs_rel]);
@@ -195,7 +194,7 @@ class ModalStackedBarPlot{
             .on('mouseout', function (d) {
                 post_med_tips.hide(d);
                 d3.select(this).attr("style", null);
-            }).transition().duration(1000).attr("y", function (d) {
+            }).attr("y", function (d) {
                 return post_med_y_scale(+d["y_" + abs_rel]);
             }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
                 return Math.max(post_med_y_scale(0) - post_med_y_scale(+d["height_" + abs_rel]), 1);
@@ -209,7 +208,7 @@ class ModalStackedBarPlot{
         profile_bars.enter().append("rect")
             .attr("x", function (d) {
                 return x_scale(sample_uid);
-            }).attr("y", profile_y_scale(0)).on('mouseover', function (d) {
+            }).on('mouseover', function (d) {
                 profile_tips.show(d);
                 d3.select(this).attr("style", "stroke-width:1;stroke:rgb(0,0,0);");
                 let profile_uid = profile_name_to_uid_dict[d["profile_name"]];
@@ -222,7 +221,7 @@ class ModalStackedBarPlot{
             .on('mouseout', function (d) {
                 profile_tips.hide(d);
                 d3.select(this).attr("style", null);
-            }).transition().duration(1000).attr("y", function (d) {
+            }).attr("y", function (d) {
                 return profile_y_scale(+d["y_" + abs_rel]);
             }).attr("width", x_scale.bandwidth()).attr("height", function (d) {
                 return Math.max(profile_y_scale(+d["height_" + abs_rel]), 1);
@@ -298,7 +297,7 @@ class ModalStackedBarPlot{
 
         // x axis
         let self = this;
-        d3.selectAll("#" + this.post_med_x_axis_id).transition().duration(this.post_med_plot_speed)
+        d3.selectAll("#" + this.post_med_x_axis_id)
         .call(d3.axisBottom(this.x_scale).tickFormat(function(d) {
             let sample_name = sample_meta_info[d]["name"];
             if (sample_name_width_obj[sample_name]["ellipse"]){
@@ -392,7 +391,6 @@ class ModalStackedBarPlot{
         this.current_sample_order_array = this.sorted_uid_arrays[sorting_key];
         this.progress_bar_increment = 100/this.current_sample_order_array.length;
     }
-    _init_plot_speed(){return [1, 10];}
     _init_margin(){return [{top: 30, left: 35, bottom: 60, right: 0}, {top: 5, left: 35, bottom: 5, right: 0}];}
     _init_width_and_height(){
         this.post_med_svg.attr("width", ((this.current_sample_order_array.length * 13) + 70).toString());
