@@ -679,7 +679,7 @@ class DistancePlot{
             // init the genera_indentifier with the first of the genera in the genera_array that we have data for
             // We only want to do this for the first genera that we find so we check whether the data-genera attribute
             // already has been set or not.
-            if (this.genera_array.includes(genera_array[j])) {
+            if (genera_array[j] in this.data[`${this.current_dist_method}_${this.current_sqrt}`]) {
                 let attr = card_element.find(".genera_identifier").attr("data-genera");
                 if (typeof attr !== typeof undefined && attr !== false) {
                     // then already set. just add genera link
