@@ -13,8 +13,12 @@
     <meta property="og:type" content="website">
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
     <title>Symportal | home</title>
 </head>
 
@@ -131,11 +135,10 @@
 
     <!-- Resources -->
     <section class="cite_us bg-light">
-        <div class="container middle_container">
-            <h3 class="light_header">Resources</h3>
-            <table id="resources_table">
+            <table id="resources_table" class="table table-striped table-bordered">
+                <caption>Resources</caption>
                 <thead>
-                    <tr class="row_on header_row">
+                    <tr>
                         <th>Resource</th>
                         <th>Description</th>
                         <th>Upload date</th>
@@ -143,7 +146,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="hover_row row_off">
+                    <tr>
                         <td label="Resource">
                             DIV_fasta
                         </td>
@@ -152,7 +155,7 @@
                             This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 3360 sequences from 4 published studies.
                         </td>
                         <td label="Upload date">
-                            08 Sept. 2019
+                            20200908
                         </td>
                         <td label="Link">
                             <a href=" {{ url_for('static', filename='resources/DIV_seqs_20190908.fasta') }}">
@@ -162,7 +165,7 @@
                             </a>
                         </td>
                     </tr>
-                    <tr class="hover_row row_on">
+                    <tr>
                         <td label="Resource">
                             all_seqs_fasta_post_MED
                         </td>
@@ -171,7 +174,7 @@
                             This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 6126 sequences from 4 published studies.
                         </td>
                         <td label="Upload date">
-                            08 Sept. 2019
+                            20200908
                         </td>
                         <td label="Link">
                             <a href="{{ url_for('static', filename='resources/all_seqs_post_med_20190908.fasta') }}">
@@ -185,18 +188,18 @@
 
             </table>
             <p class="table_footnotes">Interested in a published resource that's not listed? Get in touch!</p>
-        </div>
+        
 
     </section>
 
     <!-- Published articles that use SymPortal -->
-    <section class="published_articles bg-light" >
-        <!--<header3></header3>-->
-        <div class="container middle_container">
-            <h3 class="light_header">Published articles using SymPortal</h3>
-            <table id="published_articles_table">
+    <section class="bg-light" >
+        <div>
+            <!-- TODO this is where we need to work on the table -->
+            <table id="published_articles_table" class="table table-striped table-bordered">
+                <caption>Published articles using SymPortal</caption>
                 <thead>
-                    <tr class="row_on header_row">
+                    <tr>
                         <th>Article</th>
                         <th>Title</th>
                         <th>Location</th>
@@ -218,7 +221,7 @@
                     {% else %}
                     {% set row_type="row_on" %}
                     {% endif %}
-                    <tr class="hover_row {{row_type}}">
+                    <tr>
                         <td label="Article">{{ pd.study_name }}</td>
                         <td label="Title">{{ pd.title }}</td>
                         <td label="Location">{{ pd.location }}</td>
@@ -272,96 +275,99 @@
     </section>
 
     <!-- Your unpublished analyses -->
-    <section class="unpublished_articles bg-light" >
+    <section class="bg-light" >
         <!--<header3></header3>-->
-        <div class="container middle_container">
-            <h3 class="light_header">Your unpublished analyses</h3>
-            {% if current_user.is_anonymous %}
-            <p class="center">No unpublished analyses to load</p>
-            {% else %}
-                {% if user_unpublished_datasets %}
-                    <table id="unpublished_articles_table">
-                        <thead>
-                            <tr class="row_on header_row">
-                                <th>Article</th>
-                                <th>Title</th>
-                                <th>Location</th>
-                                <th>#Samples</th>
-                                <th>Additional markers</th>
-                                <th>Run type</th>
-                                <th>Article</th>
-                                <th>Data</th>
-                                <th>DataExplorer</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for upd in user_unpublished_datasets %}
-                            <!-- We need to set the row type to get the grey non-grey background via css -->
-                                {% if loop.index0 % 2 == 0 %}
-                                {% set row_type="row_off" %}
+        
+        
+        {% if current_user.is_anonymous %}
+        <h3 class="light_header">Your unpublished analyses</h3>
+        <p class="center">No unpublished analyses to load</p>
+        {% else %}
+            {% if user_unpublished_datasets %}
+                <table id="unpublished_articles_table" class="table table-striped table-bordered">
+                    <caption>Your unpublished analyses</caption>
+                    <thead>
+                        <tr>
+                            <th>Article</th>
+                            <th>Title</th>
+                            <th>Location</th>
+                            <th>#Samples</th>
+                            <th>Additional markers</th>
+                            <th>Run type</th>
+                            <th>Article</th>
+                            <th>Data</th>
+                            <th>DataExplorer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for upd in user_unpublished_datasets %}
+                        <!-- We need to set the row type to get the grey non-grey background via css -->
+                            {% if loop.index0 % 2 == 0 %}
+                            {% set row_type="row_off" %}
+                            {% else %}
+                            {% set row_type="row_on" %}
+                            {% endif %}
+                            <tr>
+                                <td label="Article">{{ upd.study_name }}</td>
+                                <td label="Title">{{ upd.title }}</td>
+                                <td label="Location">{{ upd.location }}</td>
+                                <td label="#Samples">{{ upd.num_samples }}</td>
+                                {% if upd.additional_markers == 'psbAncr' %}
+                                <td label="Additional markers">
+                                    <i>psbA<sup>ncr</sup></i>
+                                </td>
                                 {% else %}
-                                {% set row_type="row_on" %}
+                                <td label="Additional markers">{{ upd.additional_markers }}</td>
                                 {% endif %}
-                                <tr class="hover_row {{row_type}}">
-                                    <td label="Article">{{ upd.study_name }}</td>
-                                    <td label="Title">{{ upd.title }}</td>
-                                    <td label="Location">{{ upd.location }}</td>
-                                    <td label="#Samples">{{ upd.num_samples }}</td>
-                                    {% if upd.additional_markers == 'psbAncr' %}
-                                    <td label="Additional markers">
-                                        <i>psbA<sup>ncr</sup></i>
-                                    </td>
-                                    {% else %}
-                                    <td label="Additional markers">{{ upd.additional_markers }}</td>
-                                    {% endif %}
-                                    <td label="Run type">{{ upd.run_type }}</td>
-                                    {% if upd.article_url != '--' %}
-                                    <td label="Article URL">
-                                        <a href="{{ upd.article_url }}">
-                                            <div style="height:100%;width:100%">Article</div>
-                                        </a>
-                                    </td>
-                                    {% else %}
-                                    <td label="Article URL">--</td>
-                                    {% endif %}
-                                    {% if upd.article_url != '--' %}
-                                    <td label="Seq data URL">
-                                        <a href="{{ upd.seq_data_url }}">
-                                            <div style="height:100%;width:100%">Data</div>
-                                        </a>
-                                    </td>
-                                    {% else %}
-                                    <td label="Seq data URL">--</td>
-                                    {% endif %}
-                                    <!-- DataExplorer icon -->
-                                    {% if upd.data_explorer %}
-                                    <td align="center">
-                                        <form action method="post">
-                                            <button class="DEbtn" name="study_to_load" value="{{ upd.study_to_load_str }}">
-                                                <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
-                                            </button>
-                                        </form>
-                                    </td>
-                                    {% else %}
-                                    <td align="center">
-                                        <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
-                                    </td>
-                                    {% endif %}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                <td label="Run type">{{ upd.run_type }}</td>
+                                {% if upd.article_url != '--' %}
+                                <td label="Article URL">
+                                    <a href="{{ upd.article_url }}">
+                                        <div style="height:100%;width:100%">Article</div>
+                                    </a>
+                                </td>
+                                {% else %}
+                                <td label="Article URL">--</td>
+                                {% endif %}
+                                {% if upd.article_url != '--' %}
+                                <td label="Seq data URL">
+                                    <a href="{{ upd.seq_data_url }}">
+                                        <div style="height:100%;width:100%">Data</div>
+                                    </a>
+                                </td>
+                                {% else %}
+                                <td label="Seq data URL">--</td>
+                                {% endif %}
+                                <!-- DataExplorer icon -->
+                                {% if upd.data_explorer %}
+                                <td align="center">
+                                    <form action method="post">
+                                        <button class="DEbtn" name="study_to_load" value="{{ upd.study_to_load_str }}">
+                                            <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
+                                        </button>
+                                    </form>
+                                </td>
+                                {% else %}
+                                <td align="center">
+                                    <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
+                                </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
                     
-                    
-                {% else %}
-                <p class="center">No unpublished analyses to load</p>
-                {% endif %}
+                </table>
+                
+                
+            {% else %}
+            <p class="center">No unpublished analyses to load</p>
             {% endif %}
-        </div>
+        {% endif %}
+        
     </section>
 
     <!-- Cite Us -->
-    <section class="cite_us bg-light">
+    <section class="bg-light">
         <div class="container middle_container">
             <h3 class="light_header">Please cite us</h3>
             <div style="font-size: 0.8em;" id="cite_us_text">
@@ -388,7 +394,8 @@
         <br>
         <p>Contact: <a href="mailto:benjamin.hume@kaust.edu.sa?Subject=new submission enquiry">&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#046;&#104;&#117;&#109;&#101;&#064;&#107;&#097;&#117;&#115;&#116;&#046;&#101;&#100;&#117;&#046;&#115;&#097;</a></p>
     </footer>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    
+
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 </html>
