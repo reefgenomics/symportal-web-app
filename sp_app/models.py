@@ -12,6 +12,121 @@ datasets = db.Table('datasets',
                 db.Column('dataset_id', db.Integer, db.ForeignKey('data_set.id'), primary_key=True),
                 db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True))
 
+
+class DataSetSample(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_datasetsample'
+    id = db.Column(db.Integer, primary_key=True)
+    data_submission_from_id = db.Column(db.Integer, db.ForeignKey('dbApp_dataset.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    # This is the absolute number of sequences after make.contigs
+    num_contigs = db.Column(db.Integer, default=0)
+    # store the aboslute number of sequences after inital mothur QC i.e. before tax and size screening
+    post_qc_absolute_num_seqs = db.Column(db.Integer, default=0)
+    # This is the unique number of sequences after inital mothur QC i.e. before tax and size screening
+    post_qc_unique_num_seqs = db.Column(db.Integer, default=0)
+    # Absolute number of sequences after sequencing QC and screening for Symbiodinium (i.e. Symbiodinium only)
+    absolute_num_sym_seqs = db.Column(db.Integer, default=0)
+    # Same as above but the number of unique seqs
+    unique_num_sym_seqs = db.Column(db.Integer, default=0)
+
+    # store the abosolute number of sequenes that were not considered Symbiodinium
+    non_sym_absolute_num_seqs = db.Column(db.Integer, default=0)
+    # This is the number of unique sequences that were not considered Symbiodinium
+    non_sym_unique_num_seqs = db.Column(db.Integer, default=0)
+    # store the abosulte number of sequences that were lost during the size selection
+    size_violation_absolute = db.Column(db.Integer, default=0)
+    # store the unique number of sequences that were lost during the size screening
+    size_violation_unique = db.Column(db.Integer, default=0)
+
+    # store the number of absolute sequences remaining after MED
+    post_med_absolute = db.Column(db.Integer, default=0)
+    # store the number of unique sequences remaining after MED (nodes)
+    post_med_unique = db.Column(db.Integer, default=0)
+
+    error_in_processing = db.Column(db.Boolean, default=False)
+    error_reason = db.Column(db.String(100), nullable=False)
+    cladal_seq_totals = db.Column(db.String(5000), nullable=False)
+    # Meta data for the sample
+    sample_type = db.Column(db.String(50), nullable=False)
+    host_phylum = db.Column(db.String(50), nullable=False)
+    host_class = db.Column(db.String(50), nullable=False)
+    host_order = db.Column(db.String(50), nullable=False)
+    host_family = db.Column(db.String(50), nullable=False)
+    host_genus = db.Column(db.String(50), nullable=False)
+    host_species = db.Column(db.String(50), nullable=False)
+    collection_latitude = db.Column(db.Numeric(11,8), nullable=False)
+    collection_longitude = db.Column(db.Numeric(11,8), nullable=False)
+    # do not use the django date field as this causes problems when trying to dump and load the database
+    collection_date = db.Column(db.String(40), nullable=False)
+    # store a string rather than a number as this may be given as a range e.g. 6 - 12
+    collection_date = db.Column(db.String(40), nullable=False)
+
+    def __str__(self):
+        return self.name
+
+class SPDataSet(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_dataset'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30), nullable=False)
+    reference_fasta_database_used = db.Column(db.String(60), nullable=False)
+    submitting_user = db.Column(db.String(100), nullable=False)
+    submitting_user_email = db.Column(db.String(100), nullable=False)
+    working_directory = db.Column(db.String(300), nullable=False)
+    time_stamp = db.Column(db.String(100), nullable=False)
+    loading_complete_time_stamp = db.Column(db.String(100), nullable=False)
+    data_set_samples = db.relationship('DataSetSample', backref='dataset')
+    def __str__(self):
+        return self.name
+
+class DataAnalysis(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_dataanalysis'
+    id = db.Column(db.Integer, primary_key=True)
+    # This will be a jsoned list of uids of the dataSubmissions that are included in this analysis
+    list_of_data_set_uids = db.Column(db.String(500), nullable=True)
+    # within_clade_cutoff = models.FloatField(default=0.04)
+    within_clade_cutoff = db.Column(db.Float(), nullable=False)
+    name = db.Column(db.String(500), nullable=True)
+    # name = models.CharField(max_length=100, null=True)
+    # description = models.CharField(max_length=5000, null=True)
+    description = db.Column(db.String(5000), nullable=True)
+    time_stamp = db.Column(db.String(100), nullable=False)
+    submitting_user = db.Column(db.String(100), nullable=False)
+    submitting_user_email = db.Column(db.String(100), nullable=False)
+    analysis_complete_time_stamp = db.Column(db.String(100), nullable=False)
+
+    # def get_clade_collections(self):
+    #     list_of_uids = [int(x) for x in self.list_of_data_set_uids.split(',')]
+    #     clade_collections = []
+    #     for uid_list in general.chunks(list_of_uids):
+    #         clade_collections.extend(list(CladeCollection.objects.filter(data_set_sample_from__data_submission_from__in=uid_list)))
+    #     return clade_collections
+
+class ReferenceSequence(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_referencesequence'
+    id = db.Column(db.Integer, primary_key=True)
+    # name = models.CharField(max_length=30, default='noName')
+    name = db.Column(db.String(30), default='noName')
+    # has_name = models.BooleanField(default=False)
+    has_name = db.Column(db.Boolean, default=False)
+    # clade = models.CharField(max_length=30)
+    clade = db.Column(db.String(30))
+    # sequence = models.CharField(max_length=500)
+    # sequence = db.Column(db.String(500))
+    # accession = models.CharField(max_length=50, null=True)
+    accession = db.Column(db.String(50), nullable=True)
+
+    def __str__(self):
+        if self.has_name:
+            return self.name
+        else:
+            return f'{self.id}_{self.clade}'
+
+
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
