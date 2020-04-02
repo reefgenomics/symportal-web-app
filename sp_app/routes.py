@@ -3,7 +3,7 @@ from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user
-from sp_app.models import User, DataSet, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis
+from sp_app.models import User, DataSet, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType
 from werkzeug.urls import url_parse
 from sqlalchemy import or_
 
@@ -16,21 +16,6 @@ def index():
         # get the datasets that belong to the user that are not yet published
         user_unpublished_datasets = [ds for ds in DataSet.query.filter_by(is_published=False) if current_user in ds.users_with_access]
         # Lets see if we can get any access to ReferenceSequence
-        c3 = ReferenceSequence.query.filter_by(name='C3').first()
-        a_ds = SPDataSet.query.filter_by(name='archive_20171009_roberto_archive').first()
-        dss = DataSetSample.query.get(111)
-        print(f'dss.dataset {dss.dataset}')
-        print(f'dss is {dss}')
-        ds_id = dss.data_submission_from_id
-        ds_obj = SPDataSet.query.get(ds_id)
-        print(f'ds_obj.data_set_samples {ds_obj.data_set_samples}')
-        print(f'This is ds {ds_id}')
-        print(f'The retreived dataset is {ds_obj.name}')
-        print(f'This ds has an id of {ds_obj.id}')
-        print(dss.name)
-        print(c3.name)
-        print(str(a_ds))
-        print(DataAnalysis.query.limit(1).all()[0].name)
         return render_template('index.html', published_datasets=published_datasets, user_unpublished_datasets=user_unpublished_datasets)
     elif request.method == 'POST':
         # get the google maps api key to be used
