@@ -18,6 +18,18 @@ cladeCollectionType = db.Table('dbApp_cladecollectiontype',
     db.Column('clade_collection_found_in_id', db.Integer, db.ForeignKey('dbApp_cladecollection.id'), primary_key=True)
 )
 
+Study__DataSetSample = db.Table('dbApp_study_data_set_samples', 
+    db.Column('id', db.Integer, primary_key=True),
+    db.Column('datasetsample_id', db.Integer, db.ForeignKey('dbApp_datasetsample.id'), primary_key=True),
+    db.Column('study_id', db.Integer, db.ForeignKey('dbApp_study.id'), primary_key=True)
+    )
+
+SPUser__Study = db.Table('dbApp_user_studies',
+    db.Column('id', db.Integer, primary_key=True),
+    db.Column('study_id', db.Integer, db.ForeignKey('dbApp_study.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('dbApp_user.id'), primary_key=True)
+    )
+
 class SPDataSet(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_dataset'
@@ -82,6 +94,41 @@ class DataSetSample(db.Model):
 
     def __str__(self):
         return self.name
+
+class Study(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_study'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), index=True, unique=True, nullable=False)
+    title = db.Column(db.String(250), nullable=True)
+    is_published = db.Column(db.Boolean, default=False)
+    location = db.Column(db.String(50), nullable=True)
+    run_type = db.Column(db.String(50), default='remote')
+    article_url = db.Column(db.String(250), nullable=True)
+    data_url = db.Column(db.String(250), nullable=True)
+    data_explorer = db.Column(db.Boolean, default=False)
+    analysis = db.Column(db.Boolean, default=True)
+    author_list_string = db.Column(db.String(500))
+    additional_markers = db.Column(db.String(200))
+    creation_time_stamp = db.Column(db.String(100), default=str(datetime.now()).replace(' ', '_').replace(':', '-'))
+    data_set_samples = db.relationship('DataSetSample', secondary=Study__DataSetSample, lazy='dynamic',
+     backref=db.backref('studies', lazy='dynamic'))
+
+class SPUser(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_user'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), index=True, unique=True, nullable=False)
+    studies = db.relationship('Study', secondary=SPUser__Study, lazy='dynamic',
+     backref=db.backref('studies', lazy='dynamic'))
+    # This is set to False when User is created. Upon upload to symportal.org
+    # a user that matches this name will be searched for in the app.db database.
+    # If no matching user if found, an error will be thrown. If a user is found,
+    # This value will be set to true, and the ID of the User in the app.db database
+    # will be stored in app_db_key below.
+    # The id of this object will also be stored in the app.db User object that matches
+    app_db_key_is_set = db.Column(db.Boolean, default=False)
+    app_db_key_id = db.Column(db.Integer, nullable=True)
 
 class DataAnalysis(db.Model):
     __bind_key__ = 'symportal_database'
