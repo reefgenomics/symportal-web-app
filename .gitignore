@@ -24,3 +24,6 @@ migrations/alembic.ini
 migrations/script.py.mako
 published_articles.json
 certbot_setup_output_https.txt
+symportal_database_versions
+sp_app/password.txt
+published_articles_sp.json
