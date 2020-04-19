@@ -365,41 +365,152 @@ class OutputResourceFastas:
     the number of sequences, the number of published studies and the update date.
     """
     def __init__(self):
-        self.pre_med_seqs = []
+        self.published_studies = self._get_published_studies()
+        self.unpublised_studies = self._get_unpublished_studies()
+        self.published_data_set_samples = self._get_published_data_set_samples()
+        self.unpublished_data_set_samples = self._get_unpublished_data_set_samples()
+        self.published_data_set_sample_sequence_pm = self._get_data_set_sample_sequence_pm()
+        self.unpublished_data_set_sample_sequence_pm = self._get_data_set_sample_sequence_pm_unpublished()
+        self.published_data_set_sample_sequence = self._get_data_set_sample_sequence()
+        self.resource_dir = os.path.join(os.getcwd(), 'static', 'resources')
+        self.pre_med_fasta_path = os.path.join(self.resource_dir, 'published_pre_med.fasta')
+        self.post_med_fasta_path = os.path.join(self.resource_dir, 'published_post_med.fasta')
+        self.div_fasta_path = os.path.join(self.resource_dir, 'published_div.fasta')
+        self.json_dict = {}
+        # List is dynamic and will be used three times
+        self.rs_list = []
 
     def make_fasta_resources(self):
+        # We do it in this order so that we can use the self.rs_list that is already populated
+        # from _pre_med for _div
+        self._post_med()
         self._pre_med()
+        self._div()
+        self._populate_json()
+
+    def _populate_json(self):
+        raise NotImplementedError
 
     def _pre_med(self):
-        # Get a list of all of the pre_med reference sequences that are related to the 
-        # datasetsamplesequencePM objects.
-        # NB We have tried playing around with fancier ways of querying the database,
-        # but it doesn't seem to speed things up much.
-        # At the end of the day it is a big query so we may need to be patient
-        published_studies_ids = Study.query.filter(Study.is_published==True)
-        DataSetSample.query.filter()
-        data_set_sample_ids = set([_ for (_,) in db.session.query(Study__DataSetSample.c.datasetsample_id).filter(Study__DataSetSample.c.study_id.in_(published_studies_ids)).all()])
-        DataSetSampleSequencePM.query.filter(DataSetSampleSequence.data_set_sample_from_id.in_(data_set_sample_ids))
-        
-        
-        
-        
-        db.session.query(Study__DataSetSample.c.study_id.in_(published_studies_ids)).all()
-        dss_list = []
-        for study in published_studies:
-            dss_list.extend(study.data_set_samples)
-        dss_list = list(set(dss_list))
-        dssspm_list = []
-        for dss in dss_list:
-            dssspm_list.extend(dss.data_set_sample_sequences_pm)
-        dssspm_list = list(set(dssspm_list))
-        rs_list = set()
-        for dssspm in dssspm_list:
-            rs_list.add(dssspm.referencesequence)
-        rs_list = list(rs_list)
-        
-        foo = 'bar'
-# Now ouput the resources
+        print('Creating pre_MED_fasta')
+        self._get_representative_reference_sequences(self.published_data_set_sample_sequence_pm)
+        self._write_ref_seqs_to_path(path=self.pre_med_fasta_path)
+
+    def _post_med(self):
+        print('\n\nCreating post_MED_fasta')
+        self._get_representative_reference_sequences(self.published_data_set_sample_sequence)
+        self._write_ref_seqs_to_path(path=self.post_med_fasta_path)
+
+    def _div(self):
+        """The DIVs are a little more tricky.
+        1 - Get all named seqs
+        2 - Get all named seqs found in published studies
+        3 - remove 2 from 1. This leaves us with unpublished and starter DIVs
+        4 - Get divs from all unpublished studies (Will be massive)
+        5 - for each DIV in 3, if not in 4, then this is safe to use
+        """
+        print('\n\nCreating DIV_fasta')
+        #1
+        all_named_ref_seqs = list(ReferenceSequence.query.filter(ReferenceSequence.has_name==True).all())
+        # self.rs_list now contains all dssspm for the published so let's use this as our 2
+        #2
+        published_named_ref_seqs = [_ for _ in self.rs_list if _.has_name]
+        #3
+        unpub_and_starter = list(set(all_named_ref_seqs).difference(published_named))
+        #4
+        # It is unreasonable to work with every DataSet that is in the symportal_database,
+        # Rather we will work with the unpublised Study objects. As symportal progresses
+        # every submitted dataset will become a Study object
+        divs_in_ubpublished_studies = [rs for rs in [_.referencesequence for _ in self.unpublished_data_set_sample_sequence_pm] if rs.has_name]
+
+        # add the good DIVS directly to the published_named_ref_seqs_list
+        for div in unpub_and_starter:
+            if div not in divs_in_ubpublished_studies:
+                published_named_ref_seqs.append(div)
+        # Associate to rs_list variable so that we can use the write_ref_seqs_to_path method
+        self.rs_list = published_named_ref_seqs
+        self._write_ref_seqs_to_path(path=self.div_fasta_path)
+
+    def _write_ref_seqs_to_path(self, path):
+        with open(path, 'w') as f:
+            for rs_obj in self.rs_list:
+                f.write('>{rs_obj}')
+                f.write(rs_obj.sequence)
+    
+    def _get_representative_reference_sequences(self, obj_list):
+        print('\nRetrieving representative ReferenceSequences')
+        self.rs_list = list(set([_.referencesequence for _ in obj_list]))
+        print(f'{len(self.rs_list)} published ReferenceSeqeunces retrieved')
+
+    def _get_data_set_sample_sequence(self):
+        print('Retrieving DataSetSample objects from published DataSetSamples')
+        dsss_list = set()
+        for dss in self.published_data_set_samples:
+            ret_dsss = list(dss.data_set_sample_sequences)
+            sys.stdout.write(f'\r{dss}: {len(ret_dsss)} DataSetSampleSequences'.ljust(100))
+            dsss_list.update(ret_dsss)
+        dsss_list = list(dsss_list)
+        print(f'\n{len(dsss_list)} published DataSetSampleSequences retrieved')
+        return dsss_list
+    
+    def _get_data_set_sample_sequence_pm(self):
+        print('Retrieving DataSetSamplePM objects from published DataSetSamples')
+        dssspm_list = set()
+        for dss in self.published_data_set_samples:
+            ret_dssspm = list(dss.data_set_sample_sequences_pm)
+            sys.stdout.write(f'\r{dss}: {len(ret_dssspm)} DataSetSampleSequencePMs'.ljust(100))
+            dssspm_list.update(ret_dssspm)
+        dssspm_list = list(dssspm_list)
+        print(f'\n{len(dssspm_list)} published DataSetSampleSequencePMs retrieved')
+        return dssspm_list
+
+    def _get_data_set_sample_sequence_pm_unpublished(self):
+        print('Retrieving DataSetSamplePM objects from unpublished DataSetSamples')
+        dssspm_list = set()
+        for dss in self.unpublished_data_set_samples:
+            ret_dssspm = list(dss.data_set_sample_sequences_pm)
+            sys.stdout.write(f'\r{dss}: {len(ret_dssspm)} DataSetSampleSequencePMs'.ljust(100))
+            dssspm_list.update(ret_dssspm)
+        dssspm_list = list(dssspm_list)
+        print(f'\n{len(dssspm_list)} unpublished DataSetSampleSequencePMs retrieved')
+        return dssspm_list
+
+    def _get_published_data_set_samples(self):
+        print('Retrieving DataSetSample objects from published studies')
+        dss_list = set()
+        for study in self.published_studies:
+            ret_dss = list(study.data_set_samples)
+            sys.stdout.write(f"\r{study}: {len(ret_dss)} DataSetSamples".ljust(50))
+            dss_list.update(ret_dss)
+        dss_list = list(dss_list)
+        print(f'\n{len(dss_list)} published DataSetSamples retrieved')
+        return dss_list
+    
+    def _get_unpublished_data_set_samples(self):
+        print('Retrieving unpublished DataSetSample objects')
+        dss_list = set()
+        for study in self.unpublished_studies:
+            ret_dss = list(study.data_set_samples)
+            sys.stdout.write(f"\r{study}: {len(ret_dss)} DataSetSamples".ljust(50))
+            dss_list.update(ret_dss)
+        dss_list = list(dss_list)
+        # We need to take into account that just because a dss is in an unpublished
+        # study doesn't mean it might not be published in another study.
+        dss_list = [_ for _ in dss_list if _ not in self.published_data_set_samples]
+        print(f'\n{len(dss_list)} unpublished DataSetSamples retrieved')
+        return dss_list
+
+    def _get_published_studies(self):
+        print('Retrieving published studies')
+        published_studies = Study.query.filter(Study.is_published==True).all()
+        print(f'{len(published_studies)} published studies retrieved')
+        return published_studies
+
+    def _get_unpublished_studies(self):
+        print('Retrieving unpublished studies')
+        unpublished_studies = Study.query.filter(Study.is_published==False).all()
+        print(f'{len(unpublished_studies)} unpublished studies retrieved')
+        return unpublished_studies
 
 orf = OutputResourceFastas().make_fasta_resources()
 foo = 'bar'

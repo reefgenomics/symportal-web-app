@@ -255,6 +255,12 @@ class ReferenceSequence(db.Model):
         else:
             return f'{self.id}_{self.clade}'
 
+    def __repr__(self):
+        if self.has_name:
+            return self.name
+        else:
+            return f'{self.id}_{self.clade}'
+
 class DataSetSampleSequence(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_datasetsamplesequence'
