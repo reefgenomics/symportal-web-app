@@ -15,19 +15,22 @@ datasets = db.Table('datasets',
 cladeCollectionType = db.Table('dbApp_cladecollectiontype',
     db.Column('id', db.Integer, primary_key=True),
     db.Column('analysis_type_of_id', db.Integer, db.ForeignKey('dbApp_analysistype.id'), primary_key=True),
-    db.Column('clade_collection_found_in_id', db.Integer, db.ForeignKey('dbApp_cladecollection.id'), primary_key=True)
+    db.Column('clade_collection_found_in_id', db.Integer, db.ForeignKey('dbApp_cladecollection.id'), primary_key=True),
+    info={'bind_key': 'symportal_database'}
 )
 
 Study__DataSetSample = db.Table('dbApp_study_data_set_samples', 
     db.Column('id', db.Integer, primary_key=True),
     db.Column('datasetsample_id', db.Integer, db.ForeignKey('dbApp_datasetsample.id'), primary_key=True),
-    db.Column('study_id', db.Integer, db.ForeignKey('dbApp_study.id'), primary_key=True)
+    db.Column('study_id', db.Integer, db.ForeignKey('dbApp_study.id'), primary_key=True),
+    info={'bind_key': 'symportal_database'}
     )
 
 SPUser__Study = db.Table('dbApp_user_studies',
     db.Column('id', db.Integer, primary_key=True),
     db.Column('study_id', db.Integer, db.ForeignKey('dbApp_study.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('dbApp_user.id'), primary_key=True)
+    db.Column('user_id', db.Integer, db.ForeignKey('dbApp_user.id'), primary_key=True),
+    info={'bind_key': 'symportal_database'}
     )
 
 class SPDataSet(db.Model):
@@ -44,6 +47,8 @@ class SPDataSet(db.Model):
     data_set_samples = db.relationship('DataSetSample', backref='dataset')
     def __str__(self):
         return self.name
+    def __repr__(self):
+        return f'<SPDataSet {self.name}>'
 
 class DataSetSample(db.Model):
     __bind_key__ = 'symportal_database'
@@ -51,6 +56,8 @@ class DataSetSample(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_submission_from_id = db.Column(db.Integer, db.ForeignKey('dbApp_dataset.id'), nullable=False)
     clade_collections = db.relationship('CladeCollection', backref='dataset_sample')
+    data_set_sample_sequences = db.relationship('DataSetSampleSequence', backref='datasetsample')
+    data_set_sample_sequences_pm = db.relationship('DataSetSampleSequencePM', backref='datasetsample')
     name = db.Column(db.String(200), nullable=False)
     # This is the absolute number of sequences after make.contigs
     num_contigs = db.Column(db.Integer, default=0)
@@ -94,6 +101,8 @@ class DataSetSample(db.Model):
 
     def __str__(self):
         return self.name
+    def __repr__(self):
+        return f'<DataSetSample {self.name}>'
 
 class Study(db.Model):
     __bind_key__ = 'symportal_database'
@@ -113,6 +122,15 @@ class Study(db.Model):
     creation_time_stamp = db.Column(db.String(100), default=str(datetime.now()).replace(' ', '_').replace(':', '-'))
     data_set_samples = db.relationship('DataSetSample', secondary=Study__DataSetSample, lazy='dynamic',
      backref=db.backref('studies', lazy='dynamic'))
+    # num_samples = self.get_num_samples()
+    
+    def __str__(self):
+        return self.name
+    def __repr__(self):
+        return f'<Study {self.name}>'
+
+    def get_num_samples(self):
+        return len(list(self.data_set_samples))
 
 class SPUser(db.Model):
     __bind_key__ = 'symportal_database'
@@ -120,7 +138,7 @@ class SPUser(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), index=True, unique=True, nullable=False)
     studies = db.relationship('Study', secondary=SPUser__Study, lazy='dynamic',
-     backref=db.backref('studies', lazy='dynamic'))
+     backref=db.backref('users', lazy='dynamic'))
     # This is set to False when User is created. Upon upload to symportal.org
     # a user that matches this name will be searched for in the app.db database.
     # If no matching user if found, an error will be thrown. If a user is found,
@@ -129,6 +147,9 @@ class SPUser(db.Model):
     # The id of this object will also be stored in the app.db User object that matches
     app_db_key_is_set = db.Column(db.Boolean, default=False)
     app_db_key_id = db.Column(db.Integer, nullable=True)
+
+    def __repr__(self):
+        return f'<SPUser {self.name}>'
 
 class DataAnalysis(db.Model):
     __bind_key__ = 'symportal_database'
@@ -148,39 +169,19 @@ class DataAnalysis(db.Model):
     submitting_user_email = db.Column(db.String(100), nullable=False)
     analysis_complete_time_stamp = db.Column(db.String(100), nullable=False)
 
-    # def get_clade_collections(self):
-    #     list_of_uids = [int(x) for x in self.list_of_data_set_uids.split(',')]
-    #     clade_collections = []
-    #     for uid_list in general.chunks(list_of_uids):
-    #         clade_collections.extend(list(CladeCollection.objects.filter(data_set_sample_from__data_submission_from__in=uid_list)))
-    #     return clade_collections
-
 class CladeCollection(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_cladecollection'
     id = db.Column(db.Integer, primary_key=True)
     data_set_sample_from_id = db.Column(db.Integer, db.ForeignKey('dbApp_datasetsample.id'), nullable=False)
     analysis_types = db.relationship('AnalysisType', secondary=cladeCollectionType, backref=db.backref('clade_collections'))
+    data_set_sample_sequences = db.relationship('DataSetSampleSequence', backref='cladecollection')
     # data_set_sample_from = models.ForeignKey(DataSetSample, on_delete=models.CASCADE, null=True)
     clade = db.Column(db.String(1), nullable=False)
     # the method below to get the footprint of the clade_collection_object is incredibly slow.
     # Hopefully a much faster way will be to store the ID's of the refseqs that make up the footprint
     # I will therefore store the reference uids in the field below
     footprint = db.Column(db.String(100000), nullable=False)
-
-    # # This will return the foot print of the analysedSampleSequences that are found above the given percentage cutoff
-    # def cutoff_footprint(self, cutoff):
-    #     # get total seqs in cladeCollection
-    #     total = 0
-
-    #     for dsss in DataSetSampleSequence.objects.filter(clade_collection_found_in=self):
-    #         total += dsss.abundance
-    #     sequence_number_cutoff = cutoff * total
-    #     frset = set([])
-    #     for dsss in DataSetSampleSequence.objects.filter(clade_collection_found_in=self):
-    #         if dsss.abundance > sequence_number_cutoff:
-    #             frset.add(dsss.reference_sequence_of)
-    #     return frozenset(frset)
 
     def __str__(self):
         return self.datasetsample.name
@@ -241,15 +242,11 @@ class ReferenceSequence(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_referencesequence'
     id = db.Column(db.Integer, primary_key=True)
-    # name = models.CharField(max_length=30, default='noName')
+    data_set_sample_sequences = db.relationship('DataSetSampleSequence', backref='referencesequence')
+    data_set_sample_sequences_pm = db.relationship('DataSetSampleSequencePM', backref='referencesequence')
     name = db.Column(db.String(30), default='noName')
-    # has_name = models.BooleanField(default=False)
     has_name = db.Column(db.Boolean, default=False)
-    # clade = models.CharField(max_length=30)
     clade = db.Column(db.String(30))
-    # sequence = models.CharField(max_length=500)
-    # sequence = db.Column(db.String(500))
-    # accession = models.CharField(max_length=50, null=True)
     accession = db.Column(db.String(50), nullable=True)
 
     def __str__(self):
@@ -257,6 +254,39 @@ class ReferenceSequence(db.Model):
             return self.name
         else:
             return f'{self.id}_{self.clade}'
+
+class DataSetSampleSequence(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_datasetsamplesequence'
+    id = db.Column(db.Integer, primary_key=True)
+    # FKeys
+    data_set_sample_from_id = db.Column(db.Integer, db.ForeignKey('dbApp_datasetsample.id'))
+    clade_collection_found_in_id = db.Column(db.Integer, db.ForeignKey('dbApp_cladecollection.id'))
+    reference_sequence_of_id = db.Column(db.Integer, db.ForeignKey('dbApp_referencesequence.id'))
+    abundance = db.Column(db.Integer, default=0)
+
+    def __str__(self):
+        if self.referencesequence.has_name:
+            return self.referencesequence.name
+        else:
+            return 'ID=' + str(self.id)
+
+class DataSetSampleSequencePM(db.Model):
+    # this is the pre-MED version of the DataSetSampleSequence object
+    # its purpose is to keep track of the
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_datasetsamplesequencepm'
+    id = db.Column(db.Integer, primary_key=True)
+    # FKeys
+    data_set_sample_from_id = db.Column(db.Integer, db.ForeignKey('dbApp_datasetsample.id'))
+    reference_sequence_of_id = db.Column(db.Integer, db.ForeignKey('dbApp_referencesequence.id'))
+    abundance = db.Column(db.Integer, default=0)
+
+    def __str__(self):
+        if self.referencesequence.has_name:
+            return self.referncesequence.name
+        else:
+            return 'ID=' + str(self.id)
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -271,7 +301,7 @@ class User(UserMixin, db.Model):
     
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return f'<User {self.username}>'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
