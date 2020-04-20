@@ -39,6 +39,10 @@ from sp_app.models import SPDataSet, DataSetSample, Study, SPUser, User, Referen
 import json
 import sys
 from sqlalchemy.orm.exc import NoResultFound
+from datetime import datetime
+import json
+import pickle
+import os
 
 class DBSync:
     def __init__(self):
@@ -364,41 +368,84 @@ class OutputResourceFastas:
     This json info file can hold as a dictionary the name of the resource, the description,
     the number of sequences, the number of published studies and the update date.
     """
-    def __init__(self):
-        self.published_studies = self._get_published_studies()
-        self.unpublised_studies = self._get_unpublished_studies()
-        self.published_data_set_samples = self._get_published_data_set_samples()
-        self.unpublished_data_set_samples = self._get_unpublished_data_set_samples()
-        self.published_data_set_sample_sequence_pm = self._get_data_set_sample_sequence_pm()
-        self.unpublished_data_set_sample_sequence_pm = self._get_data_set_sample_sequence_pm_unpublished()
-        self.published_data_set_sample_sequence = self._get_data_set_sample_sequence()
-        self.resource_dir = os.path.join(os.getcwd(), 'static', 'resources')
+    def __init__(self, cache=False):
+        self.resource_dir = os.path.join(os.getcwd(), 'sp_app', 'static', 'resources')
+        self.cache_dir = os.path.join(self.resource_dir, 'cache')
+        # NB!! This cache system I've made may be useless as we are doing lazy loads and so associated
+        # objects are likely not cached. If we were to do joined loads, then the objects would be massive
+        self.cache = cache
+        if self.cache:
+            try:
+                # Try to load them and if it fails then do it from scratch
+                self.pre_med_reference_sequences_published = pickle.load(open(os.path.join(self.cache_dir, 'pre_med_reference_sequences.p'), 'rb'))
+                self.post_med_reference_sequences_published = pickle.load(open(os.path.join(self.cache_dir, 'post_med_reference_sequences.p'), 'rb'))
+                self.pre_med_reference_sequences_unpublished = pickle.load(open(os.path.join(self.cache_dir, 'pre_med_reference_sequences_unpublished.p'), 'rb'))
+            
+            # self.published_studies = self._get_object_from_cache('published_studies.p', self._get_published_studies_from_db)
+            # self.unpublished_studies = self._get_object_from_cache('unpublished_studies.p', self._get_unpublished_studies_from_db)
+            # self.published_data_set_samples = self._get_object_from_cache('published_data_set_samples.p', self._get_published_data_set_samples_from_db)
+            # self.unpublished_data_set_samples = self._get_object_from_cache('unpublished_data_set_samples.p', self._get_unpublished_data_set_samples_from_db)
+            # self.published_data_set_sample_sequence = self._get_object_from_cache('published_data_set_sample_sequence.p', self._get_data_set_sample_sequence_from_db)
+            # self.published_data_set_sample_sequence_pm =  self._get_object_from_cache('published_data_set_sample_sequences_pm.p', self._get_data_set_sample_sequence_pm_from_db)
+            # self.unpublished_data_set_sample_sequence_pm = self._get_object_from_cache('unpublished_data_set_sample_sequences_pm.p', self._get_data_set_sample_sequence_pm_unpublished_from_db)
+            # self.pre_med_reference_sequences = self._get_object_from_cache('pre_med_reference_sequences.p', self._get_pre_med_representative_reference_sequences_from_db)
+            # self.post_med_reference_sequences = self._get_object_from_cache('post_med_reference_sequences.p', self._get_post_med_representative_reference_sequences_from_db)
+            except FileNotFoundError:
+                self._get_objects_from_db()
+        else:
+            self._get_objects_from_db()
+                
         self.pre_med_fasta_path = os.path.join(self.resource_dir, 'published_pre_med.fasta')
         self.post_med_fasta_path = os.path.join(self.resource_dir, 'published_post_med.fasta')
         self.div_fasta_path = os.path.join(self.resource_dir, 'published_div.fasta')
+        self.json_path = os.path.join(self.resource_dir, 'resource_info.json')
         self.json_dict = {}
-        # List is dynamic and will be used three times
-        self.rs_list = []
+        
+    def _get_objects_from_db(self):
+        self.published_studies = self._get_published_studies_from_db()
+        self.unpublished_studies = self._get_unpublished_studies_from_db()
+        self.published_data_set_samples = self._get_published_data_set_samples_from_db()
+        self.unpublished_data_set_samples = self._get_unpublished_data_set_samples_from_db()
+        self.published_data_set_sample_sequence = self._get_data_set_sample_sequence_from_db()
+        self.published_data_set_sample_sequence_pm =  self._get_data_set_sample_sequence_pm_from_db()
+        self.unpublished_data_set_sample_sequence_pm = self._get_data_set_sample_sequence_pm_unpublished_from_db()
+        self.pre_med_reference_sequences = self._get_pre_med_representative_reference_sequences_from_db()
+        self.post_med_reference_sequences = self._get_post_med_representative_reference_sequences_from_db()
+        self.pre_med_reference_sequences_unpublished = self._get_pre_med_representative_reference_sequences_unpublished_from_db()
+    
+    def _get_pre_med_representative_reference_sequences_unpublished_from_db(self):
+        print('Retrieving pre_MED ReferenceSeqeunces from unpublished DataSetSampleSequencePMs')
+        retr_rs = [rs for rs in [_.referencesequence for _ in self.unpublished_data_set_sample_sequence_pm] if rs.has_name]
+        print(f'Retrieved {len(retr_rs)} ReferenceSequences')
+        if self.cache:
+            self._pickle_dump_obj(pre_med_reference_sequences, 'pre_med_reference_sequences_unpublished.p')
+        return retr_rs
 
     def make_fasta_resources(self):
-        # We do it in this order so that we can use the self.rs_list that is already populated
-        # from _pre_med for _div
-        self._post_med()
         self._pre_med()
+        self._post_med()
         self._div()
-        self._populate_json()
+        self._populate_and_write_json_dict()
 
-    def _populate_json(self):
-        raise NotImplementedError
+    def _populate_and_write_json_dict(self):
+        """
+        Populate the json dict with the information that we will display in the resources section
+        for each of the alignments giving the number of samples and datasets and that sort of thing
+        """
+        self.json_dict['number_published_studies'] = len(self.published_studies)
+        self.json_dict['published_data_set_samples'] = len(self.published_data_set_samples)
+        self.json_dict['update_date'] = str(datetime.now())
+        self.json_dict['num_pre_med_seqs'] = len(self.pre_med_reference_sequences)
+        self.json_dict['num_post_med_seqs'] = len(self.post_med_reference_sequences)
+        json.dump(self.json_dict, self.json_path)
+        
 
     def _pre_med(self):
         print('Creating pre_MED_fasta')
-        self._get_representative_reference_sequences(self.published_data_set_sample_sequence_pm)
-        self._write_ref_seqs_to_path(path=self.pre_med_fasta_path)
+        self._write_ref_seqs_to_path(path=self.pre_med_fasta_path, ref_seqs=self.pre_med_reference_sequences)
 
     def _post_med(self):
         print('\n\nCreating post_MED_fasta')
-        self._get_representative_reference_sequences(self.published_data_set_sample_sequence)
         self._write_ref_seqs_to_path(path=self.post_med_fasta_path)
 
     def _div(self):
@@ -412,9 +459,8 @@ class OutputResourceFastas:
         print('\n\nCreating DIV_fasta')
         #1
         all_named_ref_seqs = list(ReferenceSequence.query.filter(ReferenceSequence.has_name==True).all())
-        # self.rs_list now contains all dssspm for the published so let's use this as our 2
         #2
-        published_named_ref_seqs = [_ for _ in self.rs_list if _.has_name]
+        published_named_ref_seqs = [_ for _ in self.pre_med_reference_sequences if _.has_name]
         #3
         unpub_and_starter = list(set(all_named_ref_seqs).difference(published_named))
         #4
@@ -427,92 +473,130 @@ class OutputResourceFastas:
         for div in unpub_and_starter:
             if div not in divs_in_ubpublished_studies:
                 published_named_ref_seqs.append(div)
-        # Associate to rs_list variable so that we can use the write_ref_seqs_to_path method
-        self.rs_list = published_named_ref_seqs
-        self._write_ref_seqs_to_path(path=self.div_fasta_path)
+        
+        self.json_dict['num_div_seqs'] = len(published_named_ref_seqs)
+        self._write_ref_seqs_to_path(path=self.div_fasta_path, ref_seqs=published_named_ref_seqs)
 
-    def _write_ref_seqs_to_path(self, path):
+    def _write_ref_seqs_to_path(self, path, ref_seqs):
         with open(path, 'w') as f:
-            for rs_obj in self.rs_list:
+            for rs_obj in ref_seqs:
                 f.write('>{rs_obj}')
                 f.write(rs_obj.sequence)
     
-    def _get_representative_reference_sequences(self, obj_list):
-        print('\nRetrieving representative ReferenceSequences')
-        self.rs_list = list(set([_.referencesequence for _ in obj_list]))
-        print(f'{len(self.rs_list)} published ReferenceSeqeunces retrieved')
+    def _get_pre_med_representative_reference_sequences_from_db(self):
+        print('\nRetrieving pre_MED representative ReferenceSequences')
+        pre_med_reference_sequences = list(set([_.referencesequence for _ in self.published_data_set_sample_sequence_pm]))
+        print(f'{len(pre_med_reference_sequences)} published pre_MED ReferenceSeqeunces retrieved')
+        if self.cache:
+            self._pickle_dump_obj(pre_med_reference_sequences, 'pre_med_reference_sequences.p')
+        return pre_med_reference_sequences
 
-    def _get_data_set_sample_sequence(self):
-        print('Retrieving DataSetSample objects from published DataSetSamples')
-        dsss_list = set()
+    def _get_post_med_representative_reference_sequences_from_db(self):
+        print('\nRetrieving post_MED representative ReferenceSequences')
+        post_med_reference_sequences = list(set([_.referencesequence for _ in self.published_data_set_sample_sequence]))
+        print(f'{len(post_med_reference_sequences)} published post_MED ReferenceSeqeunces retrieved')
+        if self.cache:
+            self._pickle_dump_obj(post_med_reference_sequences, 'post_med_reference_sequences.p')
+        return post_med_reference_sequences
+
+    def _get_data_set_sample_sequence_from_db(self):
+        print('Retrieving DataSetSampleSeqeuence objects from published DataSetSamples')
+        published_data_set_sample_sequence = set()
         for dss in self.published_data_set_samples:
             ret_dsss = list(dss.data_set_sample_sequences)
             sys.stdout.write(f'\r{dss}: {len(ret_dsss)} DataSetSampleSequences'.ljust(100))
-            dsss_list.update(ret_dsss)
-        dsss_list = list(dsss_list)
-        print(f'\n{len(dsss_list)} published DataSetSampleSequences retrieved')
-        return dsss_list
+            published_data_set_sample_sequence.update(ret_dsss)
+        published_data_set_sample_sequence = list(published_data_set_sample_sequence)
+        print(f'\n{len(published_data_set_sample_sequence)} published DataSetSampleSequences retrieved')
+        if self.cache:
+            self._pickle_dump_obj(published_data_set_sample_sequence, 'published_data_set_sample_sequence.p')
+        return published_data_set_sample_sequence
     
-    def _get_data_set_sample_sequence_pm(self):
-        print('Retrieving DataSetSamplePM objects from published DataSetSamples')
-        dssspm_list = set()
+    def _get_data_set_sample_sequence_pm_from_db(self):
+        print('Retrieving DataSetSampleSequencePM objects from published DataSetSamples')
+        published_data_set_sample_sequences_pm = set()
         for dss in self.published_data_set_samples:
             ret_dssspm = list(dss.data_set_sample_sequences_pm)
             sys.stdout.write(f'\r{dss}: {len(ret_dssspm)} DataSetSampleSequencePMs'.ljust(100))
-            dssspm_list.update(ret_dssspm)
-        dssspm_list = list(dssspm_list)
-        print(f'\n{len(dssspm_list)} published DataSetSampleSequencePMs retrieved')
-        return dssspm_list
+            published_data_set_sample_sequences_pm.update(ret_dssspm)
+        published_data_set_sample_sequences_pm = list(published_data_set_sample_sequences_pm)
+        print(f'\n{len(published_data_set_sample_sequences_pm)} published DataSetSampleSequencePMs retrieved')
+        if self.cache:
+            self._pickle_dump_obj(published_data_set_sample_sequences_pm, 'published_data_set_sample_sequences_pm.p')
+        return published_data_set_sample_sequences_pm
 
-    def _get_data_set_sample_sequence_pm_unpublished(self):
-        print('Retrieving DataSetSamplePM objects from unpublished DataSetSamples')
-        dssspm_list = set()
+    def _get_data_set_sample_sequence_pm_unpublished_from_db(self):
+        print('Retrieving DataSetSampleSequencePM objects from unpublished DataSetSamples')
+        unpublished_data_set_sample_sequences_pm = set()
         for dss in self.unpublished_data_set_samples:
             ret_dssspm = list(dss.data_set_sample_sequences_pm)
             sys.stdout.write(f'\r{dss}: {len(ret_dssspm)} DataSetSampleSequencePMs'.ljust(100))
-            dssspm_list.update(ret_dssspm)
-        dssspm_list = list(dssspm_list)
-        print(f'\n{len(dssspm_list)} unpublished DataSetSampleSequencePMs retrieved')
-        return dssspm_list
+            unpublished_data_set_sample_sequences_pm.update(ret_dssspm)
+        unpublished_data_set_sample_sequences_pm = list(unpublished_data_set_sample_sequences_pm)
+        print(f'\n{len(unpublished_data_set_sample_sequences_pm)} unpublished DataSetSampleSequencePMs retrieved')
+        if self.cache:
+            self._pickle_dump_obj(unpublished_data_set_sample_sequences_pm, 'unpublished_data_set_sample_sequences_pm.p')
+        return unpublished_data_set_sample_sequences_pm
 
-    def _get_published_data_set_samples(self):
+    def _get_published_data_set_samples_from_db(self):
         print('Retrieving DataSetSample objects from published studies')
-        dss_list = set()
+        published_data_set_samples = set()
         for study in self.published_studies:
             ret_dss = list(study.data_set_samples)
             sys.stdout.write(f"\r{study}: {len(ret_dss)} DataSetSamples".ljust(50))
-            dss_list.update(ret_dss)
-        dss_list = list(dss_list)
-        print(f'\n{len(dss_list)} published DataSetSamples retrieved')
-        return dss_list
+            published_data_set_samples.update(ret_dss)
+        published_data_set_samples = list(published_data_set_samples)
+        print(f'\n{len(published_data_set_samples)} published DataSetSamples retrieved')
+        if self.cache:
+            self._pickle_dump_obj(published_data_set_samples, 'published_data_set_samples.p')
+        return published_data_set_samples
     
-    def _get_unpublished_data_set_samples(self):
+    def _get_unpublished_data_set_samples_from_db(self):
         print('Retrieving unpublished DataSetSample objects')
-        dss_list = set()
+        unpublished_data_set_samples = set()
         for study in self.unpublished_studies:
             ret_dss = list(study.data_set_samples)
             sys.stdout.write(f"\r{study}: {len(ret_dss)} DataSetSamples".ljust(50))
-            dss_list.update(ret_dss)
-        dss_list = list(dss_list)
+            unpublished_data_set_samples.update(ret_dss)
+        unpublished_data_set_samples = list(unpublished_data_set_samples)
         # We need to take into account that just because a dss is in an unpublished
         # study doesn't mean it might not be published in another study.
-        dss_list = [_ for _ in dss_list if _ not in self.published_data_set_samples]
-        print(f'\n{len(dss_list)} unpublished DataSetSamples retrieved')
-        return dss_list
+        unpublished_data_set_samples = [_ for _ in unpublished_data_set_samples if _ not in self.published_data_set_samples]
+        print(f'\n{len(unpublished_data_set_samples)} unpublished DataSetSamples retrieved')
+        if self.cache:
+            self._pickle_dump_obj(unpublished_data_set_samples, 'unpublished_data_set_samples.p')
+        return unpublished_data_set_samples
 
-    def _get_published_studies(self):
+    def _get_published_studies_from_db(self):
         print('Retrieving published studies')
         published_studies = Study.query.filter(Study.is_published==True).all()
         print(f'{len(published_studies)} published studies retrieved')
+        if self.cache:
+            self._pickle_dump_obj(published_studies, 'published_studies.p')
         return published_studies
 
-    def _get_unpublished_studies(self):
-        print('Retrieving unpublished studies')
+    def _get_unpublished_studies_from_db(self):
+        print('Retrieving unpublished studies from db')
         unpublished_studies = Study.query.filter(Study.is_published==False).all()
         print(f'{len(unpublished_studies)} unpublished studies retrieved')
+        if self.cache:
+            self._pickle_dump_obj(unpublished_studies, 'unpublished_studies.p')
         return unpublished_studies
 
-orf = OutputResourceFastas().make_fasta_resources()
+    def _pickle_dump_obj(self, obj, pickle_name):
+        pickle.dump(obj, open(os.path.join(self.cache_dir, pickle_name), 'wb'))
+
+    def _get_object_from_cache(self, pickle_name, db_method):
+        try:
+            print(f'Attempting to retrieve {pickle_name} studies from cache')
+            obj = pickle.load(open(os.path.join(self.cache_dir, pickle_name), 'rb'))
+            print(f'Retrieved {len(obj)} objects')
+            return obj
+        except FileNotFoundError:
+            print(f'Failed to retrieve {pickle_name} from cache')
+            return db_method()
+
+orf = OutputResourceFastas(cache=False).make_fasta_resources()
 foo = 'bar'
 sync = DBSync()
 sync.sync()
