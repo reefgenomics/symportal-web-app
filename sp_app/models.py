@@ -242,12 +242,13 @@ class ReferenceSequence(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_referencesequence'
     id = db.Column(db.Integer, primary_key=True)
-    data_set_sample_sequences = db.relationship('DataSetSampleSequence', backref='referencesequence')
-    data_set_sample_sequences_pm = db.relationship('DataSetSampleSequencePM', backref='referencesequence')
+    data_set_sample_sequences = db.relationship('DataSetSampleSequence', backref='referencesequence', lazy='select')
+    data_set_sample_sequences_pm = db.relationship('DataSetSampleSequencePM', backref='referencesequence', lazy='select')
     name = db.Column(db.String(30), default='noName')
     has_name = db.Column(db.Boolean, default=False)
     clade = db.Column(db.String(30))
     accession = db.Column(db.String(50), nullable=True)
+    sequence = db.Column(db.String(500), nullable=False)
 
     def __str__(self):
         if self.has_name:
