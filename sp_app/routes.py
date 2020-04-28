@@ -6,6 +6,7 @@ from flask_login import current_user, login_user, logout_user
 from sp_app.models import User, DataSet, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
 from werkzeug.urls import url_parse
 from sqlalchemy import or_
+import json
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
@@ -20,7 +21,12 @@ def index():
             user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False) if sp_user in study.users]
         except AttributeError as e:
             user_unpublished_studies = []
-        return render_template('index.html', published_studies=published_studies, user_unpublished_studies=user_unpublished_studies)
+
+        # Finally get the resource_info_dict that is jsoned out and pass this in
+        json_resource_info_dict_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'resources', 'resource_info.json')
+        with open(json_resource_info_dict_path, 'r') as f:
+            resource_info_dict = dict(json.load(f))
+        return render_template('index.html', published_studies=published_studies, user_unpublished_studies=user_unpublished_studies, resource_info_dict=resource_info_dict)
     
     elif request.method == 'POST':
         # get the google maps api key to be used

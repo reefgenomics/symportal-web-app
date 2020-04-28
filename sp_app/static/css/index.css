@@ -241,16 +241,6 @@ too much white space when there are several containers back to back on the white
     /* border-top: 1px solid #e4e6e8; */
 }
 
-/* so that we can alternate the row colors I will have a .row_on and .row_off class */
-
-.row_on{
-    background-color: rgba(220, 220, 220, 0.5);
-
-}
-
-.row_off{
-    background-color: #f4f4f4;
-}
 
 .hover_row:hover{
     /*background-color: rgba(255,255,153,0.2);*/

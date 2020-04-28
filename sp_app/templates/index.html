@@ -141,24 +141,15 @@
                     <tr>
                         <th>Resource</th>
                         <th>Description</th>
-                        <th>Upload date</th>
                         <th>Link</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td label="Resource">
-                            DIV_fasta
-                        </td>
-                        <td label="Description">
-                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote that have been used as defining intragenomic variants (DIVs; used in the definition of at least one ITS2 Type Profile).
-                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 3360 sequences from 4 published studies.
-                        </td>
-                        <td label="Upload date">
-                            20200908
-                        </td>
+                        <td label="Resource">published pre-MED sequences</td>
+                        <td label="Description">{{ resource_info_dict["published_pre_med_seqs_description"] }}</td>
                         <td label="Link">
-                            <a href=" {{ url_for('static', filename='resources/DIV_seqs_20190908.fasta') }}">
+                            <a href=" {{ url_for('static', filename='resources/published_pre_med.fasta.gz') }}">
                                 <div style="height:100%;width:100%;">
                                     Download
                                 </div>
@@ -167,17 +158,28 @@
                     </tr>
                     <tr>
                         <td label="Resource">
-                            all_seqs_fasta_post_MED
+                            published post-MED sequences
                         </td>
+                        {% autoescape false %}
                         <td label="Description">
-                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote after having been through the SymPortal quality control pipeline and undergoing minimum entropy decomposition on a sample by sample basis.
-                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 6126 sequences from 4 published studies.
+                            {{ resource_info_dict["published_post_med_seqs_description"] }}
                         </td>
-                        <td label="Upload date">
-                            20200908
-                        </td>
+                        {% endautoescape %}
                         <td label="Link">
-                            <a href="{{ url_for('static', filename='resources/all_seqs_post_med_20190908.fasta') }}">
+                            <a href="{{ url_for('static', filename='resources/published_post_med.fasta.gz') }}">
+                                <div style="height:100%;width:100%;">
+                                    Download
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td label="Resource">
+                            published named sequences
+                        </td>
+                        <td label="Description">{{ resource_info_dict["published_named_seqs_description"] }}</td>
+                        <td label="Link">
+                            <a href="{{ url_for('static', filename='resources/published_div.fasta.gz') }}">
                                 <div style="height:100%;width:100%;">
                                     Download
                                 </div>
@@ -185,7 +187,6 @@
                         </td>
                     </tr>
                 </tbody>
-
             </table>
             <p class="table_footnotes">Interested in a published resource that's not listed? Get in touch!</p>
         
@@ -212,15 +213,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                <!-- Article rows will go in here-->
                 <!-- NB the label attributes are used for the mobile display -->
-                {% for pd in published_studies %}
-                    <!-- We need to set the row type to get the grey non-grey background via css -->
-                    {% if loop.index0 % 2 == 0 %}
-                    {% set row_type="row_off" %}
-                    {% else %}
-                    {% set row_type="row_on" %}
-                    {% endif %}
+                {% for pd in published_studies %}                    
                     <tr>
                         <td label="Article">{{ pd.name }}</td>
                         <td label="Title">{{ pd.title }}</td>
@@ -301,12 +295,6 @@
                     </thead>
                     <tbody>
                         {% for upd in user_unpublished_studies %}
-                        <!-- We need to set the row type to get the grey non-grey background via css -->
-                            {% if loop.index0 % 2 == 0 %}
-                            {% set row_type="row_off" %}
-                            {% else %}
-                            {% set row_type="row_on" %}
-                            {% endif %}
                             <tr>
                                 <td label="Article">{{ upd.name }}</td>
                                 <td label="Title">{{ upd.title }}</td>
