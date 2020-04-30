@@ -147,7 +147,9 @@
                 <tbody>
                     <tr>
                         <td label="Resource">published pre-MED sequences</td>
+                        {% autoescape false %}
                         <td label="Description">{{ resource_info_dict["published_pre_med_seqs_description"] }}</td>
+                        {% endautoescape %}
                         <td label="Link">
                             <a href=" {{ url_for('static', filename='resources/published_pre_med.fasta.gz') }}">
                                 <div style="height:100%;width:100%;">
@@ -177,7 +179,9 @@
                         <td label="Resource">
                             published named sequences
                         </td>
+                        {% autoescape false %}
                         <td label="Description">{{ resource_info_dict["published_named_seqs_description"] }}</td>
+                        {% endautoescape %}
                         <td label="Link">
                             <a href="{{ url_for('static', filename='resources/published_div.fasta.gz') }}">
                                 <div style="height:100%;width:100%;">

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """This script will be run when we transfer a datbase version from the remote symportal instance
 to the symportal.org server. This transfer will always be in one directrion. From the symportal
 instance, to the symportal server. User objects and Study objects will only every be added to the
@@ -504,13 +505,13 @@ class OutputResourceFastas:
     def _write_ref_seqs_to_path(self, path, ref_seqs):
         with open(path, 'w') as f:
             for rs_obj in ref_seqs:
-                f.write(f'>{rs_obj}')
-                f.write(rs_obj.sequence)
+                f.write(f'>{rs_obj}\n')
+                f.write(f'{rs_obj.sequence}\n')
         # Then compress as this will be large
         subprocess.run(['gzip', '-f', path])
     
 
-orf = OutputResourceFastas().make_fasta_resources()
-foo = 'bar'
+
 sync = DBSync()
 sync.sync()
+orf = OutputResourceFastas().make_fasta_resources()
