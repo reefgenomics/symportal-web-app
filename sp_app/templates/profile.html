@@ -41,7 +41,7 @@
                                 <td>
                                     {% if study.data_explorer %}
                                     <form action="" method="POST">
-                                        <button class="link_button" name="study_to_load" value="{{ study.study_to_load_str }}">
+                                        <button class="link_button" name="study_to_load" value="{{ study.name }}">
                                             {{study.name}}
                                         </button>
                                     </form>
@@ -81,7 +81,7 @@
                                 <td>
                                     {% if study.data_explorer %}
                                     <form action="" method="POST">
-                                        <button class="link_button" name="study_to_load" value="{{ study.study_to_load_str }}">
+                                        <button class="link_button" name="study_to_load" value="{{ study.name }}">
                                             {{study.name}}
                                         </button>
                                     </form>

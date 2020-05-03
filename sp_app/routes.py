@@ -47,6 +47,7 @@ def index():
         if current_user.is_anonymous:
             published_and_authorised_studies = Study.query\
                 .filter(Study.data_explorer==True, Study.is_published==True).all()
+            print('we are here')
         elif current_user.is_admin:
             # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
@@ -118,7 +119,6 @@ def profile():
         # We will populate a table that shows the studies that the user is authorised for
         sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
         user_authorised_studies = list(Study.query.filter(Study.users.contains(sp_user)).all())
-        print(f'The user auth studies are {user_authorised_studies}')
         # We will also populate a table that will only be visible is the user is an admin
         # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
         if current_user.is_admin:
@@ -139,7 +139,6 @@ def profile():
         # We will also need to provide a list of studies to load in the dataexplorer drop
         # down that allows users to switch between the DataSet that they are viewing
         study_to_load = Study.query.filter(Study.name==request.form.get('study_to_load')).first()
-        print(f'This is the data_set_to_load we end up with {study_to_load}')
         # The other studies should be those that are:
         # a - published
         # b - have dataexplorer data

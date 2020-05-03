@@ -87,7 +87,7 @@
             <div class="grid-1 center">
                 <div class="service_item">
                     <form action="" method="POST">
-                        <button class="DEbtn" name="study_to_load" value="Terraneo_et_al_2019">
+                        <button class="DEbtn" name="study_to_load" value="terraneo_et_al_2019">
                             <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" class="logo" alt="pic01"></img>
                         </button>
                     </form>
@@ -254,7 +254,7 @@
                         {% if pd.data_explorer %}
                         <td align="center">
                             <form action method="post">
-                                <button class="DEbtn" name="study_to_load" value="{{ pd.study_to_load_str }}">
+                                <button class="DEbtn" name="study_to_load" value="{{ pd.name }}">
                                     <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
                                 </button>
                             </form>
@@ -334,7 +334,7 @@
                                 {% if upd.data_explorer %}
                                 <td align="center">
                                     <form action method="post">
-                                        <button class="DEbtn" name="study_to_load" value="{{ upd.study_to_load_str }}">
+                                        <button class="DEbtn" name="study_to_load" value="{{ upd.name }}">
                                             <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
                                         </button>
                                     </form>

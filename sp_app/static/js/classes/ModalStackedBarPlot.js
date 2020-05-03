@@ -343,7 +343,7 @@ class ModalStackedBarPlot{
     _center_or_ellipse_axis_labels(text_obj, sample_name_width_obj){
         let sample_meta_info = this.sample_meta_info;
         // text has already been ellipsed. So we just need to do centering here.
-        d3.select(text_obj).attr("y", 0).attr("x", 9).attr("dy", "-0.35em").attr("style", "font-size:10px;").attr("transform", "rotate(90)")
+        d3.select(text_obj).attr("y", 0).attr("x", 9).attr("dy", "0.35em").attr("style", "font-size:10px;").attr("transform", "rotate(90)")
         .style("text-anchor", "start");
         // Set the values we need to here dynamically according to the dict that we worked out above. but still need to find some way of linking.
         //This has a data node.
