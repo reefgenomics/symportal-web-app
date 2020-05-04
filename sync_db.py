@@ -249,8 +249,8 @@ class DBSync:
                         db.session.add(spd_user)
                         self._spd_to_spo_user_dict[spd_user] = spo_user
             except NoResultFound:
-                if first_pass is False:
-                    raise RuntimeError('A user was not found in the spo db on the second run')
+                if _first_user_pass is False:
+                    raise RuntimeError(f'A user ({json_user["name"]}) was not found in the spo db on the second run')
                 # Then the user doesn't yet exist in the spo db.
                 # We need to create the spo version first and then 
                 # we can link in the second run to the spd db object
@@ -348,4 +348,3 @@ class DBSync:
 
 sync = DBSync()
 sync.sync()
-orf = OutputResourceFastas().make_fasta_resources()
