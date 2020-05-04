@@ -6,6 +6,7 @@ from flask_login import current_user, login_user, logout_user
 from sp_app.models import User, DataSet, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
 from werkzeug.urls import url_parse
 from sqlalchemy import or_
+from sqlalchemy.orm.exc import NoResultFound
 import json
 
 @app.route('/', methods=['GET','POST'])
@@ -21,6 +22,11 @@ def index():
             user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False) if sp_user in study.users]
         except AttributeError as e:
             user_unpublished_studies = []
+        except NoResultFound:
+            # We should never get here as we have checked for this at the login route.
+            logout_user()
+            return redirect(url_for('index'))
+
 
         # Finally get the resource_info_dict that is jsoned out and pass this in
         json_resource_info_dict_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'resources', 'resource_info.json')
@@ -76,6 +82,14 @@ def login():
         if user is None or not user.check_password(form.password.data):
             flash("Invalid username or password")
             return redirect(url_for('login'))
+        try:
+            # We do this as the user may be logged in the local sqlite db but the corresponding object
+            # may not have been created in the symportal_database. If this is the case, the
+            # administrator will need to fix this and the user will need to be told to get in contact
+            # with the administrator.
+            sp_user = SPUser.query.filter(SPUser.app_db_key_id==user.id).one()
+        except NoResultFound:
+            flash("User has not been synced to the symportal_database.\nPlease contact the administrator to fix this.")
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
