@@ -87,7 +87,7 @@
             <div class="grid-1 center">
                 <div class="service_item">
                     <form action="" method="POST">
-                        <button class="DEbtn" name="study_to_load" value="Terraneo_et_al_2019">
+                        <button class="DEbtn" name="study_to_load" value="terraneo_et_al_2019">
                             <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" class="logo" alt="pic01"></img>
                         </button>
                     </form>
@@ -141,24 +141,17 @@
                     <tr>
                         <th>Resource</th>
                         <th>Description</th>
-                        <th>Upload date</th>
                         <th>Link</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td label="Resource">
-                            DIV_fasta
-                        </td>
-                        <td label="Description">
-                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote that have been used as defining intragenomic variants (DIVs; used in the definition of at least one ITS2 Type Profile).
-                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 3360 sequences from 4 published studies.
-                        </td>
-                        <td label="Upload date">
-                            20200908
-                        </td>
+                        <td label="Resource">published pre-MED sequences</td>
+                        {% autoescape false %}
+                        <td label="Description">{{ resource_info_dict["published_pre_med_seqs_description"] }}</td>
+                        {% endautoescape %}
                         <td label="Link">
-                            <a href=" {{ url_for('static', filename='resources/DIV_seqs_20190908.fasta') }}">
+                            <a href=" {{ url_for('static', filename='resources/published_pre_med.fasta.gz') }}">
                                 <div style="height:100%;width:100%;">
                                     Download
                                 </div>
@@ -167,17 +160,30 @@
                     </tr>
                     <tr>
                         <td label="Resource">
-                            all_seqs_fasta_post_MED
+                            published post-MED sequences
                         </td>
+                        {% autoescape false %}
                         <td label="Description">
-                            Fasta file containing all ITS2 sequences found in the published studies listed below of run type remote after having been through the SymPortal quality control pipeline and undergoing minimum entropy decomposition on a sample by sample basis.
-                            This file does not contain sequences unique to data sets held in the SymPortal database that are unpublished. 6126 sequences from 4 published studies.
+                            {{ resource_info_dict["published_post_med_seqs_description"] }}
                         </td>
-                        <td label="Upload date">
-                            20200908
-                        </td>
+                        {% endautoescape %}
                         <td label="Link">
-                            <a href="{{ url_for('static', filename='resources/all_seqs_post_med_20190908.fasta') }}">
+                            <a href="{{ url_for('static', filename='resources/published_post_med.fasta.gz') }}">
+                                <div style="height:100%;width:100%;">
+                                    Download
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td label="Resource">
+                            published named sequences
+                        </td>
+                        {% autoescape false %}
+                        <td label="Description">{{ resource_info_dict["published_named_seqs_description"] }}</td>
+                        {% endautoescape %}
+                        <td label="Link">
+                            <a href="{{ url_for('static', filename='resources/published_div.fasta.gz') }}">
                                 <div style="height:100%;width:100%;">
                                     Download
                                 </div>
@@ -185,7 +191,6 @@
                         </td>
                     </tr>
                 </tbody>
-
             </table>
             <p class="table_footnotes">Interested in a published resource that's not listed? Get in touch!</p>
         
@@ -212,20 +217,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                <!-- Article rows will go in here-->
                 <!-- NB the label attributes are used for the mobile display -->
-                {% for pd in published_datasets %}
-                    <!-- We need to set the row type to get the grey non-grey background via css -->
-                    {% if loop.index0 % 2 == 0 %}
-                    {% set row_type="row_off" %}
-                    {% else %}
-                    {% set row_type="row_on" %}
-                    {% endif %}
+                {% for pd in published_studies %}                    
                     <tr>
-                        <td label="Article">{{ pd.study_name }}</td>
+                        <td label="Article">{{ pd.name }}</td>
                         <td label="Title">{{ pd.title }}</td>
                         <td label="Location">{{ pd.location }}</td>
-                        <td label="#Samples">{{ pd.num_samples }}</td>
+                        <td label="#Samples">{{ pd.get_num_samples() }}</td>
                         {% if pd.additional_markers == 'psbAncr' %}
                         <td label="Additional markers">
                             <i>psbA<sup>ncr</sup></i>
@@ -234,7 +232,7 @@
                         <td label="Additional markers">{{ pd.additional_markers }}</td>
                         {% endif %}
                         <td label="Run type">{{ pd.run_type }}</td>
-                        {% if pd.article_url != '--' %}
+                        {% if (pd.article_url != '--') and pd.article_url %}
                         <td label="Article URL">
                             <a href="{{ pd.article_url }}">
                                 <div style="height:100%;width:100%">Article</div>
@@ -243,9 +241,9 @@
                         {% else %}
                         <td label="Article URL">--</td>
                         {% endif %}
-                        {% if pd.article_url != '--' %}
+                        {% if (pd.data_url != '--') and pd.data_url %}
                         <td label="Seq data URL">
-                            <a href="{{ pd.seq_data_url }}">
+                            <a href="{{ pd.data_url }}">
                                 <div style="height:100%;width:100%">Data</div>
                             </a>
                         </td>
@@ -256,7 +254,7 @@
                         {% if pd.data_explorer %}
                         <td align="center">
                             <form action method="post">
-                                <button class="DEbtn" name="study_to_load" value="{{ pd.study_to_load_str }}">
+                                <button class="DEbtn" name="study_to_load" value="{{ pd.name }}">
                                     <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
                                 </button>
                             </form>
@@ -283,7 +281,7 @@
         <h3 class="light_header">Your unpublished analyses</h3>
         <p class="center">No unpublished analyses to load</p>
         {% else %}
-            {% if user_unpublished_datasets %}
+            {% if user_unpublished_studies %}
                 <table id="unpublished_articles_table" class="table table-striped table-bordered">
                     <caption>Your unpublished analyses</caption>
                     <thead>
@@ -300,18 +298,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for upd in user_unpublished_datasets %}
-                        <!-- We need to set the row type to get the grey non-grey background via css -->
-                            {% if loop.index0 % 2 == 0 %}
-                            {% set row_type="row_off" %}
-                            {% else %}
-                            {% set row_type="row_on" %}
-                            {% endif %}
+                        {% for upd in user_unpublished_studies %}
                             <tr>
-                                <td label="Article">{{ upd.study_name }}</td>
+                                <td label="Article">{{ upd.name }}</td>
                                 <td label="Title">{{ upd.title }}</td>
                                 <td label="Location">{{ upd.location }}</td>
-                                <td label="#Samples">{{ upd.num_samples }}</td>
+                                <td label="#Samples">{{ upd.get_num_samples() }}</td>
                                 {% if upd.additional_markers == 'psbAncr' %}
                                 <td label="Additional markers">
                                     <i>psbA<sup>ncr</sup></i>
@@ -320,7 +312,7 @@
                                 <td label="Additional markers">{{ upd.additional_markers }}</td>
                                 {% endif %}
                                 <td label="Run type">{{ upd.run_type }}</td>
-                                {% if upd.article_url != '--' %}
+                                {% if (upd.article_url != '--') and upd.article_url %}
                                 <td label="Article URL">
                                     <a href="{{ upd.article_url }}">
                                         <div style="height:100%;width:100%">Article</div>
@@ -329,9 +321,9 @@
                                 {% else %}
                                 <td label="Article URL">--</td>
                                 {% endif %}
-                                {% if upd.article_url != '--' %}
+                                {% if (upd.data_url != '--') and upd.data_url %}
                                 <td label="Seq data URL">
-                                    <a href="{{ upd.seq_data_url }}">
+                                    <a href="{{ upd.data_url }}">
                                         <div style="height:100%;width:100%">Data</div>
                                     </a>
                                 </td>
@@ -342,7 +334,7 @@
                                 {% if upd.data_explorer %}
                                 <td align="center">
                                     <form action method="post">
-                                        <button class="DEbtn" name="study_to_load" value="{{ upd.study_to_load_str }}">
+                                        <button class="DEbtn" name="study_to_load" value="{{ upd.name }}">
                                             <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
                                         </button>
                                     </form>

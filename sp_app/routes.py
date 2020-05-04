@@ -3,19 +3,37 @@ from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user
-from sp_app.models import User, DataSet
+from sp_app.models import User, DataSet, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
 from werkzeug.urls import url_parse
 from sqlalchemy import or_
+from sqlalchemy.orm.exc import NoResultFound
+import json
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
 def index():
     if request.method == 'GET':
-        # get the datasets that will be loaded into the published data set table
-        published_datasets = DataSet.query.filter_by(is_published=True).all()
-        # get the datasets that belong to the user that are not yet published
-        user_unpublished_datasets = [ds for ds in DataSet.query.filter_by(is_published=False) if current_user in ds.users_with_access]
-        return render_template('index.html', published_datasets=published_datasets, user_unpublished_datasets=user_unpublished_datasets)
+        # get the studies that will be loaded into the published data set table
+        published_studies = Study.query.filter(Study.is_published==True).all()
+        
+        # get the studies that belong to the user that are not yet published
+        try:
+            sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
+            user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False) if sp_user in study.users]
+        except AttributeError as e:
+            user_unpublished_studies = []
+        except NoResultFound:
+            # We should never get here as we have checked for this at the login route.
+            logout_user()
+            return redirect(url_for('index'))
+
+
+        # Finally get the resource_info_dict that is jsoned out and pass this in
+        json_resource_info_dict_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'resources', 'resource_info.json')
+        with open(json_resource_info_dict_path, 'r') as f:
+            resource_info_dict = dict(json.load(f))
+        return render_template('index.html', published_studies=published_studies, user_unpublished_studies=user_unpublished_studies, resource_info_dict=resource_info_dict)
+    
     elif request.method == 'POST':
         # get the google maps api key to be used
         map_key_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'utils', 'google_maps_api_key.txt')
@@ -26,27 +44,28 @@ def index():
         # provided by the request.
         # We will also need to provide a list of studies to load in the dataexplorer drop
         # down that allows users to switch between the DataSet that they are viewing
-        dataset_to_load = DataSet.query.filter_by(study_to_load_str=request.form.get('study_to_load')).first()
-        # The other datasets should be those that are:
+        study_to_load = Study.query.filter(Study.name==request.form.get('study_to_load')).first()
+        # The other studies should be those that are:
         # a - published
         # b - have dataexplorer data
         # c - are unpublished but have the current user in their users_with_access list
-        # We also want to exclude the dataset_to_load dataset.
+        # We also want to exclude the study_to_load study.
         if current_user.is_anonymous:
-            published_and_authorised_datasets = db.session.query(DataSet)\
-                .filter(DataSet.data_explorer==True, DataSet.is_published==True).all()
+            published_and_authorised_studies = Study.query\
+                .filter(Study.data_explorer==True, Study.is_published==True).all()
+            print('we are here')
         elif current_user.is_admin:
-            # If user is admin then we just want to display all of the datasets that have dataexplorer available
+            # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
-            published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer).all()
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True).all()
         else:
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
-            published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer==True)\
-                .filter(or_(DataSet.is_published==True, DataSet.users_with_access.contains(current_user)))\
-                .filter(DataSet.study_to_load_str != dataset_to_load.study_to_load_str).all()
-        return render_template('data_explorer.html', dataset_to_load=dataset_to_load,
-                               published_and_authorised_datasets=published_and_authorised_datasets ,map_key=map_key)
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True)\
+                .filter(or_(Study.is_published==True, Study.users.contains(current_user)))\
+                .filter(Study.name != study_to_load.name).all()
+        return render_template('data_explorer.html', study_to_load=study_to_load,
+                               published_and_authorised_studies=published_and_authorised_studies ,map_key=map_key)
     
 
 @app.route('/submit_data_learn_more')
@@ -59,10 +78,18 @@ def login():
         return redirect(url_for('index'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter(User.username==form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash("Invalid username or password")
             return redirect(url_for('login'))
+        try:
+            # We do this as the user may be logged in the local sqlite db but the corresponding object
+            # may not have been created in the symportal_database. If this is the case, the
+            # administrator will need to fix this and the user will need to be told to get in contact
+            # with the administrator.
+            sp_user = SPUser.query.filter(SPUser.app_db_key_id==user.id).one()
+        except NoResultFound:
+            flash("User has not been synced to the symportal_database.\nPlease contact the administrator to fix this.")
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -96,20 +123,23 @@ def change_password():
     # We reach here if this is the first navigation to this page
     return render_template('change_password.html', form=form)
 
+# TODO still need to work out what to do with the timestamp as an upload time stamp will be overwritten everytime
+# The database is synced.
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if request.method == 'GET':
         if current_user.is_anonymous:
             return redirect(url_for('index'))
-        # We will populate a table that shows the datasets that the user is authorised for
-        user_authorised_datasets = list(db.session.query(DataSet).filter(DataSet.users_with_access.contains(current_user)).all())
+        # We will populate a table that shows the studies that the user is authorised for
+        sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
+        user_authorised_studies = list(Study.query.filter(Study.users.contains(sp_user)).all())
         # We will also populate a table that will only be visible is the user is an admin
         # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
         if current_user.is_admin:
-            admin_authorised_datasets = list(db.session.query(DataSet).filter(~DataSet.is_published).filter(~DataSet.users_with_access.contains(current_user)).all())
+            admin_authorised_studies = list(Study.query.filter(~Study.is_published).filter(~Study.users.contains(sp_user)).all())
         else:
-            admin_authorised_datasets= list()
-        return render_template('profile.html', user_authorised_datasets=user_authorised_datasets, admin_authorised_datasets=admin_authorised_datasets)
+            admin_authorised_studies= list()
+        return render_template('profile.html', user_authorised_studies=user_authorised_studies, admin_authorised_studies=admin_authorised_studies)
     if request.method == 'POST':
         # Then someone has clicked on one of the study titles
         # and we should send them to the DataExplorer view of respective study
@@ -122,25 +152,24 @@ def profile():
         # provided by the request.
         # We will also need to provide a list of studies to load in the dataexplorer drop
         # down that allows users to switch between the DataSet that they are viewing
-        dataset_to_load = DataSet.query.filter_by(study_to_load_str=request.form.get('study_to_load')).first()
-        print(f'This is the data_set_to_load we end up with {dataset_to_load}')
-        # The other datasets should be those that are:
+        study_to_load = Study.query.filter(Study.name==request.form.get('study_to_load')).first()
+        # The other studies should be those that are:
         # a - published
         # b - have dataexplorer data
         # c - are unpublished but have the current user in their users_with_access list
-        # We also want to exclude the dataset_to_load dataset.
+        # We also want to exclude the study_to_load study.
         if current_user.is_anonymous:
-            published_and_authorised_datasets = db.session.query(DataSet)\
-                .filter(DataSet.data_explorer==True, DataSet.is_published==True).all()
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.is_published==True).all()
         elif current_user.is_admin:
-            # If user is admin then we just want to display all of the datasets that have dataexplorer available
+            # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
-            published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer).all()
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True).all()
         else:
+            sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
-            published_and_authorised_datasets = db.session.query(DataSet).filter(DataSet.data_explorer==True)\
-                .filter(or_(DataSet.is_published==True, DataSet.users_with_access.contains(current_user)))\
-                .filter(DataSet.study_to_load_str != dataset_to_load.study_to_load_str).all()
-        return render_template('data_explorer.html', dataset_to_load=dataset_to_load,
-                               published_and_authorised_datasets=published_and_authorised_datasets ,map_key=map_key)
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True)\
+                .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
+                .filter(Study.name != study_to_load.name).all()
+        return render_template('data_explorer.html', study_to_load=study_to_load,
+                               published_and_authorised_studies=published_and_authorised_studies ,map_key=map_key)

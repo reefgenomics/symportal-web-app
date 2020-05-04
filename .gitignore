@@ -11,7 +11,6 @@ templated-projection/*
 symportal_website/images/
 __pycache__/
 sp_app/data_dev/
-sp_flask_launcher.py
 sp_app/static/images/
 symportal_website/data/
 symportal_website/data_dev/html_data/

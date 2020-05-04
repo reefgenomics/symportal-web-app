@@ -36,24 +36,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for study in user_authorised_datasets %}
+                                {% for study in user_authorised_studies %}
                                 <tr>
                                 <td>
                                     {% if study.data_explorer %}
                                     <form action="" method="POST">
-                                        <button class="link_button" name="study_to_load" value="{{ study.study_to_load_str }}">
-                                            {{study.study_name}}
+                                        <button class="link_button" name="study_to_load" value="{{ study.name }}">
+                                            {{study.name}}
                                         </button>
                                     </form>
                                     {% else %}
-                                    {{study.study_name}}
+                                    {{study.name}}
                                     {% endif %}
                                 </td>
+                                <!-- Work out what to do about a time stamp -->
                                 <td>{{study.upload_timestamp}}</td>
                                 <td>{{study.is_published}}</td>
                                 <td>
-                                    {% for user in study.users_with_access %}
-                                        {{ user.username }}<br>
+                                    {% for user in study.users %}
+                                        {{ user.name }}<br>
                                     {% endfor %}
                                 </td>
                                 </tr>
@@ -62,7 +63,7 @@
                         </table>
                     </div>
                     <hr>
-                    {% if admin_authorised_datasets %}
+                    {% if admin_authorised_studies %}
                     <h7 class="card-title">Admin authorised data sets</h7>
                     <div class="table-responsive">
                         <table class="table table-hover mx-auto w-auto" style="font-size: x-small;">
@@ -75,24 +76,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for study in admin_authorised_datasets %}
+                                {% for study in admin_authorised_studies %}
                                 <tr>
                                 <td>
                                     {% if study.data_explorer %}
                                     <form action="" method="POST">
-                                        <button class="link_button" name="study_to_load" value="{{ study.study_to_load_str }}">
-                                            {{study.study_name}}
+                                        <button class="link_button" name="study_to_load" value="{{ study.name }}">
+                                            {{study.name}}
                                         </button>
                                     </form>
                                     {% else %}
-                                    {{study.study_name}}
+                                    {{study.name}}
                                     {% endif %}
                                 </td>
                                 <td>{{study.upload_timestamp}}</td>
                                 <td>{{study.is_published}}</td>
                                 <td>
-                                    {% for user in study.users_with_access %}
-                                        {{ user.username }}<br>
+                                    {% for user in study.users %}
+                                        {{ user.name }}<br>
                                     {% endfor %}
                                 </td>
                                 </tr>
