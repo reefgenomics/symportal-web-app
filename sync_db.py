@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
-"""This script will be run when we transfer a datbase version from the remote symportal instance
+"""
+This script will be run when we transfer a datbase version from the remote symportal instance
 to the symportal.org server. This transfer will always be in one directrion. From the symportal
-instance, to the symportal server. User objects and Study objects will only every be added to the
+instance, to the symportal server. This transfer will most often occur when we are adding a new study and or user
+to the SymPortal.org collection of studies.
+The first thing to do will be to drop the current database, create a newone and then restore with the new back.
+I think we should keep a total of 3 .bak files. We can keep the original names, but append a 0, 1 or 2 to them
+so that the 0 is the newest, the 1 is the next newest etc. If a 2 exists at the point of transfer, we will delete this.
+One the new database has been restored from the .bak, we will sync the database using the published_articles_sp
+that will also have been sent up. I think it will be a good idea to have a common part of the name between the 
+published articles sp json and the database. I think date and time are probably a good idea. Like the .bak, we
+can keep some versions of the published articles sp json.
+
+User objects and Study objects will only every be added to the
 database during the sync performed by this script that will only every be run on a symportal.org
 server. As such every time a sync happens, all the User and Study objects will be recreated 
 using this script. The list of Study and User instances that should exist will be stored in the
@@ -17,20 +28,6 @@ Next it will create Study objects that will be linked to datasetsample objects. 
 Study objects will be linked to the datasetsample objects.
 
 Once this is completed, the symportal.org code will be able to work from the newly synced db.
-
-In addition to syncing the database we should update the fasta resources on the index page.
-We want to have three different resources here.
-pre_MED
-post_MED
-DIVs
-Each of these will be a fasta file. for pre_MED and post_MED we want all the reference sqeuences found in
-all published Studies. DataSetSampleSequencePM and DataSetSampleSeqeunce respectively.
-For the DIVs, we have some named sequences in the SP database that may not have
-been found in a sample yet (because we initially populated the SP database with named sequences).
-As such to make this fasta we will output all named sequences, unless they a given sequences is
-only found in unpublished Studies. I.e. If the sequences is not found in a DataSetSample, then
-we put it in the fasta, if it is found in a number of DataSetSamples, and any of them are published
-then we put it in the fasta.
 """
 
 from sp_app import db
@@ -45,10 +42,20 @@ import pickle
 import os
 import subprocess
 from time import time
+import argparse
+import ntpath
+import shutil
 
 class DBSync:
     def __init__(self):
-        self.path_to_json = 'published_articles_sp.json'
+        self.parser = argparse.ArgumentParser()
+        self._define_args()
+        self.args = self.parser.parse_args()
+        self.json_archive_dir = self.args.json_archive_dir
+        self.bak_archive_dir = self.args.bak_archive_dir
+        self.path_to_new_bak = self.args.path_to_new_bak
+        self.path_to_new_sp_json = self.args.path_to_new_sp_json
+        self.psql_user = self.args.psql_user
         self.published_articles_sp_dict = self._get_json_array()
         self.json_study_objects = self.published_articles_sp_dict["studies"]
         self.json_user_objects = self.published_articles_sp_dict["users"]
@@ -60,22 +67,114 @@ class DBSync:
         self._spd_to_spo_user_dict = {}
         # This is a list of strings that detail the proposed modifications
         self._modification_strings = []
-        
-
         # The Studies to be created
         self._spd_studies_to_create = []
         # New associations
         self.spd_user_study_associations = []
+        
 
+    def _define_args(self):
+        self.parser.add_argument('--path_to_new_sp_json', help='The path to the new published_articles_sp.json on this web server.', required=True)
+        self.parser.add_argument('--path_to_new_bak', help='The path to the new .bak file that will be used to create the new symportal_database version.', required=True)
+        self.parser.add_argument('--json_archive_dir', help="The path to the directory that holds the archived published_articles_sp.json files", default='/home/humebc/symportal.org/published_articles_archive')
+        self.parser.add_argument('--bak_archive_dir', help="The path to the directory that holds the archived .bak symportal_database files", default="/home/humebc/symportal.org/symportal_database_versions")
+        self.parser.add_argument('--psql_user', help="Username for postgresql commands", default='humebc')
 
     def sync(self):
+        self._archive_bak_and_json()
+        self._restore_from_bak()
         self._create_and_associate_user_objects()
         self._create_and_associate_study_objects()
         self._associate_users_to_studies()
         print('Sync complete.')
 
+    def _archive_bak_and_json(self):
+        """
+        In the symportal_database_archive_dir and in the json_archive_dir there should be up to three
+        files that have been prefixed eith 0, 1, 2 depending on which order they were up load.
+        Here we want to add the new json and bak files to these archives and update the namings accordingly.
+        """
+        bak_file_name = ntpath.basename(self.path_to_new_bak)
+        sp_json_file_name = ntpath.basename(self.path_to_new_sp_json)
+        self.new_archived_json_path = os.path.join(self.json_archive_dir, f'0_{sp_json_file_name}')
+        self.new_archived_bak_path = os.path.join(self.bak_archive_dir, f'0_{bak_file_name}')
+        # Make sure that the files are where they're supposed to be 
+        
+        # JSON
+        if os.path.isfile(os.path.join(self.json_archive_dir, sp_json_file_name)):
+            pass
+        else:
+            shutil.move(self.path_to_new_sp_json, os.path.join(self.json_archive_dir, sp_json_file_name))
+
+        # Check to see that the new .json and the new .bak have not already been updated
+        if not os.path.isfile(self.new_archived_json_path):
+            # Then update the namings
+            # We will need to grab the names and then update outside of for loop
+            # below to prevent renaming 1 -- > 2 before deleteing the old 2.
+            one_file_name_json = None
+            zero_file_name_json = None
+            for json_archive_file in os.listdir(self.json_archive_dir):
+                if json_archive_file.startswith('2_') and json_archive_file.endswith('.json'):
+                    # Then this is the oldest file and it needs to be removed
+                    os.remove(os.path.join(self.json_archive_dir, json_archive_file))
+                elif json_archive_file.startswith('1_') and json_archive_file.endswith('.json'):
+                    one_file_name_json = json_archive_file
+                elif json_archive_file.startswith('0_') and json_archive_file.endswith('.json'):
+                    zero_file_name_json = json_archive_file
+            
+            # now do the renaming.
+            if one_file_name_json is not None:
+                shutil.move(os.path.join(self.json_archive_dir, one_file_name_json), os.path.join(self.json_archive_dir, one_file_name_json.replace('1_', '2_')))
+            if zero_file_name_json is not None:
+                shutil.move(os.path.join(self.json_archive_dir, zero_file_name_json), os.path.join(self.json_archive_dir, zero_file_name_json.replace('0_', '1_'))) 
+            # finally, rename the new json file
+            shutil.move(os.path.join(self.json_archive_dir, sp_json_file_name), self.new_archived_json_path)
+        else:
+            pass
+
+        # BAK
+        if os.path.isfile(os.path.join(self.bak_archive_dir, bak_file_name)):
+            pass
+        else:
+            shutil.move(self.path_to_new_bak, os.path.join(self.bak_archive_dir, bak_file_name))
+
+        if not os.path.isfile(self.new_archived_json_path):
+            # Then update the namings
+            # We will need to grab the names and then update outside of for loop
+            # below to prevent renaming 1 -- > 2 before deleteing the old 2.
+            one_file_name_bak = None
+            zero_file_name_bak = None
+            for json_archive_file in os.listdir(self.json_archive_dir):
+                if json_archive_file.startswith('2_') and json_archive_file.endswith('.json'):
+                    # Then this is the oldest file and it needs to be removed
+                    os.remove(os.path.join(self.json_archive_dir, json_archive_file))
+                elif json_archive_file.startswith('1_') and json_archive_file.endswith('.json'):
+                    one_file_name_bak = json_archive_file
+                elif json_archive_file.startswith('0_') and json_archive_file.endswith('.json'):
+                    zero_file_name_bak = json_archive_file
+            
+            # now do the renaming.
+            if one_file_name_bak is not None:
+                shutil.move(os.path.join(self.json_archive_dir, one_file_name_bak), os.path.join(self.json_archive_dir, one_file_name_bak.replace('1_', '2_')))
+            if zero_file_name_bak is not None:
+                shutil.move(os.path.join(self.json_archive_dir, zero_file_name_bak), os.path.join(self.json_archive_dir, zero_file_name_bak.replace('0_', '1_'))) 
+            # finally, rename the new json file
+            shutil.move(os.path.join(self.json_archive_dir, sp_json_file_name), os.path.join(self.json_archive_dir, f'0_{sp_json_file_name}'))
+    
+    def _restore_from_bak(self):
+        # Passing a password can be done: https://newfivefour.com/postgresql-pgpass-password-file.html
+        # But I don't think it will be necessary as I think psql will be identifying using peer authentication
+        # (I.e. the fact that we are already logged in)
+        
+        # Drop the db
+        subprocess.run(['dropdb', '-U', self.psql_user, '-w', 'symportal_database'], check=True)
+        # Remake the db
+        subprocess.run(['createdb', '-U', self.psql_user, '-O', self.psql_user, '-w', 'symportal_database'], check=True)
+        # Restore the db from the .bak
+        subprocess.run(['pg_restore', '-U', self.psql_user, '-w', '-d', 'symportal_database', '-Fc', self.new_archived_bak_path])
+    
     def _get_json_array(self):
-        with open(self.path_to_json, 'r') as f:
+        with open(self.path_to_new_sp_json, 'r') as f:
             return json.load(f)
 
     def _associate_users_to_studies(self):
