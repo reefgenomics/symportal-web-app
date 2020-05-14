@@ -27,3 +27,6 @@ symportal_database_versions
 sp_app/password.txt
 published_articles_sp.json
 sp_app/static/resources
+example_automate_sp_output.json
+published_articles_archive/
+published_articles_sp.json_backup
