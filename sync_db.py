@@ -89,7 +89,7 @@ class DBSync:
 
     def sync(self):
         self._archive_bak_and_json()
-        # self._restore_from_bak()
+        self._restore_from_bak()
         self._init_vars_for_sync()
         self._create_and_associate_user_objects()
         self._create_and_associate_study_objects()
@@ -172,12 +172,16 @@ class DBSync:
         # (I.e. the fact that we are already logged in)
         
         # Drop the db
+        print('Dropping db')
         result = subprocess.run(['dropdb', '-U', self.psql_user, '-w', 'symportal_database'], check=True)
         # Remake the db
+        print('Creating db')
         result = subprocess.run(['createdb', '-U', self.psql_user, '-O', self.psql_user, '-w', 'symportal_database'], check=True)
         # Restore the db from the .bak
+        print('Restoring db. This make take some time...')
         result = subprocess.run(['pg_restore', '-U', self.psql_user, '-w', '-d', 'symportal_database', '-Fc', self.new_archived_bak_path])
-    
+        print('Db successfuly restored')
+
     def _get_json_array(self):
         with open(self.new_archived_json_path, 'r') as f:
             return json.load(f)
