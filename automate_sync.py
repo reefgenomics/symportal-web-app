@@ -235,7 +235,7 @@ class AutomateSync:
                 self._put_all(remote=self.remote_web_data_dir, local=self.local_data_dir)
             
             # Transfer the sp_json up
-            self.sftp_client.put(os.path.join(self.local_json_dir, self.new_pub_art_file_name), os.path.join(self.remote_web_json_dir, self.new_pub_art_file_name))
+            self.sftp_client.put(os.path.join(self.local_json_dir, self.new_pub_art_file_name), os.path.join(self.remote_web_json_dir, '_'.join(self.new_pub_art_file_name.split('_')[1:])))
             # Transfer up the .bak
             self.sftp_client.put(os.path.join(self.local_bak_dir, ntpath.basename(self.json_info["bak_path"])), os.path.join(self.remote_web_bak_dir, ntpath.basename(self.json_info["bak_path"])))
 
