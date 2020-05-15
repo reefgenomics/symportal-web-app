@@ -45,6 +45,7 @@ from time import time
 import argparse
 import ntpath
 import shutil
+import hashlib
 
 class DBSync:
     def __init__(self):
@@ -55,7 +56,21 @@ class DBSync:
         self.bak_archive_dir = self.args.bak_archive_dir
         self.path_to_new_bak = self.args.path_to_new_bak
         self.path_to_new_sp_json = self.args.path_to_new_sp_json
-        self.psql_user = self.args.psql_user
+        self.psql_user = self.args.psql_user 
+        self.prompt = self.args.no_prompt
+
+    def _define_args(self):
+        self.parser.add_argument('--path_to_new_sp_json', help='The path to the new published_articles_sp.json on this web server.', required=True)
+        self.parser.add_argument('--path_to_new_bak', help='The path to the new .bak file that will be used to create the new symportal_database version.', required=True)
+        self.parser.add_argument('--json_archive_dir', help="The path to the directory that holds the archived published_articles_sp.json files", default='/home/humebc/symportal.org/published_articles_archive')
+        self.parser.add_argument('--bak_archive_dir', help="The path to the directory that holds the archived .bak symportal_database files", default="/home/humebc/symportal.org/symportal_database_versions")
+        self.parser.add_argument('--psql_user', help="Username for postgresql commands", default='humebc')
+        self.parser.add_argument('-y', '--no_prompt', help="Do not prompt before making commits", action='store_false', default=True)
+
+    def _init_vars_for_sync(self):
+        # All the variables to do with the actual syncing need to happen after
+        # tHe new .bak and .json files have been put in their place.
+        # I.e. here.
         self.published_articles_sp_dict = self._get_json_array()
         self.json_study_objects = self.published_articles_sp_dict["studies"]
         self.json_user_objects = self.published_articles_sp_dict["users"]
@@ -71,18 +86,11 @@ class DBSync:
         self._spd_studies_to_create = []
         # New associations
         self.spd_user_study_associations = []
-        
-
-    def _define_args(self):
-        self.parser.add_argument('--path_to_new_sp_json', help='The path to the new published_articles_sp.json on this web server.', required=True)
-        self.parser.add_argument('--path_to_new_bak', help='The path to the new .bak file that will be used to create the new symportal_database version.', required=True)
-        self.parser.add_argument('--json_archive_dir', help="The path to the directory that holds the archived published_articles_sp.json files", default='/home/humebc/symportal.org/published_articles_archive')
-        self.parser.add_argument('--bak_archive_dir', help="The path to the directory that holds the archived .bak symportal_database files", default="/home/humebc/symportal.org/symportal_database_versions")
-        self.parser.add_argument('--psql_user', help="Username for postgresql commands", default='humebc')
 
     def sync(self):
         self._archive_bak_and_json()
-        self._restore_from_bak()
+        # self._restore_from_bak()
+        self._init_vars_for_sync()
         self._create_and_associate_user_objects()
         self._create_and_associate_study_objects()
         self._associate_users_to_studies()
@@ -98,16 +106,14 @@ class DBSync:
         sp_json_file_name = ntpath.basename(self.path_to_new_sp_json)
         self.new_archived_json_path = os.path.join(self.json_archive_dir, f'0_{sp_json_file_name}')
         self.new_archived_bak_path = os.path.join(self.bak_archive_dir, f'0_{bak_file_name}')
-        # Make sure that the files are where they're supposed to be 
         
-        # JSON
-        if os.path.isfile(os.path.join(self.json_archive_dir, sp_json_file_name)):
-            pass
-        else:
-            shutil.move(self.path_to_new_sp_json, os.path.join(self.json_archive_dir, sp_json_file_name))
-
         # Check to see that the new .json and the new .bak have not already been updated
         if not os.path.isfile(self.new_archived_json_path):
+            # Make sure that the new json file is where it should be 
+            if os.path.isfile(os.path.join(self.json_archive_dir, sp_json_file_name)):
+                pass
+            else:
+                shutil.move(self.path_to_new_sp_json, os.path.join(self.json_archive_dir, sp_json_file_name))
             # Then update the namings
             # We will need to grab the names and then update outside of for loop
             # below to prevent renaming 1 -- > 2 before deleteing the old 2.
@@ -133,33 +139,32 @@ class DBSync:
             pass
 
         # BAK
-        if os.path.isfile(os.path.join(self.bak_archive_dir, bak_file_name)):
-            pass
-        else:
-            shutil.move(self.path_to_new_bak, os.path.join(self.bak_archive_dir, bak_file_name))
-
-        if not os.path.isfile(self.new_archived_json_path):
+        if not os.path.isfile(self.new_archived_bak_path):
+            if os.path.isfile(os.path.join(self.bak_archive_dir, bak_file_name)):
+                pass
+            else:
+                shutil.move(self.path_to_new_bak, os.path.join(self.bak_archive_dir, bak_file_name))
             # Then update the namings
             # We will need to grab the names and then update outside of for loop
             # below to prevent renaming 1 -- > 2 before deleteing the old 2.
             one_file_name_bak = None
             zero_file_name_bak = None
-            for json_archive_file in os.listdir(self.json_archive_dir):
-                if json_archive_file.startswith('2_') and json_archive_file.endswith('.json'):
+            for bak_archive_file in os.listdir(self.bak_archive_dir):
+                if bak_archive_file.startswith('2_') and bak_archive_file.endswith('.json'):
                     # Then this is the oldest file and it needs to be removed
-                    os.remove(os.path.join(self.json_archive_dir, json_archive_file))
-                elif json_archive_file.startswith('1_') and json_archive_file.endswith('.json'):
-                    one_file_name_bak = json_archive_file
-                elif json_archive_file.startswith('0_') and json_archive_file.endswith('.json'):
-                    zero_file_name_bak = json_archive_file
+                    os.remove(os.path.join(self.bak_archive_dir, bak_archive_file))
+                elif bak_archive_file.startswith('1_') and bak_archive_file.endswith('.json'):
+                    one_file_name_bak = bak_archive_file
+                elif bak_archive_file.startswith('0_') and bak_archive_file.endswith('.json'):
+                    zero_file_name_bak = bak_archive_file
             
             # now do the renaming.
             if one_file_name_bak is not None:
-                shutil.move(os.path.join(self.json_archive_dir, one_file_name_bak), os.path.join(self.json_archive_dir, one_file_name_bak.replace('1_', '2_')))
+                shutil.move(os.path.join(self.bak_archive_dir, one_file_name_bak), os.path.join(self.bak_archive_dir, one_file_name_bak.replace('1_', '2_')))
             if zero_file_name_bak is not None:
-                shutil.move(os.path.join(self.json_archive_dir, zero_file_name_bak), os.path.join(self.json_archive_dir, zero_file_name_bak.replace('0_', '1_'))) 
+                shutil.move(os.path.join(self.bak_archive_dir, zero_file_name_bak), os.path.join(self.bak_archive_dir, zero_file_name_bak.replace('0_', '1_'))) 
             # finally, rename the new json file
-            shutil.move(os.path.join(self.json_archive_dir, sp_json_file_name), os.path.join(self.json_archive_dir, f'0_{sp_json_file_name}'))
+            shutil.move(os.path.join(self.bak_archive_dir, bak_file_name), os.path.join(self.bak_archive_dir, f'0_{bak_file_name}'))
     
     def _restore_from_bak(self):
         # Passing a password can be done: https://newfivefour.com/postgresql-pgpass-password-file.html
@@ -167,14 +172,14 @@ class DBSync:
         # (I.e. the fact that we are already logged in)
         
         # Drop the db
-        subprocess.run(['dropdb', '-U', self.psql_user, '-w', 'symportal_database'], check=True)
+        result = subprocess.run(['dropdb', '-U', self.psql_user, '-w', 'symportal_database'], check=True)
         # Remake the db
-        subprocess.run(['createdb', '-U', self.psql_user, '-O', self.psql_user, '-w', 'symportal_database'], check=True)
+        result = subprocess.run(['createdb', '-U', self.psql_user, '-O', self.psql_user, '-w', 'symportal_database'], check=True)
         # Restore the db from the .bak
-        subprocess.run(['pg_restore', '-U', self.psql_user, '-w', '-d', 'symportal_database', '-Fc', self.new_archived_bak_path])
+        result = subprocess.run(['pg_restore', '-U', self.psql_user, '-w', '-d', 'symportal_database', '-Fc', self.new_archived_bak_path])
     
     def _get_json_array(self):
-        with open(self.path_to_new_sp_json, 'r') as f:
+        with open(self.new_archived_json_path, 'r') as f:
             return json.load(f)
 
     def _associate_users_to_studies(self):
@@ -348,14 +353,21 @@ class DBSync:
                         db.session.add(spd_user)
                         self._spd_to_spo_user_dict[spd_user] = spo_user
             except NoResultFound:
-                if _first_user_pass is False:
+                if self._first_user_pass is False:
                     raise RuntimeError(f'A user ({json_user["name"]}) was not found in the spo db on the second run')
                 # Then the user doesn't yet exist in the spo db.
                 # We need to create the spo version first and then 
                 # we can link in the second run to the spd db object
                 spo_user = User(username=json_user["name"], is_admin=json_user["is_admin"])
-                db.session.add(spo_usr)
-                self._spo_users_to_create.append(spo_user)
+                if len(json_user["studies"]) != 1:
+                    raise RuntimeError('Studies is > 1 so we dont know which study to generate the password from')
+                # Set the initial password for the user
+                sum_numbers_from_study_name_as_str = str(sum([int(i) for i in list(json_user["studies"][0]) if i.isdigit()]))
+                to_hash = f'{json_user["name"]}{sum_numbers_from_study_name_as_str}'.encode('utf-8')
+                u_pass = hashlib.md5(to_hash).hexdigest()
+                spo_user.set_password(u_pass)
+                db.session.add(spo_user)
+                self._spo_users_to_create.append((spo_user, u_pass))
 
     def _confirm_spo_user_creation(self):
         if self._spo_users_to_create:
@@ -363,14 +375,18 @@ class DBSync:
             # created.
             print("The following User objects were not found in the symportal_org database:")
             for u in self._spo_users_to_create:
-                print(f"\t{u}")
-            commit_y_n = input("These objects will be created. Continue with commit? (y/n):")
-            if commit_y_n == 'y':
+                print(f"\tnew user {u[0]}: {u[1]}")
+            if self.prompt:
+                commit_y_n = input("These objects will be created. Continue with commit? (y/n):")
+                if commit_y_n == 'y':
+                    print('Creating new objects')
+                    db.session.commit()
+                else:
+                    raise SystemExit('No new User objects have been created. Exiting')
+            else:
                 print('Creating new objects')
-                # TODO it may be that we need to create a new session after performing this commit
                 db.session.commit()
-            if commit_y_n == 'n':
-                raise SystemExit('No new User objects have been created. Exiting')
+
         else:
             # There are no new objects to create
             print("All symportal.org User objects already exist")
@@ -387,15 +403,18 @@ class DBSync:
                 print("\nThe following symportal_database User ojects will be modified")
                 for mod in self._modification_strings:
                     print(mod)
-            commit_y_n = input("Continue with commit? (y/n):")
-            if commit_y_n == 'y':
-                print('Commiting')
-                # TODO this may fail due to already having done a commit.
-                db.session.commit()
+            if self.prompt:
+                commit_y_n = input("Continue with commit? (y/n):")
+                if commit_y_n == 'y':
+                    print('Commiting')
+                    db.session.commit()
+                else:
+                    raise SystemExit("""No symportal_database User objects were created or modified.
+                                        However, symportal_org database User objects may have been 
+                                        created previously in this session.""")
             else:
-                raise SystemExit("""No symportal_database User objects were created or modified.
-                                    However, symportal_org database User objects may have been 
-                                    created previously in this session.""")
+                print('Commiting')
+                db.session.commit()
 
     def _confirm_spd_study_creation_and_modification(self):
         # Here we should have created or checked all of the Studies from the published_articles_sp.json
@@ -418,11 +437,14 @@ class DBSync:
                 print("The following existing Study objects will have their associations modified:")
                 for spd_study in self._modification_strings:
                     print(f'\t{spd_study}')
-            commit_y_n = input("Continue with commit? (y/n):")
-            if commit_y_n == 'y':
-                db.session.commit()
+            if self.prompt:
+                commit_y_n = input("Continue with commit? (y/n):")
+                if commit_y_n == 'y':
+                    db.session.commit()
+                else:
+                    raise SystemExit('No symportal_database Study objects have been created or modified.')
             else:
-                raise SystemExit('No symportal_database Study objects have been created or modified.')
+                db.session.commit()
 
     def _confirm_spd_user_study_associations(self):
         # Here we should have created all of the associations
@@ -439,11 +461,22 @@ class DBSync:
                     print(f'{spd_user}:')
                     for study in spd_user.studies:
                         sys.stdout.write(f', {study}')
-            commit_y_n = input("Continue with commit? (y/n):")
-            if commit_y_n == 'y':
-                db.session.commit()
+            if self.prompt:
+                commit_y_n = input("Continue with commit? (y/n):")
+                if commit_y_n == 'y':
+                    db.session.commit()
+                else:
+                    raise SystemExit("""No symportal_database User-Study associations have been modified""")
             else:
-                raise SystemExit("""No symportal_database User-Study associations have been modified""")
+                db.session.commit()
+
+    @staticmethod
+    def md5sum(filename):
+        with open(filename, mode='rb') as f:
+            d = hashlib.md5()
+            for buf in iter(partial(f.read, 128), b''):
+                d.update(buf)
+        return d.hexdigest()
 
 sync = DBSync()
 sync.sync()
