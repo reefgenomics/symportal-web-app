@@ -96,6 +96,10 @@ class DBSync:
         self._associate_users_to_studies()
         print('Sync complete.')
 
+        print('Outputting .bak file for local')
+        subprocess.run(['/usr/bin/pg_dump', '-U', 'humebc', '-Fc', '-f', f'{self.new_archived_bak_path.replace(".bak", "_synced.bak").replace("0_", "")}', '-w', 'symportal_database'])
+        foo = 'bar'
+
     def _archive_bak_and_json(self):
         """
         In the symportal_database_archive_dir and in the json_archive_dir there should be up to three
