@@ -86,7 +86,7 @@ class AutomateSync:
         self.remote_web_json_dir = self.args.remote_web_json_dir
         self.remote_web_bak_dir = self.args.remote_web_bak_dir
         if self.remote_web_connection_type == 'IP':
-            self.web_pass = getpass('Password for remote web server: ')
+            self.remote_web_password = getpass('Password for remote web server: ')
         else:
             self.pem_file_path = self.args.pem_file_path
         
@@ -99,10 +99,15 @@ class AutomateSync:
     
     def _fire_sync_script_on_remote_web_server(self):
         # Finally we we need to run a script on the remote web that does the syncing etc.   
+        print(f'Running {self.remote_web_sync_script_path} on remote web server. This may take some time.')
         stdin, stdout, stderr = self.ssh_client.exec_command(f'/home/humebc/miniconda3/envs/symportal_org/bin/python3 {self.remote_web_sync_script_path} -y --path_to_new_sp_json {os.path.join(self.remote_web_json_dir, "_".join(self.new_pub_art_file_name.split("_")[1:]))} --path_to_new_bak {os.path.join(self.remote_web_bak_dir, ntpath.basename(self.json_info["bak_path"]))}')
-        print('sync_db.py complete: stdout:')
-        for line in stdout:
+        print('stdout:')
+        while True:
+            line = stdout.readline()
+            if not line:
+                break
             print(line)
+        print('sync_db.py complete')
 
     def start_sync(self):
         self._read_json_info_from_sp_server()
@@ -112,7 +117,8 @@ class AutomateSync:
         self._create_or_update_pub_articles_json_if_necessary()
 
         self._connect_to_remote_web_server()
-        # self._upload_to_web_server()
+        
+        self._upload_to_web_server()
 
         self._fire_sync_script_on_remote_web_server()
 
@@ -242,13 +248,14 @@ class AutomateSync:
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         if self.remote_web_connection_type == 'IP':
-            raise NotImplementedError
+            # Working with linode instance
+            self.ssh_client.connect(hostname=self.remote_web_host, username=self.remote_web_user, password=self.remote_web_password)
         else:
             # Working with the amazon aws ec2 instance
             self.ssh_client.connect(hostname=self.remote_web_host, username=self.remote_web_user, key_filename=self.pem_file_path)
         
-            # Open sftp client
-            self.sftp_client = self.ssh_client.open_sftp()
+        # Open sftp client
+        self.sftp_client = self.ssh_client.open_sftp()
     
     def _upload_to_web_server(self):
         # Send the data directory up to the remote web server
