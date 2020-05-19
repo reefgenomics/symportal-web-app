@@ -154,12 +154,12 @@ class DBSync:
             one_file_name_bak = None
             zero_file_name_bak = None
             for bak_archive_file in os.listdir(self.bak_archive_dir):
-                if bak_archive_file.startswith('2_') and bak_archive_file.endswith('.json'):
+                if bak_archive_file.startswith('2_') and bak_archive_file.endswith('.bak'):
                     # Then this is the oldest file and it needs to be removed
                     os.remove(os.path.join(self.bak_archive_dir, bak_archive_file))
-                elif bak_archive_file.startswith('1_') and bak_archive_file.endswith('.json'):
+                elif bak_archive_file.startswith('1_') and bak_archive_file.endswith('.bak'):
                     one_file_name_bak = bak_archive_file
-                elif bak_archive_file.startswith('0_') and bak_archive_file.endswith('.json'):
+                elif bak_archive_file.startswith('0_') and bak_archive_file.endswith('.bak'):
                     zero_file_name_bak = bak_archive_file
             
             # now do the renaming.
