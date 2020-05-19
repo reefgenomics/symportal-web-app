@@ -151,13 +151,14 @@ class AutomateSync:
         print('Db successfuly restored')
         # At this point, both dbs have been  pulled down, and synced, the data is all in place and we should be all setup to
         # test the local server.
-        
+        self._clean_up_on_remote_web()
         
     def _clean_up_on_remote_web(self):
         """
         Finally, let's do some cleanup on the remote web server. We want to make sure that the original non-archived bak
         does not exist and that the synced bak has been removed.
         """
+        print('Cleaning up on remote server')
         try:
             self.sftp_client.remove(os.path.join(self.remote_web_bak_dir, ntpath.basename(self.json_info["bak_path"]).replace('.bak', '_synced.bak')))
         except FileNotFoundError:
@@ -169,7 +170,8 @@ class AutomateSync:
         try:
             self.sftp_client.remove(os.path.join(self.remote_web_json_dir, '_'.join(self.new_pub_art_file_name.split('_')[1:])))
         except FileNotFoundError:
-            pass        
+            pass
+        print('Done')        
 
     def _ask_continue_sync(self):
         while True:
