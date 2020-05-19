@@ -71,7 +71,7 @@ class AutomateSync:
         self.remote_sp_host_id = self.args.remote_sp_host_id
         self.remote_sp_host_user = self.args.remote_sp_host_user
         self.remote_sp_output_path = self.args.remote_sp_output_path
-        self.remote_sp_json_info_path = os.path.join(self.remote_sp_output_path, 'example_automate_sp_output.json')
+        self.remote_sp_json_info_path = os.path.join(self.remote_sp_output_path, 'automate_sp_output.json')
         self.remote_sp_host_pass = getpass('Password for remote SymPortal server: ')
 
 
@@ -151,6 +151,25 @@ class AutomateSync:
         print('Db successfuly restored')
         # At this point, both dbs have been  pulled down, and synced, the data is all in place and we should be all setup to
         # test the local server.
+        
+        
+    def _clean_up_on_remote_web(self):
+        """
+        Finally, let's do some cleanup on the remote web server. We want to make sure that the original non-archived bak
+        does not exist and that the synced bak has been removed.
+        """
+        try:
+            self.sftp_client.remove(os.path.join(self.remote_web_bak_dir, ntpath.basename(self.json_info["bak_path"]).replace('.bak', '_synced.bak')))
+        except FileNotFoundError:
+            pass
+        try:
+            self.sftp_client.remove(os.path.join(self.remote_web_bak_dir, ntpath.basename(self.json_info["bak_path"])))
+        except FileNotFoundError:
+            pass
+        try:
+            self.sftp_client.remove(os.path.join(self.remote_web_json_dir, '_'.join(self.new_pub_art_file_name.split('_')[1:])))
+        except FileNotFoundError:
+            pass        
 
     def _ask_continue_sync(self):
         while True:
@@ -206,7 +225,14 @@ class AutomateSync:
             os.makedirs(self.local_data_dir)
             print(f'Pulling down data from {self.remote_sp_output_path}')
             self._pull_down_data()
+            print('Processing data for upload')
             self._process_sp_output_data()
+        if os.path.exists(os.path.join(self.local_bak_dir, ntpath.basename(self.json_info["bak_path"]))):
+            print(f'{os.path.join(self.local_bak_dir, ntpath.basename(self.json_info["bak_path"]))} already exists locally and will not be pulled down')
+        else:
+            print(f'pulling down {self.json_info["bak_path"]}. This may take some time...')
+            #Finally pull down the .bak
+            self.sftp_client.get(remotepath=self.json_info["bak_path"], localpath=os.path.join(self.local_bak_dir, ntpath.basename(self.json_info["bak_path"])))
 
     def _create_or_update_pub_articles_json_if_necessary(self):
         # Check to see if the new published_articles_sp.json has been created and populated
@@ -395,8 +421,7 @@ class AutomateSync:
         I don't want to do that. So we're back to square one, that is the slow get all.
         """
         self._get_all(self.remote_sp_output_path, self.local_data_dir)
-        #Finally get pull down the .bak
-        self.sftp_client.get(remotepath=self.json_info["bak_path"], localpath=os.path.join(self.local_database_dir, ntpath.basename(self.json_info["bak_path"])))
+        
     
     def _put_all(self, remote, local):
         remote_contents = self.sftp_client.listdir(remote)
