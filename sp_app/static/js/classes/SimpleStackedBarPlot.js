@@ -332,7 +332,7 @@ class SimpleStackedBarPlot{
         }
     }
     _init_plot_meta_info_holders(){
-        // Init the primary info
+        // Init the primary info: "sample", "UID", "taxa", "lat", "lon"
         for (let i = 0; i < this.meta_info_annotation_order_array_primary.length; i++) {
             let annotation = this.meta_info_annotation_order_array_primary[i];
             if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation])) {
@@ -353,20 +353,51 @@ class SimpleStackedBarPlot{
             }
         }
         
-        // Init the secondary info
+        // Init the secondary info: "collection_date", "depth",
+        // "clade_relative_abund", "clade_absolute_abund", "raw_contigs", "post_qc_absolute", "post_qc_unique",
+        // "post_med_absolute", "post_med_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
         for (let i = 0; i < this.meta_info_annotation_order_array_secondary.length; i++) {
             let annotation = this.meta_info_annotation_order_array_secondary[i];
-            if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation])) {
-                if (this.plot_type == 'post_med'){
-                    $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
-                }else if (this.plot_type == 'profile'){
-                    $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+            // TODO here we have to take into account the annotation keys:
+            // "post_qc_absolute", "post_qc_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"
+            // will return a list rather than a string due to the fact that the key we are searching for may either
+            // contain 'symbiodinium' or 'symbiodiniaceae'
+            if (["post_qc_absolute", "post_qc_unique", "non_Symbiodiniaceae_absolute", "non_Symbiodiniaceae_unique"].includes(annotation)){
+                // this.meta_annotation_to_key[annotation] will return a list
+                for (let j = 0; j < this.meta_annotation_to_key[annotation].length; j++){
+                    // For each of the possible strings housed in the list
+                    if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation][j])){
+                        // Then we have found the correct symbiodinium or symbiodiniaceae string
+                        // This will only work for max one of the items in the list
+                        if (this.plot_type == 'post_med'){
+                            $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation][j]}>--</span></div>`);
+                        }else if (this.plot_type == 'profile'){
+                            $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation][j]}>--</span></div>`);
+                        }
+                    }
+                }
+            }else{
+                if (this.available_meta_info.includes(this.meta_annotation_to_key[annotation])) {
+                    if (this.plot_type == 'post_med'){
+                        $(".secondary_sample_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="sample_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }else if (this.plot_type == 'profile'){
+                        $(".secondary_profile_meta").append(`<div><span style="font-weight:bold;">${annotation}: </span><span class="profile_meta_item mr-1" data-key=${this.meta_annotation_to_key[annotation]}>--</span></div>`);
+                    }
                 }
             }
+
         }
     }
     _init_meta_info_vars(){
         if (this.plot_type == 'post_med'){
+            // TODO we have changed all instances of symbiodinium in symportal to symbiodiniaceae
+            // As such, we will now need to take into account that studies could have either symbiodinium
+            // in the meta info string or symbiodiniaceae depending on whether they were output
+            // and uploaded before or after this change in symportal.
+            // As such, we will build in a system where we will look for the symbiodinium version
+            // first and if we don't find that we will look for the symbiodiniaceae system.
+            // To make that work we will make the concerned meta info categories map to a list
+            // rather than a string.
             let meta_annotation_to_key = {
             "sample": "name",
             "UID": "uid",
@@ -378,12 +409,12 @@ class SimpleStackedBarPlot{
             "clade_relative_abund": "clade_prop_string",
             "clade_absolute_abund": "clade_abs_abund_string",
             "raw_contigs": "raw_contigs",
-            "post_qc_absolute": "post_taxa_id_absolute_symbiodinium_seqs",
-            "post_qc_unique": "post_taxa_id_unique_symbiodinium_seqs",
+            "post_qc_absolute": ["post_taxa_id_absolute_symbiodinium_seqs", "post_taxa_id_absolute_symbiodiniaceae_seqs"],
+            "post_qc_unique": ["post_taxa_id_unique_symbiodinium_seqs", "post_taxa_id_unique_symbiodiniaceae_seqs"],
             "post_med_absolute": "post_med_absolute",
             "post_med_unique": "post_med_unique",
-            "non_Symbiodiniaceae_absolute": "post_taxa_id_absolute_non_symbiodinium_seqs",
-            "non_Symbiodiniaceae_unique": "post_taxa_id_unique_non_symbiodinium_seqs"
+            "non_Symbiodiniaceae_absolute": ["post_taxa_id_absolute_non_symbiodinium_seqs", "post_taxa_id_absolute_non_symbiodiniaceae_seqs"],
+            "non_Symbiodiniaceae_unique": ["post_taxa_id_unique_non_symbiodinium_seqs", "post_taxa_id_unique_non_symbiodiniaceae_seqs"]
             };
             let meta_info_annotation_order_array_primary = ["sample", "UID", "taxa", "lat", "lon"];
             let meta_info_annotation_order_array_secondary = ["collection_date", "depth",
