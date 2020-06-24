@@ -55,15 +55,20 @@ def index():
                 .filter(Study.data_explorer==True, Study.is_published==True).all()
             print('we are here')
         elif current_user.is_admin:
+            print('here current user is admin')
             # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
             published_and_authorised_studies = Study.query.filter(Study.data_explorer==True).all()
         else:
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
+            print('here user is logged in')
+            print(f'current_user is {current_user}')
+            sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
             published_and_authorised_studies = Study.query.filter(Study.data_explorer==True)\
-                .filter(or_(Study.is_published==True, Study.users.contains(current_user)))\
+                .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
                 .filter(Study.name != study_to_load.name).all()
+            print(f'published_and_authorised_studies are {published_and_authorised_studies}')
         return render_template('data_explorer.html', study_to_load=study_to_load,
                                published_and_authorised_studies=published_and_authorised_studies ,map_key=map_key)
     
