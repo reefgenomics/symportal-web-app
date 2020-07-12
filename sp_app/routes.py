@@ -3,7 +3,7 @@ from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user
-from sp_app.models import User, DataSet, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
+from sp_app.models import User, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
 from werkzeug.urls import url_parse
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 We want to automate the process of getting an SP output up and displayed on the symportal.org website
 
@@ -508,7 +509,7 @@ class AutomateSync:
 
         # Symportal.org webpage server
         self.parser.add_argument('--remote_web_json_dir', help='The full path to the json file that contains the information for the symportal_database User and Study objects on the remote web server', default='/home/humebc/symportal.org/published_articles_archive')
-        self.parser.add_argument('--remote_web_connection_type', help='Either IP or PEM.', default='IP', required=True),
+        self.parser.add_argument('--remote_web_connection_type', help='Either IP or PEM.', default='IP'),
         self.parser.add_argument('--remote_web_bak_dir', help="Path to the directory on the web server where the .bak file should be deposited", default="/home/humebc/symportal.org/symportal_database_versions")
         self.parser.add_argument('--remote_web_sync_script_path', help="Full path to the syncronization script to run on the web server", default="/home/humebc/symportal.org/sync_db.py")
         self.parser.add_argument(
