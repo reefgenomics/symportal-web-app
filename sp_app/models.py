@@ -100,6 +100,9 @@ class DataSetSample(db.Model):
     def __repr__(self):
         return f'<DataSetSample {self.name}>'
 
+def set_creation_time_stamp_default():
+    return str(datetime.now()).replace(' ', '_').replace(':', '-')
+
 class Study(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_study'
@@ -110,12 +113,13 @@ class Study(db.Model):
     location = db.Column(db.String(50), nullable=True)
     run_type = db.Column(db.String(50), default='remote')
     article_url = db.Column(db.String(250), nullable=True)
+    display_online = db.Column(db.Boolean, default=False)
     data_url = db.Column(db.String(250), nullable=True)
     data_explorer = db.Column(db.Boolean, default=False)
     analysis = db.Column(db.Boolean, default=True)
     author_list_string = db.Column(db.String(500))
     additional_markers = db.Column(db.String(200))
-    creation_time_stamp = db.Column(db.String(100), default=str(datetime.now()).replace(' ', '_').replace(':', '-'))
+    creation_time_stamp = db.Column(db.String(100), default=set_creation_time_stamp_default)
     data_set_samples = db.relationship('DataSetSample', secondary=Study__DataSetSample, lazy='dynamic',
      backref=db.backref('studies', lazy='dynamic'))
     # num_samples = self.get_num_samples()
