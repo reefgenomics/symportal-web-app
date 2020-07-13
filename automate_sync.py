@@ -111,10 +111,17 @@ class AutomateSync:
         Then run the start_symportal.py to get symportal back online.
         """
 
-        print('Running /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py')
+        print('Running /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py. stdout:')
         stdin, stdout, stderr = self.ssh_client.exec_command(f'sudo /home/humebc/miniconda3/envs/symportal_org/bin/python3 /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py', get_pty=True)
+        stdin.write(f'{self.remote_web_password}\n')
+        stdin.flush()
+        while True:
+            line = stdout.readline()
+            if not line:
+                break
+            print(line)
 
-        print(f'Running {self.args.remote_web_sync_script_path} on remote web server. This may take some time.')
+        print(f'\nRunning {self.args.remote_web_sync_script_path} on remote web server. This may take some time.')
         stdin, stdout, stderr = self.ssh_client.exec_command(f'/home/humebc/miniconda3/envs/symportal_org/bin/python3 {self.args.remote_web_sync_script_path} -y --path_to_new_sp_json {os.path.join(self.remote_web_json_dir, "_".join(self.new_pub_art_file_name.split("_")[1:]))} --path_to_new_bak {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}')
         print('stdout:')
         while True:
@@ -123,7 +130,7 @@ class AutomateSync:
                 break
             print(line)
 
-        # TODO we will run the start_symportal.py manually so that we can test the results locally first.
+        # NB we will run the start_symportal.py manually so that we can test the results locally first.
         # print('Running /home/humebc/symportal.org/nginx/conf.d/start_symportal.py')
         # stdin, stdout, stderr = self.ssh_client.exec_command(f'sudo /home/humebc/miniconda3/envs/symportal_org/bin/python3 /home/humebc/symportal.org/nginx/conf.d/start_symportal.py', get_pty=True)
 
