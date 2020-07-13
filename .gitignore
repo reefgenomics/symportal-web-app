@@ -31,3 +31,4 @@ example_automate_sp_output.json
 published_articles_archive/
 published_articles_sp.json_backup
 .vscode/*
+nginx/conf.d/virtual*
