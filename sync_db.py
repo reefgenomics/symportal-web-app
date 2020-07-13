@@ -64,12 +64,61 @@ class DBSync:
         self.parser.add_argument('-y', '--no_prompt', help="Do not prompt before making commits", action='store_false', default=True)     
 
     def sync(self):
+        self._stop_symportal()
         self._archive_bak()
-        # self._restore_from_bak()
+        self._restore_from_bak()
         self._verfiy_and_create_users()
+        self._start_symportal()
 
         print('Sync complete.')
 
+    def _stop_symportal(self):
+        """
+        Switch out the nginx config files so that the symportal is down for maintenance page is displayed
+        Stop the sp_stack process
+        This then allows us to do the db work.
+        """
+        if os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf') and os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf.bak'):
+            # Then we are currently in the live state and we want to change to the
+            # maintenance conf file
+            os.rename('/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf', '/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf.bak')
+            os.rename('/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf.bak', '/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf')
+        elif os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf.bak') and os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf'):
+            # Then we are already in maintenance state
+            pass
+        else:
+            raise RuntimeError('Check .conf files. Something seems to have gone wrong.')
+
+        # Restart the ngnix server to ensure that the conf files are being correctly read
+        subprocess.run(['nginx' '-s' 'reload'], check=True)
+
+        # At this point people can no longer access symportal.org
+        # now stop the sp_stack so that the symportal_database can be dropped
+        subprocess.run(['supervisorctl', 'stop', 'sp_stack'], check=True)
+
+    def _start_symportal(self):
+        """
+        Switch out the nginx config files so that the symportal is up and running
+        Start the sp_stack process
+        This will being symportal.org back online after a successful db
+        """
+        # At this point people can no longer access symportal.org
+        # now stop the sp_stack so that the symportal_database can be dropped
+        subprocess.run(['supervisorctl', 'start', 'sp_stack'], check=True)
+        
+        if os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf.bak') and os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf'):
+            # Then we are currently in the maintenance state and we want to change to the
+            # running conf file
+            os.rename('/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf.bak', '/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf')
+            os.rename('/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf', '/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf.bak')
+        elif os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.running.conf') and os.path.exists('/home/humebc/symportal.org/nginx/conf.d/virtual.maintenance.conf.bak'):
+            # Then we are already in running state
+            pass
+        else:
+            raise RuntimeError('Check .conf files. Something seems to have gone wrong.')
+
+        # Restart the ngnix server to ensure that the conf files are being correctly read
+        subprocess.run(['nginx' '-s' 'reload'], check=True)
 
     def _archive_bak(self):
         """
