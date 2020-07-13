@@ -26,4 +26,4 @@ else:
     raise RuntimeError('Check .conf files. Something seems to have gone wrong.')
 
 # Restart the ngnix server to ensure that the conf files are being correctly read
-subprocess.run(['nginx' '-s' 'reload'], check=True)
+subprocess.run(['nginx', '-s', 'reload'], check=True)
