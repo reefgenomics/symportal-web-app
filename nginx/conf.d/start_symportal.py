@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Switch out the nginx config files so that symportal is up
 Start the sp_stack process

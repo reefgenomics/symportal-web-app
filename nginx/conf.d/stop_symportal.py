@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Switch out the nginx config files so that the symportal is down for maintenance page is displayed
 Stop the sp_stack process
