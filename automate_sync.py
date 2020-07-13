@@ -69,18 +69,11 @@ class AutomateSync:
         self._define_args()
         self.args = self.parser.parse_args()
         
-        # Local machine
-        self.local_symportal_data_directory = self.args.local_symportal_data_directory
-        self.local_json_dir = self.args.local_json_dir
-        self.local_bak_dir = self.args.local_bak_dir
-        
-        # Parameters for remote symportal framework server
-        self.remote_sp_host_id = self.args.remote_sp_host_id
-        self.remote_sp_host_user = self.args.remote_sp_host_user
-        # TODO this is now a list.
+        # List of the data output directories we will be working with
         self.remote_sp_output_paths = self.args.remote_sp_output_paths.split(',')
-        # TODO this is now a list
-        self.remote_sp_json_info_paths = [os.path.join(_, 'automate_sp_output.json') for _ in self.remote_sp_output_paths]
+        # List of the study_output_info.json objects that we will be working with
+        self.remote_sp_json_info_paths = [os.path.join(_, 'study_output_info.json') for _ in self.remote_sp_output_paths]
+        
         # A list of the json info objects
         self.json_info_object_list = []
         # If we are working with multiple datasets worth of syncing here, then we should be working from
@@ -94,19 +87,9 @@ class AutomateSync:
         # with the study name in question.
         self.local_data_dirs = []
         self.remote_sp_host_pass = getpass('Password for remote SymPortal_framework server: ')
-
-
-        # Symportal.org web server
-        self.remote_web_sync_script_path = self.args.remote_web_sync_script_path
         
         # Parameters for the web server
-        self.remote_web_connection_type = self.args.remote_web_connection_type
-        self.remote_web_symportal_data_directory = self.args.remote_web_symportal_data_directory
-        self.remote_web_host = self.args.remote_web_host
-        self.remote_web_user = self.args.remote_web_user
-        self.remote_web_json_dir = self.args.remote_web_json_dir
-        self.remote_web_bak_dir = self.args.remote_web_bak_dir
-        if self.remote_web_connection_type == 'IP':
+        if self.args.remote_web_connection_type == 'IP':
             self.remote_web_password = getpass('Password for remote web server: ')
         else:
             self.pem_file_path = self.args.pem_file_path
@@ -114,20 +97,36 @@ class AutomateSync:
         # Initial SSH and sftp clients
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
-        self.ssh_client.connect(hostname=self.remote_sp_host_id, username=self.remote_sp_host_user, password=self.remote_sp_host_pass)
+        self.ssh_client.connect(hostname=self.args.remote_sp_host_id, username=self.args.remote_sp_host_user, password=self.remote_sp_host_pass)
         # Open sftp client
         self.sftp_client = self.ssh_client.open_sftp()
     
     def _fire_sync_script_on_remote_web_server(self):
-        # Finally we we need to run a script on the remote web that does the syncing etc.   
-        print(f'Running {self.remote_web_sync_script_path} on remote web server. This may take some time.')
-        stdin, stdout, stderr = self.ssh_client.exec_command(f'/home/humebc/miniconda3/envs/symportal_org/bin/python3 {self.remote_web_sync_script_path} -y --path_to_new_sp_json {os.path.join(self.remote_web_json_dir, "_".join(self.new_pub_art_file_name.split("_")[1:]))} --path_to_new_bak {os.path.join(self.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}')
+        """
+        Finally we we need to run a script on the remote web that does the syncing etc.
+        This is split into three parts due to the first and last part needing to be run as root
+        First run stop_symportal.py - this changes out the nginx .conf files so that symportal.org web
+        access is taken offline and a maintenance message is displayed in its place.
+        Then run the sync script to do the actual syncing
+        Then run the start_symportal.py to get symportal back online.
+        """
+
+        print('Running /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py')
+        stdin, stdout, stderr = self.ssh_client.exec_command(f'sudo /home/humebc/miniconda3/envs/symportal_org/bin/python3 /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py', get_pty=True)
+
+        print(f'Running {self.args.remote_web_sync_script_path} on remote web server. This may take some time.')
+        stdin, stdout, stderr = self.ssh_client.exec_command(f'/home/humebc/miniconda3/envs/symportal_org/bin/python3 {self.args.remote_web_sync_script_path} -y --path_to_new_sp_json {os.path.join(self.remote_web_json_dir, "_".join(self.new_pub_art_file_name.split("_")[1:]))} --path_to_new_bak {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}')
         print('stdout:')
         while True:
             line = stdout.readline()
             if not line:
                 break
             print(line)
+
+        # TODO we will run the start_symportal.py manually so that we can test the results locally first.
+        # print('Running /home/humebc/symportal.org/nginx/conf.d/start_symportal.py')
+        # stdin, stdout, stderr = self.ssh_client.exec_command(f'sudo /home/humebc/miniconda3/envs/symportal_org/bin/python3 /home/humebc/symportal.org/nginx/conf.d/start_symportal.py', get_pty=True)
+
         print('sync_db.py complete')
 
     def start_sync(self):
@@ -138,30 +137,20 @@ class AutomateSync:
         
         self._download_and_prep_data_if_necessary()
         
-        self._create_or_update_pub_articles_json_if_necessary()
-
         self._connect_to_remote_web_server()
         
         self._upload_to_web_server()
 
         self._fire_sync_script_on_remote_web_server()
 
-        # Finally we want to pull down copies of the symportal_org db and the symportal_database db.
-        # We can simply copy over the app.db file
-        # For the symportal_database database we will need to put down a new .bak, pull down, drop, create and restore
+        # Finally we want to pull down the app.db file so that the symportal.org user information is upto date in
+        # the local version. We do not need to pull down the symportal_database as no changes have been made ot it
+        # since it was pulled down.
         print('Getting app.db from remote web server')
         self.sftp_client.get("/home/humebc/symportal.org/app.db", "/Users/humebc/Documents/symportal.org/app.db")
         print('Complete')
-        # The .bak is saved in the bak archive dir, with the same name as the bak we put up but with *_synced.bak
-        print('Getting .bak of synced symportal_database from web server')
-        # Check to see if it needs pulling down
-        if os.path.isfile(os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path).replace('.bak', '_synced.bak'))):
-            print('.bak has already been pulled down and will not be pulled down again.')
-        else:
-            self.sftp_client.get(os.path.join(self.remote_web_bak_dir, ntpath.basename(self.remote_bak_path).replace('.bak', '_synced.bak')), os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path).replace('.bak', '_synced.bak')))
-        print('Complete')
-        # At this point we need to restore the .bak.
         
+        # At this point we need to restore the .bak.
         # Drop the db
         print('Installing synced database')
         print('Dropping db')
@@ -171,32 +160,12 @@ class AutomateSync:
         result = subprocess.run(['createdb', '-U', 'humebc', '-O', 'humebc', '-w', 'symportal_database'], check=True)
         # Restore the db from the .bak
         print('Restoring db. This make take some time...')
-        result = subprocess.run(['pg_restore', '-U', 'humebc', '-w', '-d', 'symportal_database', '-Fc', os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path).replace('.bak', '_synced.bak'))])
+        result = subprocess.run(['pg_restore', '-U', 'humebc', '-w', '-d', 'symportal_database', '-Fc', os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))])
         print('Db successfuly restored')
+        
         # At this point, both dbs have been  pulled down, and synced, the data is all in place and we should be all setup to
         # test the local server.
-        self._clean_up_on_remote_web()
         
-    def _clean_up_on_remote_web(self):
-        """
-        Finally, let's do some cleanup on the remote web server. We want to make sure that the original non-archived bak
-        does not exist and that the synced bak has been removed.
-        """
-        print('Cleaning up on remote server')
-        try:
-            self.sftp_client.remove(os.path.join(self.remote_web_bak_dir, ntpath.basename(self.remote_bak_path).replace('.bak', '_synced.bak')))
-        except FileNotFoundError:
-            pass
-        try:
-            self.sftp_client.remove(os.path.join(self.remote_web_bak_dir, ntpath.basename(self.remote_bak_path)))
-        except FileNotFoundError:
-            pass
-        try:
-            self.sftp_client.remove(os.path.join(self.remote_web_json_dir, '_'.join(self.new_pub_art_file_name.split('_')[1:])))
-        except FileNotFoundError:
-            pass
-        print('Done')        
-
     def _ask_continue_sync(self):
         while True:
             continue_text = input('Continue with synchronisation? [y/n]: ')
@@ -213,7 +182,7 @@ class AutomateSync:
         in the published_articles_sp.json and that the study
         is already related
         """
-        with open(os.path.join(self.local_json_dir, latest_json_file), 'r') as f:
+        with open(os.path.join(self.args.local_json_dir, latest_json_file), 'r') as f:
             self.j_obj = json.load(f)
         # first check to see whether the user already exists
         for i in range(len(self.j_obj["users"])):
@@ -238,7 +207,7 @@ class AutomateSync:
     def _download_and_prep_data_if_necessary(self):
         for json_info, remote_sp_output_path in zip(self.json_info_object_list, self.remote_sp_output_paths):
             # check to see if a directory already exists for the study in question
-            local_data_dir = os.path.join(self.local_symportal_data_directory, json_info["study"])
+            local_data_dir = os.path.join(self.args.local_symportal_data_directory, json_info["study"])
             self.local_data_dirs.append(local_data_dir)
             if os.path.exists(local_data_dir):
                 print(f"{Fore.RED}WARNING: Local directory {local_data_dir} already exists.{Style.RESET_ALL}")
@@ -259,51 +228,23 @@ class AutomateSync:
                 self._process_sp_output_data(local_data_dir=local_data_dir, json_info=json_info)
             
             
-            if os.path.exists(os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path))):
-                print(f'{os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path))} already exists locally and will not be pulled down')
+            if os.path.exists(os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))):
+                print(f'{os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))} already exists locally and will not be pulled down')
             else:
                 print(f'pulling down {self.remote_bak_path}. This may take some time...')
                 #Finally pull down the .bak
-                self.sftp_client.get(remotepath=self.remote_bak_path, localpath=os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path)))
-            
-
-    def _create_or_update_pub_articles_json_if_necessary(self):
-        # Find the latest json version file.
-        # For each of the sync objects check to see if the user and dataset are found
-        # If the are, then we work with this json file
-        # else we need to create a new one.
-        largest_version_num = 0
-        latest_json_file = None
-        for article in os.listdir(self.local_json_dir):
-            if int(article.split('_')[0]) > largest_version_num:
-                    largest_version_num = int(article.split('_')[0])
-                    latest_json_file = article
-        
-        need_new_json = False
-        for json_info in self.json_info_object_list:
-            if not self._user_and_study_populated(latest_json_file, json_info):
-                # If at any point this fails, then that means we need to make a new json
-                need_new_json = True
-                break
-        if need_new_json:
-            self.new_pub_art_file_name = f'{largest_version_num + 1}_published_articles_sp_{self.time_stamp_str}.json'
-            print('Creating and populating a new published articles json file')
-            self._update_sp_json_file(template_json_file_name=latest_json_file)
-        else:
-            print(f'Current json file {latest_json_file} already contains all users and dataset objects.')
-            print('We will work with this file')
-            self.new_pub_art_file_name = latest_json_file
+                self.sftp_client.get(remotepath=self.remote_bak_path, localpath=os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path)))
 
     def _connect_to_remote_web_server(self):
         self.ssh_client.close()
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
-        if self.remote_web_connection_type == 'IP':
+        if self.args.remote_web_connection_type == 'IP':
             # Working with linode instance
-            self.ssh_client.connect(hostname=self.remote_web_host, username=self.remote_web_user, password=self.remote_web_password)
+            self.ssh_client.connect(hostname=self.args.remote_web_host, username=self.args.remote_web_user, password=self.remote_web_password)
         else:
             # Working with the amazon aws ec2 instance
-            self.ssh_client.connect(hostname=self.remote_web_host, username=self.remote_web_user, key_filename=self.pem_file_path)
+            self.ssh_client.connect(hostname=self.args.remote_web_host, username=self.args.remote_web_user, key_filename=self.pem_file_path)
         
         # Open sftp client
         self.sftp_client = self.ssh_client.open_sftp()
@@ -313,7 +254,7 @@ class AutomateSync:
         # send the sp_json up to the server as well
         for json_info, local_data_dir in zip(self.json_info_object_list, self.local_data_dirs):
             # Check to see if the data directory exists
-            if json_info["study"] in self.sftp_client.listdir(self.remote_web_symportal_data_directory):
+            if json_info["study"] in self.sftp_client.listdir(self.args.remote_web_symportal_data_directory):
                 print(f'{Fore.RED}WARNING: Directory {json_info["study"]} already exists in the remote web server data directory.{Style.RESET_ALL}')
                 print('We will not upload anything additional to this directory.')
                 if self._ask_continue_sync():
@@ -322,21 +263,15 @@ class AutomateSync:
                 else:
                     sys.exit(1)
             else:
-                remote_web_data_dir = os.path.join(self.remote_web_symportal_data_directory, json_info["study"])
+                remote_web_data_dir = os.path.join(self.args.remote_web_symportal_data_directory, json_info["study"])
                 self.sftp_client.mkdir(remote_web_data_dir)
                 self._put_all(remote=remote_web_data_dir, local=local_data_dir)
             
-            # Transfer the sp_json up only once
-            if "_".join(self.new_pub_art_file_name.split("_")[1:]) not in self.sftp_client.listdir(self.remote_web_json_dir):
-                print(f'Transfering {os.path.join(self.local_json_dir, self.new_pub_art_file_name)} to {os.path.join(self.remote_web_json_dir, "_".join(self.new_pub_art_file_name.split("_")[1:]))}\nThis may take some time...')
-                self.sftp_client.put(os.path.join(self.local_json_dir, self.new_pub_art_file_name), os.path.join(self.remote_web_json_dir, '_'.join(self.new_pub_art_file_name.split('_')[1:])))
-                print('Transfer complete')
-            
             # Transfer up the bak only once.
-            if ntpath.basename(self.remote_bak_path) not in self.sftp_client.listdir(self.remote_web_bak_dir):
-                print(f'Transfering {os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path))} to {os.path.join(self.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}\nThis may take some time...')
+            if ntpath.basename(self.remote_bak_path) not in self.sftp_client.listdir(self.args.remote_web_bak_dir):
+                print(f'Transfering {os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))} to {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}\nThis may take some time...')
                 # Transfer up the .bak
-                self.sftp_client.put(os.path.join(self.local_bak_dir, ntpath.basename(self.remote_bak_path)), os.path.join(self.remote_web_bak_dir, ntpath.basename(self.remote_bak_path)))
+                self.sftp_client.put(os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path)), os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path)))
                 print('Transfer complete')
             
     def _update_sp_json_file(self, template_json_file_name):
@@ -420,7 +355,7 @@ class AutomateSync:
                         continue
                     # Add file to zip
                     # https://stackoverflow.com/questions/27991745/zip-file-and-avoid-directory-structure
-                    zipObj.write(filePath, arcname=os.path.relpath(filePath, start=self.local_symportal_data_directory))
+                    zipObj.write(filePath, arcname=os.path.relpath(filePath, start=self.args.local_symportal_data_directory))
                     # Now zip the file individually unless it is the study_data.js file
                     if not 'study_data.js' in filePath:
                         with ZipFile(f'{filePath}.zip', 'w') as sub_zip_obj:
@@ -478,7 +413,6 @@ class AutomateSync:
             
     def _define_args(self):
         # Parameter for local machine
-        self.parser.add_argument('--local_json_dir', help='The  path to the directory that holds the published_articles_sp.json files that contains the information for the symportal_database User and Study objects on the local machine', default='/Users/humebc/Documents/symportal.org/published_articles_archive')
         self.parser.add_argument(
             '--local_symportal_data_directory', 
             help='The base directory where the individual study directories are held on the local machine', 
@@ -490,7 +424,7 @@ class AutomateSync:
         self.parser.add_argument(
             '--remote_sp_output_paths', 
             type=str, 
-            help='The path to the base output directory of the SymPortal output on the remote SymPortal server. For multiple outputs, this can be comma separated.', 
+            help='The path(s) to the base output directory of the SymPortal output on the remote SymPortal server. For multiple outputs, this can be comma separated.', 
             required=True
             )
         self.parser.add_argument(
@@ -508,7 +442,6 @@ class AutomateSync:
         self.parser.add_argument('--remote_bak_path', type=str, help='When syncing multiple datasets, a single path to a .bak file should be passed using this argument', default=None)
 
         # Symportal.org webpage server
-        self.parser.add_argument('--remote_web_json_dir', help='The full path to the json file that contains the information for the symportal_database User and Study objects on the remote web server', default='/home/humebc/symportal.org/published_articles_archive')
         self.parser.add_argument('--remote_web_connection_type', help='Either IP or PEM.', default='IP'),
         self.parser.add_argument('--remote_web_bak_dir', help="Path to the directory on the web server where the .bak file should be deposited", default="/home/humebc/symportal.org/symportal_database_versions")
         self.parser.add_argument('--remote_web_sync_script_path', help="Full path to the syncronization script to run on the web server", default="/home/humebc/symportal.org/sync_db.py")
