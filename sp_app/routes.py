@@ -14,12 +14,12 @@ import json
 def index():
     if request.method == 'GET':
         # get the studies that will be loaded into the published data set table
-        published_studies = Study.query.filter(Study.is_published==True).all()
+        published_studies = Study.query.filter(Study.is_published==True, Study.display_online==True).all()
         
         # get the studies that belong to the user that are not yet published
         try:
-            sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
-            user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False) if sp_user in study.users]
+            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+            user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False, Study.display_online==True) if sp_user in study.users]
         except AttributeError as e:
             user_unpublished_studies = []
         except NoResultFound:
@@ -52,25 +52,20 @@ def index():
         # We also want to exclude the study_to_load study.
         if current_user.is_anonymous:
             published_and_authorised_studies = Study.query\
-                .filter(Study.data_explorer==True, Study.is_published==True).all()
-            print('we are here')
+                .filter(Study.data_explorer==True, Study.is_published==True, Study.display_online==True).all()
         elif current_user.is_admin:
-            print('here current user is admin')
             # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True).all()
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True).all()
         else:
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
-            print('here user is logged in')
-            print(f'current_user is {current_user}')
-            sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True)\
+            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
                 .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
                 .filter(Study.name != study_to_load.name).all()
-            print(f'published_and_authorised_studies are {published_and_authorised_studies}')
         return render_template('data_explorer.html', study_to_load=study_to_load,
-                               published_and_authorised_studies=published_and_authorised_studies ,map_key=map_key)
+                               published_and_authorised_studies=published_and_authorised_studies, map_key=map_key)
     
 
 @app.route('/submit_data_learn_more')
@@ -92,7 +87,7 @@ def login():
             # may not have been created in the symportal_database. If this is the case, the
             # administrator will need to fix this and the user will need to be told to get in contact
             # with the administrator.
-            sp_user = SPUser.query.filter(SPUser.app_db_key_id==user.id).one()
+            sp_user = SPUser.query.filter(SPUser.name==user.username).one()
         except NoResultFound:
             flash("User has not been synced to the symportal_database.\nPlease contact the administrator to fix this.")
         login_user(user, remember=form.remember_me.data)
@@ -136,12 +131,12 @@ def profile():
         if current_user.is_anonymous:
             return redirect(url_for('index'))
         # We will populate a table that shows the studies that the user is authorised for
-        sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
-        user_authorised_studies = list(Study.query.filter(Study.users.contains(sp_user)).all())
+        sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+        user_authorised_studies = list(Study.query.filter(Study.users.contains(sp_user), Study.display_online==True).all())
         # We will also populate a table that will only be visible is the user is an admin
         # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
         if current_user.is_admin:
-            admin_authorised_studies = list(Study.query.filter(~Study.is_published).filter(~Study.users.contains(sp_user)).all())
+            admin_authorised_studies = list(Study.query.filter(~Study.is_published).filter(~Study.users.contains(sp_user)).filter(Study.display_online==True).all())
         else:
             admin_authorised_studies= list()
         return render_template('profile.html', user_authorised_studies=user_authorised_studies, admin_authorised_studies=admin_authorised_studies)
@@ -164,16 +159,16 @@ def profile():
         # c - are unpublished but have the current user in their users_with_access list
         # We also want to exclude the study_to_load study.
         if current_user.is_anonymous:
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.is_published==True).all()
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.is_published==True, Study.display_online==True).all()
         elif current_user.is_admin:
             # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True).all()
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True).all()
         else:
-            sp_user = SPUser.query.filter(SPUser.app_db_key_id==current_user.id).one()
+            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True)\
+            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
                 .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
                 .filter(Study.name != study_to_load.name).all()
         return render_template('data_explorer.html', study_to_load=study_to_load,
