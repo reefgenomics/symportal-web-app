@@ -122,7 +122,7 @@ class AutomateSync:
             print(line)
 
         print(f'\nRunning {self.args.remote_web_sync_script_path} on remote web server. This may take some time.')
-        stdin, stdout, stderr = self.ssh_client.exec_command(f'/home/humebc/miniconda3/envs/symportal_org/bin/python3 {self.args.remote_web_sync_script_path} -y --path_to_new_sp_json {os.path.join(self.remote_web_json_dir, "_".join(self.new_pub_art_file_name.split("_")[1:]))} --path_to_new_bak {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}')
+        stdin, stdout, stderr = self.ssh_client.exec_command(f'/home/humebc/miniconda3/envs/symportal_org/bin/python3 {self.args.remote_web_sync_script_path} -y --path_to_new_bak {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}')
         print('stdout:')
         while True:
             line = stdout.readline()
