@@ -9,6 +9,10 @@ from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
 
+#TODO remove "Title" and make this a hyper link to the paper
+#TODO hide 'Your unpublished analyses if this is empty
+#TODO add the table of citations.
+
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
 def index():
