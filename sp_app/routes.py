@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, flash, url_for
+from flask import render_template, request, redirect, flash, url_for, jsonify
 from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
@@ -177,3 +177,36 @@ def profile():
                 .filter(Study.name != study_to_load.name).all()
         return render_template('data_explorer.html', study_to_load=study_to_load,
                                published_and_authorised_studies=published_and_authorised_studies ,map_key=map_key)
+
+# Max upload size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024
+
+# file Upload
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'uploads')
+# Make directory if "uploads" folder not exists
+if not os.path.isdir(UPLOAD_FOLDER):
+    os.mkdir(UPLOAD_FOLDER)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+ALLOWED_EXTENSIONS = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'gz', 'html']
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/submission', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'GET':
+        return render_template('submission.html')
+    elif request.method == 'POST':
+        files = request.files
+        for f in files:
+            file = request.files.get(f)
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # TODO we will also populate the preview etc.
+        # but for the time being lets just give some feed back in green
+        response = {'message': f"{len(files)} file(s) loaded successfully", 'message_class': "text-success"}
+        return jsonify(response)

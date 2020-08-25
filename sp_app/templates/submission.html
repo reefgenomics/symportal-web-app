@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
+        <!-- Dropzone -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js" crossorigin="anonymous"></script>
+        <title>SymPortal:Submission</title>
+        <style>
+            .btn{padding: 0px 12px;}
+        </style>
+    </head>
+    <body>
+        <!--  NAV BAR  -->
+        <div class="nav navbar-light bg-light justify-content-end">
+          <a class="nav-link" href="/">
+              Home
+          </a>
+        </div>
+        <!--  JUMBOTRON  -->
+        <div class="jumbotron jumbotron-fluid bg-info text-white text-center">
+          <div class="container">
+              <h1 class="display-4">SymPortal data submission</h1>
+              <p class="lead">Upload your data for analysis</p>
+          </div>
+        </div>
+        <!--  UPLOAD CONTENT  -->
+        <div class="container">
+            <!-- The DRAG and DROP container -->
+            <div class="row justify-content-md-center" style="margin:10px 0px;">
+                <div class="col-sm-8 text-center text-muted" id="dropZone" style="padding: 20px 10px; border: 4px dashed blue;">
+                    Drag and drop or select files to begin upload
+                </div>
+            </div>
+            <!-- The ADD FILES, UPLOAD and CANCEL buttons -->
+            <div class="row justify-content-md-center" id="actions">
+                <div class="col-sm-8">
+                    <button type="button" class="btn btn-success fileinput-button">
+                        <i class="fa fa-plus-circle"></i> Add files...
+                    </button>
+                    <button type="button" class="btn btn-primary start">
+                        <i class="fa fa-upload"></i> Start upload
+                    </button>
+                    <button type="button" class="btn btn-warning cancel">
+                      <i class="fa fa-ban"></i> Cancel
+                    </button>
+                </div>
+            </div>
+            <!-- FEEDBACK MESSAGE HOLDER -->
+            <div class="row justify-content-md-center">
+                <div class="col-12">
+                    <!-- set this feedback message programmatically -->
+                    <p id="feedback-message"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" class="files" id="previews">
+
+          <div id="template" class="row">
+            <!-- This is used as the file preview template -->
+            <div class="col-md-8 col-lg-9">
+                <p class="name m-0" data-dz-name></p>
+                <strong class="error text-danger" data-dz-errormessage></strong>
+            </div>
+            <div class="col-md-2 col-lg-1">
+                <p class="size m-0" data-dz-size></p>
+            </div>
+              <div class="col-md-1">
+                  <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
+                    </div>
+              </div>
+            <div class="col-md-1">
+              <button data-dz-remove class="btn btn-danger delete btn-sm">
+                <i class="glyphicon glyphicon-trash"></i>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="container">
+            <div class="row justify-content-md-center">
+                <div class="col-sm-8">
+                    <p>Instructions instructions instructions</p>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+
+        <script src="{{ url_for('static', filename='js/submission.js') }}"></script>
+    </body>
+</html>
