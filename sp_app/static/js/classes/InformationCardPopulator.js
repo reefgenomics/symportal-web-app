@@ -71,9 +71,9 @@ class DownloadResourcesPopulator{
             "post_med_relative_abund_only_count", "post_med_relative_meta_only_count",
             "post_med_fasta", "post_med_additional_info", "pre_med_absolute_count",
             "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count",
-            "profile_absolute_abund_only_count", "profile_absolute_meta_only_count",
+            "profile_absolute_abund_only_count", "profile_meta",
             "profile_relative_abund_meta_count", "profile_relative_abund_only_count",
-            "profile_relative_meta_only_count", "profile_additional_info_file"
+            "profile_additional_info_file"
         ];
     }
     populate_downloads(){
