@@ -65,15 +65,21 @@ class DownloadResourcesPopulator{
         this.dist_type_array = ['unifrac', 'braycurtis'];
         this.sample_profile_array = ['sample', 'profile'];
         this.sqrt_array = ['sqrt', 'no_sqrt'];
+        // We have both profile_absolute_meta_only_count and profile_meta in here
+        // This is because we have moved from outputing two profile meta only files
+        // (relative and abosulte) to only one (because they are identical).
+        // We removed the profile_relative_meta_only_count so that this is not displayed
+        // for the older outputs. For the newer outputs profile_absolute_meta_only_count won't exist
+        // because we renamed it profile_meta. As such this will be output.
         this.file_type_array = [
             "post_med_absolute_abund_meta_count", "post_med_absolute_abund_only_count",
             "post_med_absolute_meta_only_count", "post_med_relative_abund_meta_count",
             "post_med_relative_abund_only_count", "post_med_relative_meta_only_count",
             "post_med_fasta", "post_med_additional_info", "pre_med_absolute_count",
             "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count",
-            "profile_absolute_abund_only_count", "profile_meta",
+            "profile_absolute_abund_only_count", "profile_absolute_meta_only_count",
             "profile_relative_abund_meta_count", "profile_relative_abund_only_count",
-            "profile_additional_info_file"
+            "profile_meta", "profile_additional_info_file"
         ];
     }
     populate_downloads(){
