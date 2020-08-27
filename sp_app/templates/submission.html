@@ -8,11 +8,16 @@
         <!-- Bootstrap CSS -->
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
+        <!-- DataTables for bootstrap-->
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" crossorigin="anonymous">
         <!-- Dropzone -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js" crossorigin="anonymous"></script>
         <title>SymPortal:Submission</title>
         <style>
             .btn{padding: 0px 12px;}
+            .container{margin-top: 60px;}
+            .table{margin: 0px;}
+            .table-footer{font-size: small; font-weight: bold;}
         </style>
     </head>
     <body>
@@ -85,11 +90,61 @@
           </div>
 
         </div>
+        
 
         <div class="container">
-            <div class="row justify-content-md-center">
-                <div class="col-sm-8">
-                    <p>Instructions instructions instructions</p>
+            <!-- The upload table should be in the next dict -->
+            <div class="table-responsive">
+                <table class="table table-sm table-hover table-striped">
+                    <thead>
+                        <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">fwd</th>
+                        <th scope="col"></th>
+                        <th scope="col">rev</th>
+                        <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">1</th>
+                            <td class='text-success'>example_20200825_R1.fastq.gz</td>
+                            <td class='text-success'>29.3 MB</td>
+                            <td class='text-success'>example_20200825_R2.fastq.gz</td>
+                            <td class='text-success'>29.6 MB</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">2</th>
+                            <td class='text-danger'>example_20200825_R1.fastq.gz</td>
+                            <td class='text-danger'>29.3 MB</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Footer for the table -->
+            <div>
+                <span class="table-footer">N.B. Server-side data will be stored for 12 hours before automatic deletion</span>
+            </div>
+        </div>
+        <div class="container">
+            <!-- Instruction card -->
+            <div class="card">
+                <!-- contains the title and the instruction collapse link -->
+                <div class="card-header">
+                    <div class="row">
+                        <h5 class="col-md-6 col-sm-12 m-0">Instructions</h5>
+                    </div>
+                </div>
+                <div class="card-body collapse show" id="collapseInstr">
+                    <!-- Instructions that can be collapsed -->
+                        <ol>
+                            <li>Complete and upload a datasheet</li>
+                            <li>Upload your paired fastq.gz ITS2 amplicon sequencing files</li>
+                            <li>With your files successfully uploaded click “Validate" </li>
+                            <li>After successful validation click "Submit"</li>
+                        </ul>                    
                 </div>
             </div>
         </div>
