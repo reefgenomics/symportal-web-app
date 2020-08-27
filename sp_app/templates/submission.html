@@ -48,7 +48,7 @@
                     <button type="button" class="btn btn-success fileinput-button">
                         <i class="fa fa-plus-circle"></i> Add files...
                     </button>
-                    <button type="button" class="btn btn-primary start">
+                    <button id="start_upload_btn" type="button" class="btn btn-primary start" disabled>
                         <i class="fa fa-upload"></i> Start upload
                     </button>
                     <button type="button" class="btn btn-warning cancel">
@@ -57,20 +57,20 @@
                 </div>
             </div>
             <!-- FEEDBACK MESSAGE HOLDER -->
-            <div class="row justify-content-md-center">
-                <div class="col-12">
+            <div class="row justify-content-md-center invisible" id="feedback-container">
+                <div class="col-12 border border-warning">
                     <!-- set this feedback message programmatically -->
                     <p id="feedback-message"></p>
                 </div>
             </div>
         </div>
 
+        <!--  STAGING AREA TABLE -->
         <div class="container" class="files" id="previews">
-
           <div id="template" class="row">
             <!-- This is used as the file preview template -->
             <div class="col-md-8 col-lg-9">
-                <p class="name m-0" data-dz-name></p>
+                <p class="name m-0 staged-file-name" data-dz-name></p>
                 <strong class="error text-danger" data-dz-errormessage></strong>
             </div>
             <div class="col-md-2 col-lg-1">
@@ -91,9 +91,9 @@
 
         </div>
         
-
+        <!-- UPLOAD TABLE -->
         <div class="container">
-            <!-- The upload table should be in the next dict -->
+            <h5 class="text-center">Uploaded files</h5>
             <div class="table-responsive">
                 <table class="table table-sm table-hover table-striped">
                     <thead>
@@ -108,14 +108,14 @@
                     <tbody>
                         <tr>
                             <th scope="row">1</th>
-                            <td class='text-success'>example_20200825_R1.fastq.gz</td>
+                            <td class='text-success uploaded-file-name'>example_20200825_R1.fastq.gz</td>
                             <td class='text-success'>29.3 MB</td>
-                            <td class='text-success'>example_20200825_R2.fastq.gz</td>
+                            <td class='text-success uploaded-file-name'>example_20200825_R2.fastq.gz</td>
                             <td class='text-success'>29.6 MB</td>
                         </tr>
                         <tr>
                             <th scope="row">2</th>
-                            <td class='text-danger'>example_20200825_R1.fastq.gz</td>
+                            <td class='text-danger uploaded-file-name'>example_20200825_R1.fastq.gz</td>
                             <td class='text-danger'>29.3 MB</td>
                             <td></td>
                             <td></td>
@@ -128,8 +128,9 @@
                 <span class="table-footer">N.B. Server-side data will be stored for 12 hours before automatic deletion</span>
             </div>
         </div>
+
+        <!-- INSTRUCTION CARD -->
         <div class="container">
-            <!-- Instruction card -->
             <div class="card">
                 <!-- contains the title and the instruction collapse link -->
                 <div class="card-header">
