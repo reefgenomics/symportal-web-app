@@ -7,7 +7,9 @@ $(document).ready(function() {
     previewNode.parentNode.removeChild(previewNode);
 
     // Dropzone class:
-    let csv_xlsx_count = 0;
+    // We can create a class of DatasheetCounter here and then access it within the addedfiles event.
+    // This class can already have all of the relevant objects selected
+    const datasheet_counter = new DatasheetCounter();
     var myDropzone = new Dropzone("div#dropZone", {
         url: "/submission",
         parallelUploads: 20,
@@ -34,81 +36,82 @@ $(document).ready(function() {
             // The <P></P> tags that hold the file names in the staging area have the class staged-file-name
             // The <P></P> tags that hold the file names in the staging area have the class uploaded-file-name
             
-            function enable_start_upload_button(){
-                document.querySelector("#start_upload_btn").removeAttribute("disabled");
-            }
+            // function enable_start_upload_button(){
+            //     document.querySelector("#start_upload_btn").removeAttribute("disabled");
+            // }
 
-            function disable_start_upload_button(){
-                document.querySelector("#start_upload_btn").addAttribute("disabled");
-            }
+            // function disable_start_upload_button(){
+            //     document.querySelector("#start_upload_btn").addAttribute("disabled");
+            // }
 
-            function remove_warning_message(){
-                let feedback_container = document.querySelector("#feedback-container");
-                feedback_container.classList.remove("visible");
-                feedback_container.classList.add("invisible");
-                let feedback_message = document.querySelector("#feedback-message");
-                feedback_message.innerText = "";
-            }
+            // function remove_warning_message(){
+            //     let feedback_container = document.querySelector("#feedback-container");
+            //     feedback_container.classList.remove("visible");
+            //     feedback_container.classList.add("invisible");
+            //     let feedback_message = document.querySelector("#feedback-message");
+            //     feedback_message.innerText = "";
+            // }
             
-            function display_upload_datasheet_feedback_message(){
-                // Ensure that the message container is visible
-                let feedback_container = document.querySelector("#feedback-container");
-                feedback_container.classList.remove("invisible");
-                feedback_container.classList.add("visible");
-                let feedback_message = document.querySelector("#feedback-message");
-                feedback_message.innerText = "Please upload a datasheet (.xlsx or .csv)"
-            }
+            // function display_upload_datasheet_feedback_message(){
+            //     // Ensure that the message container is visible
+            //     let feedback_container = document.querySelector("#feedback-container");
+            //     feedback_container.classList.remove("invisible");
+            //     feedback_container.classList.add("visible");
+            //     let feedback_message = document.querySelector("#feedback-message");
+            //     feedback_message.innerText = "Please upload a datasheet (.xlsx or .csv)"
+            // }
 
-            function report_datasheet_already_loaded(){
-                let feedback_container = document.querySelector("#feedback-container");
-                feedback_container.classList.remove("invisible");
-                feedback_container.classList.add("visible");
-                let feedback_message = document.querySelector("#feedback-message");
-                feedback_message.innerText = "A datasheet is already uploaded. Please remove this before attempting to upload another datasheet.";
-            }
+            // function report_datasheet_already_loaded(){
+            //     let feedback_container = document.querySelector("#feedback-container");
+            //     feedback_container.classList.remove("invisible");
+            //     feedback_container.classList.add("visible");
+            //     let feedback_message = document.querySelector("#feedback-message");
+            //     feedback_message.innerText = "A datasheet is already uploaded. Please remove this before attempting to upload another datasheet.";
+            // }
             
-            let staged_csv_xlsx_count = 0;
-            // Count the xlsx and csv files that are in the staging area
-            let staged_files = Array.from(document.getElementsByClassName("staged-file-name"));
-                staged_files.forEach(element => {
-                    if (element.innerText.endsWith(".xlsx") || element.innerText.endsWith(".csv")){
-                        staged_csv_xlsx_count +=1;
-                    }
-            });
+            // // Count the xlsx and csv files that are in the staging area
+            // let staged_csv_xlsx_count = 0;
+            // let staged_files = Array.from(document.getElementsByClassName("staged-file-name"));
+            // staged_files.forEach(element => {
+            //     if (element.innerText.endsWith(".xlsx") || element.innerText.endsWith(".csv")){
+            //         staged_csv_xlsx_count +=1;
+            //     }
+            // });
 
-            // Count the xlsx and csv files that have already been uploaded
-            let uploaded_csv_xlsx_count = 0;
-            let uploaded_files = document.getElementsByClassName("uploaded-file-name");
-            uploaded_files.forEach(element => {
-                if (element.innerText.endsWith(".xlsx") || element.innerText.endsWith(".csv")){
-                    uploaded_csv_xlsx_count +=1;
-                }
-            });
+            // // Count the xlsx and csv files that have already been uploaded
+            // let uploaded_csv_xlsx_count = 0;
+            // let uploaded_files = Array.from(document.getElementsByClassName("uploaded-file-name"));
+            // uploaded_files.forEach(element => {
+            //     if (element.innerText.endsWith(".xlsx") || element.innerText.endsWith(".csv")){
+            //         uploaded_csv_xlsx_count +=1;
+            //     }
+            // });
 
-            if ((uploaded_csv_xlsx_count === 0) && (staged_csv_xlsx_count === 1)){
-                // If upload=0 and staging == 1, then enable start upload.
-                // and remove any error message
-                enable_start_upload_button();
-                remove_warning_message();
-            } else if ((uploaded_csv_xlsx_count === 0) && (staged_csv_xlsx_count === 0)){
-                // if upload=0 and staging ==0 then diable start upload.
-                // and report that user must upload datasheet
-                disable_start_upload_button();
-                display_upload_datasheet_feedback_message();
-            } else if ((uploaded_csv_xlsx_count === 1) && (staged_csv_xlsx_count > 0)){
-                // If uploaded == 1 and staging > 0 then diable start upload and report that a datasheet is already uploaded
-                // and that the user needs to remove the currently uploaded dataahseet before proceeding with
-                // the upload of a new datasheet.
-                disable_start_upload_button();
-                report_datasheet_already_loaded();
-            } else if ((uploaded_csv_xlsx_count === 0) && (staged_csv_xlsx_count === 0)){
-                // If uploaded == 1 and staging ==0 then enable the upload button
-                // and remove any warning.
-                remove_warning_message();
-                enable_start_upload_button();
-            }else{
-                throw `Unexpected counts reported for staged ${staged_csv_xlsx_count} and uploaded ${uploaded_csv_xlsx_count} csv xlsx counts.\n`
-            }
+            // if ((uploaded_csv_xlsx_count === 0) && (staged_csv_xlsx_count === 1)){
+            //     // If upload=0 and staging == 1, then enable start upload.
+            //     // and remove any error message
+            //     enable_start_upload_button();
+            //     remove_warning_message();
+            // } else if ((uploaded_csv_xlsx_count === 0) && (staged_csv_xlsx_count === 0)){
+            //     // if upload=0 and staging ==0 then diable start upload.
+            //     // and report that user must upload datasheet
+            //     disable_start_upload_button();
+            //     display_upload_datasheet_feedback_message();
+            // } else if ((uploaded_csv_xlsx_count === 1) && (staged_csv_xlsx_count > 0)){
+            //     // If uploaded == 1 and staging > 0 then diable start upload and report that a datasheet is already uploaded
+            //     // and that the user needs to remove the currently uploaded dataahseet before proceeding with
+            //     // the upload of a new datasheet.
+            //     disable_start_upload_button();
+            //     report_datasheet_already_loaded();
+            // } else if ((uploaded_csv_xlsx_count === 0) && (staged_csv_xlsx_count === 0)){
+            //     // If uploaded == 1 and staging ==0 then enable the upload button
+            //     // and remove any warning.
+            //     remove_warning_message();
+            //     enable_start_upload_button();
+            // }else{
+            //     throw `Unexpected counts reported for staged ${staged_csv_xlsx_count} and uploaded ${uploaded_csv_xlsx_count} csv xlsx counts.\n`
+            // }
+            datasheet_counter.update_DOM();
             
         }
         });
