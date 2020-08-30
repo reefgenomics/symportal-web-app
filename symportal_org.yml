@@ -27,6 +27,7 @@ dependencies:
   - mccabe
   - ncurses
   - openssl
+  - pandas
   - pip
   - psycopg2
   - pylint

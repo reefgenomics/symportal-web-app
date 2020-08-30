@@ -2,12 +2,14 @@ from flask import render_template, request, redirect, flash, url_for, jsonify
 from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user, login_required
 from sp_app.models import User, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
 from werkzeug.urls import url_parse
+from werkzeug.utils import secure_filename
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
+from sp_app.datasheet_check import DatasheetChecker
 
 #TODO remove "Title" and make this a hyper link to the paper
 #TODO hide 'Your unpublished analyses if this is empty
@@ -189,24 +191,31 @@ if not os.path.isdir(UPLOAD_FOLDER):
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
-ALLOWED_EXTENSIONS = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'gz', 'html']
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @app.route('/submission', methods=['GET', 'POST'])
+@login_required
 def upload_file():
     if request.method == 'GET':
         return render_template('submission.html')
     elif request.method == 'POST':
+        username = current_user.username
+        user_upload_directory = os.path.join(app.config['UPLOAD_FOLDER'], username)
+        # The datasheet name that we should be working with is passed in using the form parameter
+        # of the request.
         files = request.files
-        for f in files:
-            file = request.files.get(f)
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        datasheet_filename = request.form["datasheet_filename"]
+        if datasheet_filename == "":
+            dc = DatasheetChecker(request=request, user_upload_directory=user_upload_directory)
+        else:
+            dc = DatasheetChecker(
+                request=request,
+                user_upload_directory=user_upload_directory,
+                datasheet_path=os.path.join(user_upload_directory, datasheet_filename))
+        #TODO deal with the rest of the files.
+        # for f in files:
+        #     file = request.files.get(f)
+        #     filename = secure_filename(file.filename)
+        #     file.save(user_upload_directory)
         # TODO we will also populate the preview etc.
         # but for the time being lets just give some feed back in green
-        response = {'message': f"{len(files)} file(s) loaded successfully", 'message_class': "text-success"}
+        response = {'message': f"{len(files)} file(s) loaded successfully", 'message_class': "text-success", 'container_class':"border-success"}
         return jsonify(response)

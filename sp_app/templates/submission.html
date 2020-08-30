@@ -5,6 +5,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+
         <!-- Bootstrap CSS -->
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
@@ -57,8 +58,8 @@
                 </div>
             </div>
             <!-- FEEDBACK MESSAGE HOLDER -->
-            <div class="row justify-content-md-center invisible" id="feedback-container">
-                <div class="col-12 border border-danger">
+            <div class="row justify-content-md-center invisible border border-danger" id="feedback-container">
+                <div class="col-12">
                     <!-- set this feedback message programmatically -->
                     <p class="text-danger my-1" id="feedback-message"></p>
                 </div>
@@ -97,18 +98,29 @@
                     <h5>Uploaded files</h5>
             </div>
             <div class="row">
-                <div>Datasheet:</div>
+                <div data-datasheet-filename="" id="datasheet_filename" class="col-12">Datasheet:</div>
             </div>
             
             <div class="table-responsive">
                 <table class="table table-sm table-hover table-striped">
                     <thead>
                         <tr>
-                        <th scope="col">#</th>
+                        <th scope="col">sample_name</th>
                         <th scope="col">fwd</th>
                         <th scope="col"></th>
                         <th scope="col">rev</th>
                         <th scope="col"></th>
+                        <th scope="col">type</th>
+                        <th scope="col">phylum</th>
+                        <th scope="col">class</th>
+                        <th scope="col">order</th>
+                        <th scope="col">family</th>
+                        <th scope="col">genus</th>
+                        <th scope="col">species</th>
+                        <th scope="col">lat.</th>
+                        <th scope="col">lon.</th>
+                        <th scope="col">date</th>
+                        <th scope="col">depth</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -162,8 +174,9 @@
         <!-- Optional JavaScript -->
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+        <!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script> -->
+        <!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script> -->
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="{{ url_for('static', filename='js/classes/DatasheetCounter.js') }}"></script>
         <script src="{{ url_for('static', filename='js/submission.js') }}"></script>
     </body>

@@ -26,8 +26,12 @@ $(document).ready(function() {
         successmultiple: function (files, response) {
             console.log("Success");
             console.log(response);
-            document.querySelector("#feedback-container").classList.remove("invisible");
-            document.querySelector("#feedback-container").classList.remove("visible");
+            let feedback_container = document.querySelector("#feedback-container");
+            feedback_container.classList.remove("invisible");
+            feedback_container.classList.remove("visible");
+            feedback_container.classList.remove("border-danger");
+            feedback_container.classList.remove("border-success");
+            feedback_container.classList.add(response.container_class);
             document.querySelector("#feedback-message").setAttribute("class", response.message_class);
             document.querySelector("#feedback-message").textContent = response.message;
         },
@@ -37,7 +41,6 @@ $(document).ready(function() {
             // a datasheet file uploaded, or if more than one .xlsx or .csv files have been staged.
             // This way we will ensure that we are always working with only a single .csv or .xlsx file (datasheet)
             datasheet_counter.update_DOM();
-
         },
         removedfile: function(file){
             // By listening for this event we are overwriting the automatic removal of the file by dropzone.
@@ -45,6 +48,13 @@ $(document).ready(function() {
             // the file is not sent to the backend upon submission.
             file.previewElement.remove();
             datasheet_counter.update_DOM();
+        },
+        sendingmultiple: function(files, xhr, formData){
+            // When we upload the files we will send up a string value of the
+            // current datasheet value that will be stored in an element associated with
+            // the Uploaded files table. This way we know which datasheet we should be working with.
+            let current_datasheet_filename = document.querySelector("#datasheet_filename").getAttribute("data-datasheet-filename");
+            formData.append("datasheet_filename", current_datasheet_filename);
         }
         });
 
