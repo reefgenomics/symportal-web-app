@@ -14,7 +14,7 @@ class DatasheetCounter{
     }
 
     _disable_start_upload_button(){
-        document.querySelector("#start_upload_btn").addAttribute("disabled");
+        document.querySelector("#start_upload_btn").setAttribute("disabled", '');
     }
 
     _remove_warning_message(){
@@ -34,6 +34,12 @@ class DatasheetCounter{
         this.feedback_container.classList.remove("invisible");
         this.feedback_container.classList.add("visible");
         this.feedback_message.innerText = "A datasheet is already uploaded. Please remove this before attempting to upload another datasheet.";
+    }
+
+    _report_datasheet_already_staged(){
+        this.feedback_container.classList.remove("invisible");
+        this.feedback_container.classList.add("visible");
+        this.feedback_message.innerText = "> 1 .xlsx/.csv file is staged. Only one datasheet is accepted per submission.";
     }
 
     _count_staged_and_uploaded_datasheets(){
@@ -73,7 +79,12 @@ class DatasheetCounter{
             // and remove any warning.
             this._remove_warning_message();
             this._enable_start_upload_button();
-        }else{
+        } else if ((this.uploaded_csv_xlsx_count === 0) && (this.staged_csv_xlsx_count > 1)){
+            // If upload == 0 and staging > 1 then show warning that need to remove one .csv/.xlsx
+            // file from the staging area.
+            this._disable_start_upload_button();
+            this._report_datasheet_already_staged();
+        } else{
             throw `Unexpected counts reported for staged ${this.staged_csv_xlsx_count} and uploaded ${this.uploaded_csv_xlsx_count} csv xlsx counts.\n`
         }
     }
