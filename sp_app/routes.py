@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
-from sp_app.datasheet_check import DatasheetChecker
+from sp_app.datasheet_check import DatasheetChecker, DatasheetFormattingError
 
 #TODO remove "Title" and make this a hyper link to the paper
 #TODO hide 'Your unpublished analyses if this is empty
@@ -205,6 +205,19 @@ def upload_file():
         datasheet_filename = request.form["datasheet_filename"]
         if datasheet_filename == "":
             dc = DatasheetChecker(request=request, user_upload_directory=user_upload_directory)
+
+            try:
+                dc.do_qc()
+            # Handle general error non-unique
+            except DatasheetFormattingError as e:
+                column, values = e.data.items()[0]
+                response = {
+                    'error': True, 'message': f"{column} contained non_unique values",
+                    "data" : values, "error_type": "non_unique"
+                }
+                return jsonify(response)
+
+
         else:
             dc = DatasheetChecker(
                 request=request,
