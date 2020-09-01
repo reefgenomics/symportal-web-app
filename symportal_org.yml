@@ -46,4 +46,5 @@ dependencies:
   - wrapt
   - wtforms
   - xz
+  - xlrd
   - zlib

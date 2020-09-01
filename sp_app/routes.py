@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
-# from sp_app.datasheet_check import DatasheetChecker, DatasheetFormattingError
+from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError
 
 #TODO remove "Title" and make this a hyper link to the paper
 #TODO hide 'Your unpublished analyses if this is empty
@@ -196,8 +196,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def upload_file():
     if request.method == 'GET':
         return render_template('submission.html')
-    # elif request.method == 'POST':
-        # TODO save the files and do submission
 
 @app.route('/_check_submission', methods=['POST'])
 @login_required
@@ -210,39 +208,94 @@ def _check_submission():
     datasheet_data and add_or_upload. If the value is '' and add_or_upload is 'add'
     then we know we should only be looking for the user to have submitted a single *.xlsx or .csv. This is all we will
     be checking at this point."""
-    data_dict = json.loads(list(request.form.keys())[0])
-    if data_dict["add_or_upload"] == "add" and data_dict["datasheet_data"] == "":
-        if len(data_dict["files"]) != 1:
-            response = {
-                "check_type": "datasheet",
-                "add_or_upload": "add",
-                "error":True,
-                "border_class": "border-danger",
-                "message_class": "text-danger",
-                "message":"More than one file selected. Please select only a single datasheet (.xlsx, .csv)"
-            }
-            return jsonify(response)
-        file_name = [k for k, v in data_dict["files"][0].items()][0]
-        if file_name.endswith(".xlsx") or file_name.endswith(".csv"):
-            response = {
-                "check_type": "datasheet",
-                "add_or_upload": "add",
-                "error":False,
-                "border_class": "border-success",
-                "message_class": "text-success",
-                "message":"Datasheet selected, please upload"
-            }
-            return jsonify(response)
+    if request.form:
+    # Then this is checking files in the staged area
+        data_dict = json.loads(list(request.form.keys())[0])
+        if data_dict["add_or_upload"] == "add" and data_dict["datasheet_data"] == "":
+            if len(data_dict["files"]) != 1:
+                response = {
+                    "check_type": "datasheet",
+                    "add_or_upload": "add",
+                    "error":True,
+                    "border_class": "border-danger",
+                    "message_class": "text-danger",
+                    "message":"More than one file selected. Please select only a single datasheet (.xlsx, .csv)"
+                }
+                return jsonify(response)
+            file_name = [k for k, v in data_dict["files"][0].items()][0]
+            if file_name.endswith(".xlsx") or file_name.endswith(".csv"):
+                response = {
+                    "check_type": "datasheet",
+                    "add_or_upload": "add",
+                    "error":False,
+                    "border_class": "border-success",
+                    "message_class": "text-success",
+                    "message":"Datasheet selected, please upload"
+                }
+                return jsonify(response)
+            else:
+                response = {
+                    "check_type": "datasheet",
+                    "add_or_upload": "add",
+                    "error": True,
+                    "border_class": "border-danger",
+                    "message_class": "text-danger",
+                    "message": "Please select only a single datasheet (.xlsx, .csv)"
+                }
+                return jsonify(response)
         else:
-            response = {
-                "check_type": "datasheet",
-                "add_or_upload": "add",
-                "error": True,
-                "border_class": "border-danger",
-                "message_class": "text-danger",
-                "message": "Please select only a single datasheet (.xlsx, .csv)"
-            }
-            return jsonify(response)
+            # This could be either checking sequencing files that are in the staged area
+            # or a change of datasheet
+            raise NotImplementedError
+    else:
+        # Then this is an upload of either a datasheet or sequencing files that have been checked
+        # while in the staging area
+        if len(request.files) == 1:
+            # Then this is an upload of a datasheet
+            # We should perform the general formatting tests on it and then send an appropriate response.
+            # If the general formatting tests pass, we enable user to proceed to sequence upload
+            # TODO ouput general stats about the number of samples etc.
+            # If the general checking fails then we will output the errors to show where it failed.
+            # TODO display a spinner when we send it up and switch it up once checking is complete
+            # can set a delay of 1 sec or something.
+            # TODO catch unhandled errors during the init of the DatasheetChecker
+            dc = DatasheetChecker(
+                request=request,
+                user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username))
+            try:
+                # TODO If we have an error here then we should first try to catch it as the
+                # DatasheetGeneralFormattingError that the we have created and then handle
+                # unhandled errors" and pass back this error to the
+                # browser to inform the user.
+                dc.do_general_format_check()
+                response = {
+                    'error': False, 'message': "Datasheet {} containing {} samples successfully uploaded.",
+                    "num_samples": len(dc.sample_meta_info_df.index)
+                }
+                return jsonify(response)
+            except DatasheetGeneralFormattingError as e:
+                if e.data["error_type"] == "non_unique":
+                    response = {
+                        'error': True, 'message': str(e),
+                        "data": e.data["non_unique_data"], "error_type": "non_unique"
+                    }
+                elif e.data["error_type"] == "full_path":
+                    response = {
+                        'error': True, 'message': str(e),
+                        "data": e.data["example_filename"], "error_type": "full_path"
+                    }
+                elif e.data["error_type"] == "df_empty":
+                    response = {
+                        'error': True, 'message': str(e),
+                        "error_type": "df_empty"
+                    }
+                return jsonify(response)
+        else:
+            # Then we are handling the upload of sequence data that has already been through the checking.
+            # At this point we will be saving files doing final checks and then sending back good news to the user
+            raise NotImplementedError
+
+
 
     username = current_user.username
     user_upload_directory = os.path.join(app.config['UPLOAD_FOLDER'], username)

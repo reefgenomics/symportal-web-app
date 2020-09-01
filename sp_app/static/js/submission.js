@@ -25,7 +25,7 @@ $(document).ready(function() {
     // This class can already have all of the relevant objects selected
     const datasheet_counter = new DatasheetCounter();
     var myDropzone = new Dropzone("div#dropZone", {
-        url: "/submission",
+        url: "/_check_submission",
         parallelUploads: 20,
         previewTemplate: previewTemplate,
         autoQueue: false, // Make sure the files aren't queued until manually added
@@ -118,11 +118,16 @@ $(document).ready(function() {
 //            datasheet_counter.update_DOM();
 //        },
         sendingmultiple: function(files, xhr, formData){
-            // When we upload the files we will send up a string value of the
-            // current datasheet value that will be stored in an element associated with
-            // the Uploaded files table. This way we know which datasheet we should be working with.
-            let current_datasheet_filename = document.querySelector("#datasheet_filename").getAttribute("data-datasheet-filename");
-            formData.append("datasheet_filename", current_datasheet_filename);
+            // This will be fired either when we are uploading a datasheet, or when we are doing the final submission
+            // (i.e. after having checked that only a single .csv/.xlsx has been uploaded or after checking that
+            // all is in agreement between an uploaded datasheet and a set of sequencing files).
+            // Both cases are easily distinguishable. In the first, files will contain only a sinlge .csv/.xlsx
+            // In the other, files will contain at least two sequencing files.
+            if (this.files.length > 1){
+                // Then this is a submission of the sequencing datafiles and we want to send up the datasheetfile name
+                formData.append("datasheet_filename", current_datasheet_filename);
+            }
+            // length is one. we just send it as it is without adding additional data.
         }
         });
 
