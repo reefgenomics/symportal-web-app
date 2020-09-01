@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
-from sp_app.datasheet_check import DatasheetChecker, DatasheetFormattingError
+# from sp_app.datasheet_check import DatasheetChecker, DatasheetFormattingError
 
 #TODO remove "Title" and make this a hyper link to the paper
 #TODO hide 'Your unpublished analyses if this is empty
@@ -196,39 +196,74 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def upload_file():
     if request.method == 'GET':
         return render_template('submission.html')
-    elif request.method == 'POST':
-        username = current_user.username
-        user_upload_directory = os.path.join(app.config['UPLOAD_FOLDER'], username)
-        # The datasheet name that we should be working with is passed in using the form parameter
-        # of the request.
-        files = request.files
-        datasheet_filename = request.form["datasheet_filename"]
-        if datasheet_filename == "":
-            dc = DatasheetChecker(request=request, user_upload_directory=user_upload_directory)
+    # elif request.method == 'POST':
+        # TODO save the files and do submission
 
-            try:
-                dc.do_qc()
-            # Handle general error non-unique
-            except DatasheetFormattingError as e:
-                column, values = e.data.items()[0]
-                response = {
-                    'error': True, 'message': f"{column} contained non_unique values",
-                    "data" : values, "error_type": "non_unique"
-                }
-                return jsonify(response)
-
-
+@app.route('/_check_submission', methods=['POST'])
+@login_required
+def _check_submission():
+    """This is where the AJAX requests are sent when a user clicks the
+    Add datasheet or Add seq files.
+    We will send
+    We have sent up a jsonified object that contains keys of datasheet_data, files or add_or_upload
+    We can tell what sort of checks we should be doing based on the value of
+    datasheet_data and add_or_upload. If the value is '' and add_or_upload is 'add'
+    then we know we should only be looking for the user to have submitted a single *.xlsx or .csv. This is all we will
+    be checking at this point."""
+    data_dict = json.loads(list(request.form.keys())[0])
+    if data_dict["add_or_upload"] == "add" and data_dict["datasheet_data"] == "":
+        if len(data_dict["files"]) != 1:
+            response = {
+                "check_type": "datasheet",
+                "add_or_upload": "add",
+                "error":True,
+                "border_class": "border-danger",
+                "message_class": "text-danger",
+                "message":"More than one file selected. Please select only a single datasheet (.xlsx, .csv)"
+            }
+            return jsonify(response)
+        file_name = [k for k, v in data_dict["files"][0].items()][0]
+        if file_name.endswith(".xlsx") or file_name.endswith(".csv"):
+            response = {
+                "check_type": "datasheet",
+                "add_or_upload": "add",
+                "error":False,
+                "border_class": "border-success",
+                "message_class": "text-success",
+                "message":"Datasheet selected, please upload"
+            }
+            return jsonify(response)
         else:
-            dc = DatasheetChecker(
-                request=request,
-                user_upload_directory=user_upload_directory,
-                datasheet_path=os.path.join(user_upload_directory, datasheet_filename))
-        #TODO deal with the rest of the files.
-        # for f in files:
-        #     file = request.files.get(f)
-        #     filename = secure_filename(file.filename)
-        #     file.save(user_upload_directory)
-        # TODO we will also populate the preview etc.
-        # but for the time being lets just give some feed back in green
-        response = {'message': f"{len(files)} file(s) loaded successfully", 'message_class': "text-success", 'container_class':"border-success"}
-        return jsonify(response)
+            response = {
+                "check_type": "datasheet",
+                "add_or_upload": "add",
+                "error": True,
+                "border_class": "border-danger",
+                "message_class": "text-danger",
+                "message": "Please select only a single datasheet (.xlsx, .csv)"
+            }
+            return jsonify(response)
+
+    username = current_user.username
+    user_upload_directory = os.path.join(app.config['UPLOAD_FOLDER'], username)
+    # The datasheet name that we should be working with is passed in using the form parameter
+    # of the request.
+    return jsonify("foo")
+    # dc = DatasheetChecker(
+    #     request=request,
+    #     user_upload_directory=user_upload_directory)
+    # try:
+    #     dc.do_qc()
+    # # Handle general error non-unique
+    # except DatasheetFormattingError as e:
+    #     if e.data["error_type"] == "non_unique":
+    #         response = {
+    #             'error': True, 'message': str(e),
+    #             "data": e.data["non_unique_data"], "error_type": "non_unique"
+    #         }
+    #     elif e.data["error_type"] == "full_path":
+    #         response = {
+    #             'error': True, 'message': str(e),
+    #             "data": e.data["example_filename"], "error_type": "full_path"
+    #         }
+    #     return jsonify(response)
