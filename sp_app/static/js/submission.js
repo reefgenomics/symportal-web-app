@@ -20,6 +20,14 @@ $(document).ready(function() {
             feedback_message.textContent = message;
     }
 
+    function hide_feedback(){
+        let feedback_container = document.querySelector("#feedback-container");
+        feedback_container.classList.remove("visible");
+        feedback_container.classList.add("invisible");
+        let feedback_message = document.querySelector("#feedback-message");
+        feedback_message.textContent = "";
+    }
+
     // Dropzone class:
     // We can create a class of DatasheetCounter here and then access it within the addedfiles event.
     // This class can already have all of the relevant objects selected
@@ -30,7 +38,7 @@ $(document).ready(function() {
         previewTemplate: previewTemplate,
         autoQueue: false, // Make sure the files aren't queued until manually added
         previewsContainer: "#previews", // Define the container to display the previews
-        clickable: ".fileinput-button",
+        clickable: "#fileinput-button",
         uploadMultiple: true,
         acceptedFiles: ".csv,.xlsx,.fastq.gz",
         error: function (file, response) {
@@ -38,16 +46,45 @@ $(document).ready(function() {
             console.log(response);
         },
         successmultiple: function (files, response) {
-            console.log("Success");
-            console.log(response);
-            let feedback_container = document.querySelector("#feedback-container");
-            feedback_container.classList.remove("invisible");
-            feedback_container.classList.remove("visible");
-            feedback_container.classList.remove("border-danger");
-            feedback_container.classList.remove("border-success");
-            feedback_container.classList.add(response.container_class);
-            document.querySelector("#feedback-message").setAttribute("class", response.message_class);
-            document.querySelector("#feedback-message").textContent = response.message;
+            //TODO we are here. Handle the return from upload
+            // We are either handling the upload response for a datasheet being sent up
+            // Or we are handling a successful submission.
+            if (response.response_type == "datasheet"){
+                // Then this is the upload of a datasheet rather than the upload of sequencing files
+                if (response.error === true){
+                    // There was a problem with the datasheet
+                    // The following actions will take the user back to the upload datasheet
+                    // The file should be removed from the dropzone object
+                    myDropzone.removeAllFiles();
+                    // Error message should be displayed
+                    // It should give an informative error AND instruct user to reupload
+                    display_feedback(response.message, response.border_class, response.message_class);
+                    // The Select datasheet button should be enabled
+                    document.querySelector("#fileinput-button").removeAttribute("disabled");
+                    // The upload datasheet button should be disabled
+                    document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+                }else{
+                    // Then the datasheet looks good
+                    // Now it is time to allow the user to upload seq files
+                    // Once they have been selected we will check them against the datasheet that has
+                    // been uploaded
+                    // The following actions will progress the user
+                    // Change the datasheet label to indicate the datasheet we are working with
+                    document.querySelector("#datasheet_filename").textContent = `Datasheet: ${response.datasheet_filename}`;
+                    document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename") = `${response.datasheet_filename}`;
+                    // Change the text of the Select datasheet to select seqfiles
+                    document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select seq files';
+                    // Enable this button
+                    document.querySelector("#fileinput-button").removeAttribute("disabled");
+                    // Change the Upload datasheet text to Upload seq files
+                    document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload seq files';
+                    // Disable this button
+                    document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+                    // Change the message box to show successful upload
+                    display_feedback(response.message, response.border_class, response.message_class);
+                }
+            }
+
         },
         addedfiles: function(files){
             // When a datasheet is added, or when seq files are added, we will need to send the added files
@@ -96,18 +133,37 @@ $(document).ready(function() {
                         }else{
                             // Then the user uploaded a single .csv or .xlsx.
                             // Disable the Add datasheet button so that no further files can be added before the upload
-
+                            document.querySelector("#fileinput-button").setAttribute("disabled", "");
                             // Enable the upload datasheet button
                             document.querySelector("#start_upload_btn").removeAttribute("disabled");
-                            // Ensure the innber text is upload datasheet. With a space before.
+                            // Ensure the inner text is upload datasheet. With a space before.
                             document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload datasheet';
                             // Display the message
                             display_feedback(response["message"], response["border_class"], response["message_class"]);
                         }
+                    }else{
+                        // Then this is the response from checking the seq files
+                        if (response.error == true){
+                            // If there was an error
+                            // Report the error in the message box
+                            // Then the user will have two options to fix the problem
+                            // Either, modify and reupload the datasheet, or add/remove files
+                            // If the user wants to modify the datasheet
+                            // Then the dataset will need to be reloaded to fix the problem
+                            // The easiest way to do this is probably to hit he restart button
+                            // In this case we should put this guidance in the feedback message
+                            let message = "To fix the below problems, either \n1)hit the 'Reset' button and upload a modified datasheet or \n2) add/remove problematic files as needed"
+                            display_feedback(message, response["border_class"], response["message_class"]);
+                            // We will need to revert to the datasheet upload stage
+                            // Rename and enable the datasheet selection button
+                            // Rename and disable the datasheet upload button
+                            // Change the text of the datasheet indicator label to ''
+
+                        }
                     }
                     console.log(response);
                     }
-                });
+               });
 
         },
 //        removedfile: function(file){
@@ -139,10 +195,33 @@ $(document).ready(function() {
     document.querySelector("#actions .start").onclick = function() {
       myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
     };
-    document.querySelector("#actions .cancel").onclick = function() {
-      myDropzone.removeAllFiles(true);
-      // Assess activation/deactivation of Start Upload button
-      datasheet_counter.update_DOM();
+    document.querySelector("#reset").onclick = function() {
+        myDropzone.removeAllFiles(true);
+        // To reset we will send an AJAX request to the server
+        // We will delete and remake all files already uploaded
+        // Upon success
+
+
+        // disable the cancel button
+        // All files will already have been removed
+        // TODO implement spinner
+        // This POST to the server will delete all user uploaded files that are currently held on the server
+        $.ajax({
+                type: 'POST',
+                url: "/_reset_submission"
+                });
+        // Rename and enable select datasheet button
+        document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select datasheet';
+        document.querySelector("#fileinput-button").removeAttribute("disabled");
+        // Rename and disable upload datasheet button
+        document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+        document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload datasheet';
+        // Change the text and attribute of the Datasheet indicator
+        document.querySelector("#datasheet_filename").textContent = "Datasheet: ";
+        document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename", "");
+        // Make feedback invisible
+        hide_feedback()
+        this.setAttribute("disabled", "");
     };
 
 
