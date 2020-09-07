@@ -9,7 +9,8 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
-from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError
+from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError, AddedFilesError
+import shutil
 
 #TODO remove "Title" and make this a hyper link to the paper
 #TODO hide 'Your unpublished analyses if this is empty
@@ -202,7 +203,6 @@ def upload_file():
 def _check_submission():
     """This is where the AJAX requests are sent when a user clicks the
     Add datasheet or Add seq files.
-    We will send
     We have sent up a jsonified object that contains keys of datasheet_data, files or add_or_upload
     We can tell what sort of checks we should be doing based on the value of
     datasheet_data and add_or_upload. If the value is '' and add_or_upload is 'add'
@@ -246,7 +246,28 @@ def _check_submission():
         else:
             # This could be either checking sequencing files that are in the staged area
             # or a change of datasheet
-            raise NotImplementedError
+            # TODO for the time being lets implement for this being the addition of sequencing files
+            datasheet_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username, data_dict["datasheet_data"])
+            dc = DatasheetChecker(
+                request=request,
+                user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username),
+                datasheet_path=datasheet_path)
+            try:
+                dc._check_valid_seq_files_added()
+                raise NotImplementedError
+            except AddedFilesError as e:
+                # Then files were missing, too small, or extra files were added
+                response = {
+                    "check_type": "seq_files", "add_or_upload": "add",
+                    'error': True, 'message': str(e),
+                    "data": e.data,
+                    "error_type": "non_unique",
+                    "response_type": "seq_check",
+                    "border_class": "border-danger",
+                    "message_class": "text-danger"
+                }
+                return jsonify(response)
+
     else:
         # Then this is an upload of either a datasheet or sequencing files that have been checked
         # while in the staging area
@@ -269,54 +290,58 @@ def _check_submission():
                 # browser to inform the user.
                 dc.do_general_format_check()
                 response = {
-                    'error': False, 'message': "Datasheet {} containing {} samples successfully uploaded.",
-                    "num_samples": len(dc.sample_meta_info_df.index)
+                    'error': False,
+                    'message': f"Datasheet {dc.datasheet_filename} containing {len(dc.sample_meta_info_df.index)} "
+                               f"samples successfully uploaded. Please select your seq files",
+                    "num_samples": len(dc.sample_meta_info_df.index),
+                    "response_type": "datasheet",
+                    "datasheet_filename": dc.datasheet_filename,
+                    "border_class": "border-success",
+                    "message_class": "text-success"
                 }
                 return jsonify(response)
             except DatasheetGeneralFormattingError as e:
                 if e.data["error_type"] == "non_unique":
                     response = {
                         'error': True, 'message': str(e),
-                        "data": e.data["non_unique_data"], "error_type": "non_unique"
+                        "data": e.data["non_unique_data"],
+                        "error_type": "non_unique",
+                        "response_type": "datasheet",
+                        "border_class": "border-danger",
+                        "message_class": "text-danger"
                     }
                 elif e.data["error_type"] == "full_path":
                     response = {
                         'error': True, 'message': str(e),
-                        "data": e.data["example_filename"], "error_type": "full_path"
+                        "data": e.data["example_filename"],
+                        "error_type": "full_path",
+                        "response_type": "datasheet",
+                        "border_class": "border-danger",
+                        "message_class": "text-danger"
                     }
                 elif e.data["error_type"] == "df_empty":
                     response = {
                         'error': True, 'message': str(e),
-                        "error_type": "df_empty"
+                        "error_type": "df_empty",
+                        "response_type": "datasheet",
+                        "border_class": "border-danger",
+                        "message_class": "text-danger"
                     }
+                os.remove(dc.datasheet_path)
                 return jsonify(response)
         else:
             # Then we are handling the upload of sequence data that has already been through the checking.
             # At this point we will be saving files doing final checks and then sending back good news to the user
             raise NotImplementedError
 
-
-
-    username = current_user.username
-    user_upload_directory = os.path.join(app.config['UPLOAD_FOLDER'], username)
-    # The datasheet name that we should be working with is passed in using the form parameter
-    # of the request.
-    return jsonify("foo")
-    # dc = DatasheetChecker(
-    #     request=request,
-    #     user_upload_directory=user_upload_directory)
-    # try:
-    #     dc.do_qc()
-    # # Handle general error non-unique
-    # except DatasheetFormattingError as e:
-    #     if e.data["error_type"] == "non_unique":
-    #         response = {
-    #             'error': True, 'message': str(e),
-    #             "data": e.data["non_unique_data"], "error_type": "non_unique"
-    #         }
-    #     elif e.data["error_type"] == "full_path":
-    #         response = {
-    #             'error': True, 'message': str(e),
-    #             "data": e.data["example_filename"], "error_type": "full_path"
-    #         }
-    #     return jsonify(response)
+@app.route('/_reset_submission', methods=['POST'])
+@login_required
+def _reset_submission():
+    """
+    This will be called when a user hits the reset button.
+    Delete user upload dir. Recreate dir.
+    """
+    user_dir = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username)
+    if os.path.exists(user_dir):
+        shutil.rmtree(user_dir)
+    os.makedirs(user_dir)

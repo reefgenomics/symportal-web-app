@@ -17,7 +17,7 @@ $(document).ready(function() {
             feedback_message.classList.remove("text-danger");
             feedback_message.classList.remove("text-success");
             feedback_message.classList.add(message_class);
-            feedback_message.textContent = message;
+            feedback_message.innerHTML = message;
     }
 
     function hide_feedback(){
@@ -26,6 +26,128 @@ $(document).ready(function() {
         feedback_container.classList.add("invisible");
         let feedback_message = document.querySelector("#feedback-message");
         feedback_message.textContent = "";
+    }
+
+    function send_files_for_checking(){
+        // Collects the files that are currently of status added in the dropzone
+        // and sends them up to the server for checking.
+        // It will automatically differentiate between checking a datasheet and checking sequencing files
+        // This will be called when files are added using a variation of the select files button
+        // and also when a files is removed
+        // When a datasheet is added, or when seq files are added, we will need to send the added files
+        // up to the routes.py to check the adding.
+        // It is important that we get the files with status "added" directly from the dropzone element
+        // rather than from the automatic "files" parameter that get given to this event, as for some reason
+        // this fileList only contains the lastest "batch" of files that were added rather than all files
+        // in the dropzone with the status "added".
+        let files_to_send = []
+        myDropzone.files.forEach(element => {
+            if (element.status == "added"){
+                var obj = {};
+                obj[element.name] = element.size;
+                files_to_send.push(obj);
+            }
+        });
+
+        // We also want to send up the value of the data-datasheet-filename
+        // If this is "" then the user should have selected only a single .csv or .xlsx
+        // Else, then we use this to do then this is the user selecting sequencing files
+        // and we should only be receiving sequencing files and we will run the checks on
+        // agreement between the datasheet and the sequencing files submitted
+        let datasheet = document.querySelector("#datasheet_filename");
+        let datasheet_data = datasheet.getAttribute("data-datasheet-filename");
+
+        let ajax_object_to_send = {"datasheet_data": datasheet_data, "files": files_to_send, "add_or_upload":"add"}
+
+        $.ajax({
+            type: 'POST',
+            url: "/_check_submission",
+            data: JSON.stringify(ajax_object_to_send),
+            dataType: "json",
+            success: function(response){
+                if (response["check_type"] == "datasheet" && response["add_or_upload"] == "add"){
+                    // Then we checked to see that the user was only uploading a single file
+                    // And that that file was a .xlsx or .csv.
+                    if (response["error"] == true){
+                        // Then there was some sort of error.
+                        // Ensure the Upload datasheet button is disabled
+                        document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+                        // Display the message in a red box in the error area
+                        // message, border_class, message_class
+                        display_feedback(response["message"], response["border_class"], response["message_class"]);
+                        // Remove the staged object(s)
+                        myDropzone.removeAllFiles();
+                    }else{
+                        // Then the user uploaded a single .csv or .xlsx.
+                        // Disable the Add datasheet button so that no further files can be added before the upload
+                        document.querySelector("#fileinput-button").setAttribute("disabled", "");
+                        // Enable the upload datasheet button
+                        document.querySelector("#start_upload_btn").removeAttribute("disabled");
+                        // Ensure the inner text is upload datasheet. With a space before.
+                        document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload datasheet';
+                        // Display the message
+                        display_feedback(response["message"], response["border_class"], response["message_class"]);
+                    }
+                }else{
+                    // Then this is the response from checking the seq files
+                    if (response.error == true){
+                        // If there was an error
+                        // Report the error in the message box
+                        // Then the user will have two options to fix the problem
+                        // Either, modify and reupload the datasheet, or add/remove files
+                        // If the user wants to modify the datasheet
+                        // Then the dataset will need to be reloaded to fix the problem
+                        // The easiest way to do this is probably to hit he restart button
+                        // In this case we should put this guidance in the feedback message
+                        let message = "";
+                        message += "<strong>ERROR: missing files, extra files or small files were detected</strong><br><br>"
+
+                        // To produce a useful error message we need to go through the data that has
+                        // been returned by the processing to see which of the data objects were populated
+                        // Check for missing files
+                        let missing_files_object = response.data["missing_files"];
+                        if (Object.keys(missing_files_object).length){
+                            // Then there are some missing files
+                            message += "The following files are listed in the datasheet but missing from your selection: <br>"
+                            for (let key in missing_files_object) {
+                                message += `\t${key}: ${missing_files_object[key].join(' ')}<br>`;
+                            }
+                            message += "<br><br>"
+                        }
+                        let extra_files_array = response.data["extra_files"];
+                        if (extra_files_array.length){
+                            // Then there were extra files selected that were not in the datasheet
+                            message += "The following files were selected but do not appear in the datasheet: <br>"
+                            extra_files_array.forEach(function(filename){
+                                message += `\t${filename}<br>`;
+                            });
+                            message += "<br><br>"
+                        }
+                        let small_files = response.data["size_violation_samples"];
+                        if (small_files.length){
+                            // Then there were extra files selected that were not in the datasheet
+                            message += "The following files are too small (please remove from datasheet): <br>"
+                            small_files.forEach(function(filename){
+                                message += `\t${filename}<br>`;
+                            });
+                            message += "<br><br>"
+                        }
+                        message += "<br>To fix the above problems, either <br>1) hit the 'Reset' button and upload a modified datasheet or <br>2) add/remove problematic files as needed."
+                        display_feedback(message, response["border_class"], response["message_class"]);
+
+                        // Activate the reset button
+                        document.querySelector("#reset").removeAttribute("disabled");
+                        // Alternatively the user may wish to add or remove files
+                        // In this case, then the easiest way to implement this is to check the files again for each
+                        // addition or removal. If a files are added then we enter this function again
+                        // so we don't need to implement anything else
+                        // However, we will need to implement a check when the delete button is pressed.
+                        // TODO we are here.
+                    }
+                }
+                console.log(response);
+                }
+           });
     }
 
     // Dropzone class:
@@ -40,7 +162,7 @@ $(document).ready(function() {
         previewsContainer: "#previews", // Define the container to display the previews
         clickable: "#fileinput-button",
         uploadMultiple: true,
-        acceptedFiles: ".csv,.xlsx,.fastq.gz",
+        acceptedFiles: ".csv,.xlsx,.gz",
         error: function (file, response) {
             console.log("Error");
             console.log(response);
@@ -71,7 +193,7 @@ $(document).ready(function() {
                     // The following actions will progress the user
                     // Change the datasheet label to indicate the datasheet we are working with
                     document.querySelector("#datasheet_filename").textContent = `Datasheet: ${response.datasheet_filename}`;
-                    document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename") = `${response.datasheet_filename}`;
+                    document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename", `${response.datasheet_filename}`);
                     // Change the text of the Select datasheet to select seqfiles
                     document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select seq files';
                     // Enable this button
@@ -87,92 +209,16 @@ $(document).ready(function() {
 
         },
         addedfiles: function(files){
-            // When a datasheet is added, or when seq files are added, we will need to send the added files
-            // up to the routes.py to check the adding.
-            // It is important that we get the files with status "added" directly from the dropzone element
-            // rather than from the automatic "files" parameter that get given to this event, as for some reason
-            // this fileList only contains the lastest "batch" of files that were added rather than all files
-            // in the dropzone with the status "added".
-            let files_to_send = []
-            this.files.forEach(element => {
-                if (element.status == "added"){
-                    var obj = {};
-                    obj[element.name] = element.size;
-                    files_to_send.push(obj);
-                }
-            });
-
-            // We also want to send up the value of the data-datasheet-filename
-            // If this is "" then the user should have selected only a single .csv or .xlsx
-            // Else, then we use this to do then this is the user selecting sequencing files
-            // and we should only be receiving sequencing files and we will run the checks on
-            // agreement between the datasheet and the sequencing files submitted
-            let datasheet = document.querySelector("#datasheet_filename");
-            let datasheet_data = datasheet.getAttribute("data-datasheet-filename");
-
-            let ajax_object_to_send = {"datasheet_data": datasheet_data, "files": files_to_send, "add_or_upload":"add"}
-
-            $.ajax({
-                type: 'POST',
-                url: "/_check_submission",
-                data: JSON.stringify(ajax_object_to_send),
-                dataType: "json",
-                success: function(response){
-                    if (response["check_type"] == "datasheet" && response["add_or_upload"] == "add"){
-                        // Then we checked to see that the user was only uploading a single file
-                        // And that that file was a .xlsx or .csv.
-                        if (response["error"] == true){
-                            // Then there was some sort of error.
-                            // Ensure the Upload datasheet button is disabled
-                            document.querySelector("#start_upload_btn").setAttribute("disabled", "");
-                            // Display the message in a red box in the error area
-                            // message, border_class, message_class
-                            display_feedback(response["message"], response["border_class"], response["message_class"]);
-                            // Remove the staged object(s)
-                            myDropzone.removeAllFiles();
-                        }else{
-                            // Then the user uploaded a single .csv or .xlsx.
-                            // Disable the Add datasheet button so that no further files can be added before the upload
-                            document.querySelector("#fileinput-button").setAttribute("disabled", "");
-                            // Enable the upload datasheet button
-                            document.querySelector("#start_upload_btn").removeAttribute("disabled");
-                            // Ensure the inner text is upload datasheet. With a space before.
-                            document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload datasheet';
-                            // Display the message
-                            display_feedback(response["message"], response["border_class"], response["message_class"]);
-                        }
-                    }else{
-                        // Then this is the response from checking the seq files
-                        if (response.error == true){
-                            // If there was an error
-                            // Report the error in the message box
-                            // Then the user will have two options to fix the problem
-                            // Either, modify and reupload the datasheet, or add/remove files
-                            // If the user wants to modify the datasheet
-                            // Then the dataset will need to be reloaded to fix the problem
-                            // The easiest way to do this is probably to hit he restart button
-                            // In this case we should put this guidance in the feedback message
-                            let message = "To fix the below problems, either \n1)hit the 'Reset' button and upload a modified datasheet or \n2) add/remove problematic files as needed"
-                            display_feedback(message, response["border_class"], response["message_class"]);
-                            // We will need to revert to the datasheet upload stage
-                            // Rename and enable the datasheet selection button
-                            // Rename and disable the datasheet upload button
-                            // Change the text of the datasheet indicator label to ''
-
-                        }
-                    }
-                    console.log(response);
-                    }
-               });
+            send_files_for_checking();
+        },
+        removedfile: function(file){
+            // By listening for this event we are overwriting the automatic removal of the file by dropzone.
+            // This is fine, we can manually remove the file from the DOM table. However we must check that
+            // the file is not sent to the backend upon submission.
+            file.previewElement.remove();
+            send_files_for_checking();
 
         },
-//        removedfile: function(file){
-//            // By listening for this event we are overwriting the automatic removal of the file by dropzone.
-//            // This is fine, we can manually remove the file from the DOM table. However we must check that
-//            // the file is not sent to the backend upon submission.
-//            file.previewElement.remove();
-//            datasheet_counter.update_DOM();
-//        },
         sendingmultiple: function(files, xhr, formData){
             // This will be fired either when we are uploading a datasheet, or when we are doing the final submission
             // (i.e. after having checked that only a single .csv/.xlsx has been uploaded or after checking that

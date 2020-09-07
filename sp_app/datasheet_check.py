@@ -93,7 +93,7 @@ class DatasheetChecker:
 
         self.sample_meta_info_df.set_index('sample_name', inplace=True, drop=True)
         self.sample_meta_info_df.index = self.sample_meta_info_df.index.map(str)
-
+        # TODO move this to the warning section same as for the lat long changes
         self._check_for_binomial()
 
         self._replace_null_vals_in_meta_info_df()
@@ -117,7 +117,10 @@ class DatasheetChecker:
         # Get a list of the files that the user has added
         data_dict = json.loads(list(self.request.form.keys())[0])
         # A dict of filename to size
-        self.added_files_dict = {k: v.size for k, v in data_dict["files"][0].items()}
+        self.added_files_dict = {}
+        for file_dict in data_dict["files"]:
+            for k, v in file_dict.items():
+                self.added_files_dict[k] = v
 
         self._strip_white_space_from_filenames()
 
