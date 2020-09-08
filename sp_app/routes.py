@@ -377,3 +377,5 @@ def _reset_submission():
     if os.path.exists(user_dir):
         shutil.rmtree(user_dir)
     os.makedirs(user_dir)
+    response = "user files deleted"
+    return response

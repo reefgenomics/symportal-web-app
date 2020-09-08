@@ -299,11 +299,14 @@ $(document).ready(function() {
         },
         removedfile: function(file){
             // By listening for this event we are overwriting the automatic removal of the file by dropzone.
-            // This is fine, we can manually remove the file from the DOM table. However we must check that
-            // the file is not sent to the backend upon submission.
+            // This is fine, we can manually remove the file from the DOM table.
+            // Once removed from the DOM, the file is also removed from the dropzone object list of files
+            // This event is also fired when we hit the Reset button. When the reset button is hit
+            // we do not want to send each of the removed files for checking
+            if (event.currentTarget.id != 'reset'){
+                send_files_for_checking();
+            }
             file.previewElement.remove();
-            send_files_for_checking();
-
         },
         sendingmultiple: function(files, xhr, formData){
             // This will be fired either when we are uploading a datasheet, or when we are doing the final submission
