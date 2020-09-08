@@ -156,7 +156,7 @@ $(document).ready(function() {
                         let depth_missing = response.data.depth_missing;
 
 
-                        message = "<strong>WARNING: some meta data fields are incomplete or causing format errors</strong><br><br>"
+                        let message = "<strong>WARNING: some meta data fields are incomplete or causing format errors</strong><br><br>";
                         if (taxonomy_missing.length > 0){
                             message += "The following samples are missing taxonomy data: <br>"
                             taxonomy_missing.forEach(function(sample_name){
@@ -209,7 +209,7 @@ $(document).ready(function() {
                             message += "<br>"
                         }
                         message += "Your seq files can be submitted despite the above warnings<br>"
-                        message += "To begin uploading your seq files click the Upload seq files button.<br>"
+                        message += "To begin uploading your seq files, click the 'Upload seq files' button.<br>"
                         message += "To act on any of the above warnings, click 'Reset' then upload your modified datasheet"
                         display_feedback(message, response["border_class"], response["message_class"]);
                         // Enable the upload datasheet button
@@ -220,7 +220,15 @@ $(document).ready(function() {
                         document.querySelector("#reset").removeAttribute("disabled");
                     }else{
                         // No warnings or errors.
-                        // Enable the upload button
+                        let message = "<strong>Your datasheet passed QC with no errors or warning</strong><br>";
+                        message += "To begin uploading your seq files, click the 'Upload seq files' button.<br>";
+                        display_feedback(message, response["border_class"], response["message_class"]);
+                        // Enable the upload datasheet button
+                        document.querySelector("#start_upload_btn").removeAttribute("disabled");
+                        // Ensure the inner text is Upload seq files.
+                        document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload seq files';
+                        // Enable the reset button
+                        document.querySelector("#reset").removeAttribute("disabled");
                     }
                 }
                 console.log(response);
