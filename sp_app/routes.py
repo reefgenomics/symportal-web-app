@@ -254,15 +254,47 @@ def _check_submission():
                 datasheet_path=datasheet_path)
             try:
                 dc._check_valid_seq_files_added()
-                raise NotImplementedError
+                # If we make it to here then an AddedFilesError was not raised
+                # Check to see if any of the warning containers have contents
+                # If so return these
+                if (
+                        dc.binomial_dict or dc.lat_long_dict or
+                        dc.lat_lon_missing or dc.date_missing_list or
+                        dc.depth_missing_list or dc.sample_type_missing_list or
+                        dc.taxonomy_missing_set
+                ):
+                    response = {
+                        "check_type": "seq_files", "add_or_upload": "add",
+                        'error': False, 'warning':True,
+                        "data": {
+                            'binomial_dict': dc.binomial_dict,
+                            'lat_long_dict': dc.lat_long_dict,
+                            'lat_long_missing': dc.lat_lon_missing,
+                            'date_missing':dc.date_missing_list,
+                            'depth_missing': dc.depth_missing_list,
+                            'sample_type_missing':dc.sample_type_missing_list,
+                            'taxonomy_missing': list(dc.taxonomy_missing_set)
+                        },
+                        "border_class": "border-warning",
+                        "message_class": "text-warning"
+                    }
+                    return jsonify(response)
+
+                else:
+                    # No warnings
+                    response = {
+                        "check_type": "seq_files", "add_or_upload": "add",
+                        'error': False, 'warning': False,
+                        "border_class": "border-success",
+                        "message_class": "text-success"
+                    }
+                    return jsonify(response)
             except AddedFilesError as e:
                 # Then files were missing, too small, or extra files were added
                 response = {
                     "check_type": "seq_files", "add_or_upload": "add",
                     'error': True, 'message': str(e),
                     "data": e.data,
-                    "error_type": "non_unique",
-                    "response_type": "seq_check",
                     "border_class": "border-danger",
                     "message_class": "text-danger"
                 }

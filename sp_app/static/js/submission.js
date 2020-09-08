@@ -142,7 +142,85 @@ $(document).ready(function() {
                         // addition or removal. If a files are added then we enter this function again
                         // so we don't need to implement anything else
                         // However, we will need to implement a check when the delete button is pressed.
-                        // TODO we are here.
+
+                    }else if(response.warning){
+                        // Then we need to parse through the response.data and construct an appropriate warning message
+                        // However, warnings should not prevent the upload of seq data
+                        // Enable the upload button
+                        let taxonomy_missing = response.data.taxonomy_missing;
+                        let binomial_dict = response.data.binomial_dict;
+                        let lat_long_missing = response.data.lat_long_missing;
+                        let lat_long_dict = response.data.lat_long_dict;
+                        let sample_type_missing = response.data.sample_type_missing;
+                        let date_missing = response.data.date_missing;
+                        let depth_missing = response.data.depth_missing;
+
+
+                        message = "<strong>WARNING: some meta data fields are incomplete or causing format errors</strong><br><br>"
+                        if (taxonomy_missing.length > 0){
+                            message += "The following samples are missing taxonomy data: <br>"
+                            taxonomy_missing.forEach(function(sample_name){
+                                message += `<pre class="text-warning">   ${sample_name}</pre>`;
+                            });
+                            message += "<br>"
+                        }
+                        if (Object.keys(binomial_dict).length > 0){
+                            // Then we split binomials that were provided in the species field
+                            message += "A binomial is detected and adjusted in the following samples:<br>"
+                            for (let key in binomial_dict) {
+                                message += `<pre class="text-warning">   ${key}: ${binomial_dict[key][0]} --> ${binomial_dict[key][1]}</pre>`;
+                            }
+                            message += "<br>"
+                        }
+                        if (lat_long_missing.length > 0){
+                            message += "The following samples are missing lat/lon data: <br>"
+                            lat_long_missing.forEach(function(sample_name){
+                                message += `<pre class="text-warning">   ${sample_name}</pre>`;
+                            });
+                            message += "<br>"
+                        }
+                        if (Object.keys(lat_long_dict).length > 0){
+                            // Then we split binomials that were provided in the species field
+                            message += "Lat/lon format is bad for the following samples:<br>"
+                            for (let key in lat_long_dict) {
+                                message += `<pre class="text-warning">   ${key}: ${lat_long_dict[key]}</pre>`;
+                            }
+                            message += "<br>"
+                        }
+                        if (sample_type_missing.length > 0){
+                            message += "The following samples are missing sample_type data: <br>"
+                            sample_type_missing.forEach(function(sample_name){
+                                message += `<pre class="text-warning">   ${sample_name}</pre>`;
+                            });
+                            message += "<br>"
+                        }
+                        if (date_missing.length > 0){
+                            message += "The following samples are missing collection date data: <br>"
+                            date_missing.forEach(function(sample_name){
+                                message += `<pre class="text-warning">   ${sample_name}</pre>`;
+                            });
+                            message += "<br>"
+                        }
+                        if (depth_missing.length > 0){
+                            message += "The following samples are missing collection depth data: <br>"
+                            depth_missing.forEach(function(sample_name){
+                                message += `<pre class="text-warning">   ${sample_name}</pre>`;
+                            });
+                            message += "<br>"
+                        }
+                        message += "Your seq files can be submitted despite the above warnings<br>"
+                        message += "To begin uploading your seq files click the Upload seq files button.<br>"
+                        message += "To act on any of the above warnings, click 'Reset' then upload your modified datasheet"
+                        display_feedback(message, response["border_class"], response["message_class"]);
+                        // Enable the upload datasheet button
+                        document.querySelector("#start_upload_btn").removeAttribute("disabled");
+                        // Ensure the inner text is Upload seq files.
+                        document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload seq files';
+                        // Enable the reset button
+                        document.querySelector("#reset").removeAttribute("disabled");
+                    }else{
+                        // No warnings or errors.
+                        // Enable the upload button
                     }
                 }
                 console.log(response);
