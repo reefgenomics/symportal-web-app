@@ -9,6 +9,10 @@ import ntpath
 import json
 import re
 
+# TODO QC
+# Staged same file twice
+# Check that both a fwd and rev file are given for every sample
+
 # Most modern way of defining advanced exceptions here:
 # https://stackoverflow.com/a/53469898/5516420
 class DatasheetGeneralFormattingError(Exception):
@@ -66,6 +70,9 @@ class DatasheetChecker:
         self.missing_files = defaultdict(list)
         # The list of the files that have been uploaded but that have not been
         self.extra_files = []
+        # We must ensure that the same file has not been staged more than once
+        # Key is file name, value is number of times it appears in the staged area
+        self.duplicate_staged_files = defaultdict(int)
         # Warning containers
         # We will have a missing container for each of the fields, grouping taxonomy together
         # We will have a further lat_long_dict that will hold the details for those lat long values that
@@ -95,13 +102,35 @@ class DatasheetChecker:
         # It will be handled in routes.py
         self._check_datasheet_df_vals_unique()
 
+        self._check_valid_file_names()
+
+    def _check_valid_file_names(self):
+        """
+        Check that every file name cell has a valid fastq.gz filename listed in it
+        If a fastq file is listed explicitly warn that files must be compressed
+        """
+        self.sample_meta_info_df.set_index('sample_name', inplace=True)
+        for sample_name in self.sample_meta_info_df.index:
+            fwd_str = self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name'].rstrip().lstrip()
+            rev_str = self.sample_meta_info_df.at[sample_name, 'fastq_rev_file_name'].rstrip().lstrip()
+            if (not fwd_str.endswith('fastq.gz')) or (not rev_str.endswith('fastq.gz')):
+
+                raise DatasheetGeneralFormattingError(
+                    message=f'<strong class="text-danger">Invalid file name.</strong><br>'
+                            f"A fwd and rev seq file must be provided for every sample<br>"
+                            f"All seq files must be in fastq.gz format.<br>"
+                            f"Please fix this problem and upload again.",
+                    data={"error_type": "invalid_file_format"}
+                )
+
+
     def _format_sample_names(self):
         # Convert sample names to strings and remove white space and greek characters
         self.sample_meta_info_df['sample_name'] = self.sample_meta_info_df['sample_name'].astype(str)
         self.sample_meta_info_df['sample_name'] = self.sample_meta_info_df['sample_name'].str.rstrip() \
             .str.lstrip().str.replace(' ', '_').str.replace('/', '_').str.replace('α', 'alpha').str.replace('β', 'beta')
 
-    def _check_valid_seq_files_added(self):
+    def check_valid_seq_files_added(self):
         # drop any cells in which the sample name is null
         self.sample_meta_info_df = self.sample_meta_info_df[~pd.isnull(self.sample_meta_info_df['sample_name'])]
         self._format_sample_names()
@@ -270,9 +299,8 @@ class DatasheetChecker:
     def _check_seq_files_exist(self):
         """
         Check that all of the sequencing files provided in the datasheet exist.
-        If filenames are given in the datasheet then convert these to full paths
-        before checking for their existence. This way, all locations of seq files
-        are full paths.
+        Check that there are no additional files staged that are not in the datasheet
+        Check that no files have been staged more than once
         Ensure that we lstrip and rstrip the entries to remove any spaces.
         Also check for size of file and require a 300B minimum. Remove from the sample from the data sheet if
         smaller than this.
@@ -284,7 +312,15 @@ class DatasheetChecker:
         self.added_files_dict = {}
         for file_dict in data_dict["files"]:
             for k, v in file_dict.items():
+                self.duplicate_staged_files[k] += 1
                 self.added_files_dict[k] = v
+
+        # Delete any entries from the duplicate samples dict that are 1 and then remove
+        for k_1 in [k for k, v in self.duplicate_staged_files.items() if v == 1]:
+            del self.duplicate_staged_files[k_1]
+        # Convert to plain dict
+        # This dict will now be empty if there were no duplicate files.
+        self.duplicate_staged_files = dict(self.duplicate_staged_files)
 
         self._strip_white_space_from_filenames()
 
@@ -326,7 +362,7 @@ class DatasheetChecker:
         # Check for files that have been added but haven't been listed in the df
         self.extra_files = [filename for filename in self.added_files_dict.keys() if filename not in checked_files]
 
-        if self.missing_files or self.size_violation_samples or self.extra_files:
+        if self.missing_files or self.size_violation_samples or self.extra_files or self.duplicate_staged_files:
             # Then we either have missing files, size violation files or extra files
             message = []
             if self.missing_files:
@@ -335,13 +371,16 @@ class DatasheetChecker:
                 message.append("Some of your files are too small.")
             if self.extra_files:
                 message.append("There are files that are not listed in your datasheet.")
+            if self.duplicate_staged_files:
+                message.append("Some files have been staged twice.")
             message = '\n'.join(message)
             raise AddedFilesError(
                 message=message,
                 data={
                     "missing_files":self.missing_files,
                     "size_violation_samples":self.size_violation_samples,
-                    "extra_files":self.extra_files
+                    "extra_files":self.extra_files,
+                    "duplicate_staged_files": self.duplicate_staged_files
                 })
         else:
             # Otherwise there were no errors and we can proceed to check for warnings
@@ -368,8 +407,8 @@ class DatasheetChecker:
     def _check_for_full_path_error(self, file):
         if not file == ntpath.basename(file):
             raise DatasheetGeneralFormattingError(
-                message=f"It appears that full paths have been provided for the seq files. "
-                        f"Please provide only filenames.  Please fix this problem and upload again.",
+                message=f'<strong class="text-danger">It appears that full paths have been provided for the seq files.</strong><br>'
+                        f"Please provide only filenames.<br>Please fix this problem and upload again.",
                 data={"error_type": "full_path", "example_filename": file})
 
     def _replace_null_vals_in_meta_info_df(self):
@@ -410,7 +449,7 @@ class DatasheetChecker:
                 logging.error(f"\t{item}")
             self.duplication_dict[column_name] = non_unique_name_list
             raise DatasheetGeneralFormattingError(
-                message=f"Column {column_name} contains non unique values. Please fix this problem and upload again.",
+                message=f'<strong class="text-danger">Column "{column_name}" contains non unique values.</strong><br>Please fix this problem and upload again.',
                 data={"error_type": "non_unique", "non_unique_data": self.duplication_dict})
 
     def _make_sample_meta_info_df(self):

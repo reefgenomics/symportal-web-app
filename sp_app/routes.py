@@ -5,12 +5,12 @@ from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user, login_required
 from sp_app.models import User, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
 from werkzeug.urls import url_parse
-from werkzeug.utils import secure_filename
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
 from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError, AddedFilesError
 import shutil
+import traceback
 
 #TODO remove "Title" and make this a hyper link to the paper
 #TODO hide 'Your unpublished analyses if this is empty
@@ -218,8 +218,7 @@ def _check_submission():
                     "add_or_upload": "add",
                     "error":True,
                     "border_class": "border-danger",
-                    "message_class": "text-danger",
-                    "message":"More than one file selected. Please select only a single datasheet (.xlsx, .csv)"
+                    "message":'<strong class="text-danger">Please select a single datasheet (.xlsx, .csv)</strong>'
                 }
                 return jsonify(response)
             file_name = [k for k, v in data_dict["files"][0].items()][0]
@@ -229,8 +228,7 @@ def _check_submission():
                     "add_or_upload": "add",
                     "error":False,
                     "border_class": "border-success",
-                    "message_class": "text-success",
-                    "message":"Datasheet selected, please upload"
+                    "message":'<strong class="text-success">Datasheet selected, please upload<strong>'
                 }
                 return jsonify(response)
             else:
@@ -239,67 +237,81 @@ def _check_submission():
                     "add_or_upload": "add",
                     "error": True,
                     "border_class": "border-danger",
-                    "message_class": "text-danger",
-                    "message": "Please select only a single datasheet (.xlsx, .csv)"
+                    "message": '<strong class="text-danger">Please select a single datasheet (.xlsx, .csv)</strong>'
                 }
                 return jsonify(response)
         else:
-            # This could be either checking sequencing files that are in the staged area
-            # or a change of datasheet
-            # TODO for the time being lets implement for this being the addition of sequencing files
-            datasheet_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username, data_dict["datasheet_data"])
-            dc = DatasheetChecker(
-                request=request,
-                user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username),
-                datasheet_path=datasheet_path)
+            # Checking sequencing files that are in the staged area
             try:
-                dc._check_valid_seq_files_added()
-                # If we make it to here then an AddedFilesError was not raised
-                # Check to see if any of the warning containers have contents
-                # If so return these
-                if (
-                        dc.binomial_dict or dc.lat_long_dict or
-                        dc.lat_lon_missing or dc.date_missing_list or
-                        dc.depth_missing_list or dc.sample_type_missing_list or
-                        dc.taxonomy_missing_set
-                ):
-                    response = {
-                        "check_type": "seq_files", "add_or_upload": "add",
-                        'error': False, 'warning':True,
-                        "data": {
-                            'binomial_dict': dc.binomial_dict,
-                            'lat_long_dict': dc.lat_long_dict,
-                            'lat_long_missing': dc.lat_lon_missing,
-                            'date_missing':dc.date_missing_list,
-                            'depth_missing': dc.depth_missing_list,
-                            'sample_type_missing':dc.sample_type_missing_list,
-                            'taxonomy_missing': list(dc.taxonomy_missing_set)
-                        },
-                        "border_class": "border-warning",
-                        "message_class": "text-warning"
-                    }
-                    return jsonify(response)
+                datasheet_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username, data_dict["datasheet_data"])
+                dc = DatasheetChecker(
+                    request=request,
+                    user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username),
+                    datasheet_path=datasheet_path)
+                try:
+                    dc.check_valid_seq_files_added()
+                    # If we make it to here then an AddedFilesError was not raised
+                    # Check to see if any of the warning containers have contents
+                    # If so return these
+                    if (
+                            dc.binomial_dict or dc.lat_long_dict or
+                            dc.lat_lon_missing or dc.date_missing_list or
+                            dc.depth_missing_list or dc.sample_type_missing_list or
+                            dc.taxonomy_missing_set
+                    ):
+                        response = {
+                            "check_type": "seq_files", "add_or_upload": "add",
+                            'error': False, 'warning':True,
+                            "data": {
+                                'binomial_dict': dc.binomial_dict,
+                                'lat_long_dict': dc.lat_long_dict,
+                                'lat_long_missing': dc.lat_lon_missing,
+                                'date_missing':dc.date_missing_list,
+                                'depth_missing': dc.depth_missing_list,
+                                'sample_type_missing':dc.sample_type_missing_list,
+                                'taxonomy_missing': list(dc.taxonomy_missing_set)
+                            },
+                            "border_class": "border-warning"
+                        }
+                        return jsonify(response)
 
-                else:
-                    # No warnings
+                    else:
+                        # No warnings
+                        response = {
+                            "check_type": "seq_files", "add_or_upload": "add",
+                            'error': False, 'warning': False,
+                            "border_class": "border-success"
+                        }
+                        return jsonify(response)
+                except AddedFilesError as e:
+                    # Then files were missing, too small, or extra files were added
                     response = {
                         "check_type": "seq_files", "add_or_upload": "add",
-                        'error': False, 'warning': False,
-                        "border_class": "border-success",
-                        "message_class": "text-success"
+                        'error': True, 'message': str(e),
+                        "data": e.data,
+                        "border_class": "border-danger"
                     }
                     return jsonify(response)
-            except AddedFilesError as e:
-                # Then files were missing, too small, or extra files were added
+            except Exception:
+                # Catch any unhandled errors and present on to the user with a 'please contact us' message
+                tb = traceback.format_exc().replace("\n", "<br>")
                 response = {
-                    "check_type": "seq_files", "add_or_upload": "add",
-                    'error': True, 'message': str(e),
-                    "data": e.data,
-                    "border_class": "border-danger",
-                    "message_class": "text-danger"
+                    'error': True,
+                    'message': '<strong class="text-danger">ERROR: an unexpected error has occured when trying to run QC on your submission.</strong><br>'
+                               'Please ensure that you are uploading a properly formatted datasheet.<br>'
+                               'If the error persists, please get in contact at:<br>'
+                               '&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#099;&#099;&#104;&#117;&#109;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;<br>'
+                               f'The full backend traceback is:<br><br>{tb}',
+                    "error_type": "unhandled_error",
+                    "response_type": "datasheet",
+                    "border_class": "border-danger"
                 }
+                # Delete the datasheet from the server if it has been saved
+                if 'dc' in locals():
+                    if dc.datasheet_path:
+                        if os.path.exists(dc.datasheet_path):
+                            os.remove(dc.datasheet_path)
                 return jsonify(response)
-
     else:
         # Then this is an upload of either a datasheet or sequencing files that have been checked
         # while in the staging area
@@ -307,59 +319,84 @@ def _check_submission():
             # Then this is an upload of a datasheet
             # We should perform the general formatting tests on it and then send an appropriate response.
             # If the general formatting tests pass, we enable user to proceed to sequence upload
-            # TODO ouput general stats about the number of samples etc.
             # If the general checking fails then we will output the errors to show where it failed.
-            # TODO display a spinner when we send it up and switch it up once checking is complete
+            # TODO display a spinner when we send it up and switch it off once checking is complete
             # can set a delay of 1 sec or something.
             # TODO catch unhandled errors during the init of the DatasheetChecker
-            dc = DatasheetChecker(
-                request=request,
-                user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username))
             try:
-                # TODO If we have an error here then we should first try to catch it as the
-                # DatasheetGeneralFormattingError that the we have created and then handle
-                # unhandled errors" and pass back this error to the
-                # browser to inform the user.
-                dc.do_general_format_check()
+                dc = DatasheetChecker(
+                    request=request,
+                    user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username))
+                try:
+                    # TODO If we have an error here then we should first try to catch it as the
+                    # DatasheetGeneralFormattingError that the we have created and then handle
+                    # unhandled errors" and pass back this error to the
+                    # browser to inform the user.
+                    dc.do_general_format_check()
+                    response = {
+                        'error': False,
+                        'message': f'<strong class="text-success">Datasheet {dc.datasheet_filename} '
+                                   f'containing {len(dc.sample_meta_info_df.index)} '
+                                   f"samples successfully uploaded.</strong><br>Please select your seq files",
+                        "num_samples": len(dc.sample_meta_info_df.index),
+                        "response_type": "datasheet",
+                        "datasheet_filename": dc.datasheet_filename,
+                        "border_class": "border-success"
+                    }
+                    return jsonify(response)
+                # TODO message class is now redundant. Remove
+                except DatasheetGeneralFormattingError as e:
+                    if e.data["error_type"] == "non_unique":
+                        response = {
+                            'error': True, 'message': str(e),
+                            "data": e.data["non_unique_data"],
+                            "error_type": "non_unique",
+                            "response_type": "datasheet",
+                            "border_class": "border-danger"
+                        }
+                    elif e.data["error_type"] == "full_path":
+                        response = {
+                            'error': True, 'message': str(e),
+                            "data": e.data["example_filename"],
+                            "error_type": "full_path",
+                            "response_type": "datasheet",
+                            "border_class": "border-danger"
+                        }
+                    elif e.data["error_type"] == "df_empty":
+                        response = {
+                            'error': True, 'message': str(e),
+                            "error_type": "df_empty",
+                            "response_type": "datasheet",
+                            "border_class": "border-danger"
+                        }
+                    elif e.data["error_type"] == "invalid_file_format":
+                        response = {
+                            'error': True, 'message': str(e),
+                            "error_type": "invalid_file_format",
+                            "response_type": "datasheet",
+                            "border_class": "border-danger"
+                        }
+                    os.remove(dc.datasheet_path)
+                    return jsonify(response)
+            except Exception as e:
+                # Catch any unhandled errors and present on to the user with a 'please contact us' message
+                tb = traceback.format_exc().replace("\n", "<br>")
                 response = {
-                    'error': False,
-                    'message': f"Datasheet {dc.datasheet_filename} containing {len(dc.sample_meta_info_df.index)} "
-                               f"samples successfully uploaded. Please select your seq files",
-                    "num_samples": len(dc.sample_meta_info_df.index),
+                    'error': True,
+                    'message': '<strong class="text-danger">ERROR: an unexpected error has occured when trying to run QC on your submission.</strong><br>'
+                               'Please ensure that you are uploading a properly formatted datasheet.<br>'
+                               'If the error persists, please get in contact at:<br>'
+                               '&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#099;&#099;&#104;&#117;&#109;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;<br>'
+                               f'The full backend traceback is:<br><br>{tb}',
+                    "error_type": "unhandled_error",
                     "response_type": "datasheet",
-                    "datasheet_filename": dc.datasheet_filename,
-                    "border_class": "border-success",
-                    "message_class": "text-success"
+                    "border_class": "border-danger"
                 }
-                return jsonify(response)
-            except DatasheetGeneralFormattingError as e:
-                if e.data["error_type"] == "non_unique":
-                    response = {
-                        'error': True, 'message': str(e),
-                        "data": e.data["non_unique_data"],
-                        "error_type": "non_unique",
-                        "response_type": "datasheet",
-                        "border_class": "border-danger",
-                        "message_class": "text-danger"
-                    }
-                elif e.data["error_type"] == "full_path":
-                    response = {
-                        'error': True, 'message': str(e),
-                        "data": e.data["example_filename"],
-                        "error_type": "full_path",
-                        "response_type": "datasheet",
-                        "border_class": "border-danger",
-                        "message_class": "text-danger"
-                    }
-                elif e.data["error_type"] == "df_empty":
-                    response = {
-                        'error': True, 'message': str(e),
-                        "error_type": "df_empty",
-                        "response_type": "datasheet",
-                        "border_class": "border-danger",
-                        "message_class": "text-danger"
-                    }
-                os.remove(dc.datasheet_path)
+                # Delete the datasheet from the server if it has been saved
+                if 'dc' in locals():
+                    if dc.datasheet_path:
+                        if os.path.exists(dc.datasheet_path):
+                            os.remove(dc.datasheet_path)
                 return jsonify(response)
         else:
             # Then we are handling the upload of sequence data that has already been through the checking.
