@@ -86,7 +86,7 @@
             </div>
             <div class="grid-1 center">
                 <div class="service_item">
-                    <form action="" method="POST">
+                    <form action="{{ url_for('data_explorer') }}" method="POST">
                         <button class="DEbtn" name="study_to_load" value="Terraneo_et_al_2019">
                             <img src="{{ url_for('static', filename='images/greyscale_alt1.svg') }}" class="logo" alt="pic01"></img>
                         </button>

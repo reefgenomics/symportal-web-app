@@ -38,39 +38,40 @@ def index():
         with open(json_resource_info_dict_path, 'r') as f:
             resource_info_dict = dict(json.load(f))
         return render_template('index.html', published_studies=published_studies, user_unpublished_studies=user_unpublished_studies, resource_info_dict=resource_info_dict)
-    
-    elif request.method == 'POST':
-        # get the google maps api key to be used
-        map_key_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'utils', 'google_maps_api_key.txt')
-        with open(map_key_path) as f:
-            map_key = f.read().rstrip()
-        # Here we are going to load the data_explorer page
-        # We will need to provide the database object that represents the study_to_load string
-        # provided by the request.
-        # We will also need to provide a list of studies to load in the dataexplorer drop
-        # down that allows users to switch between the DataSet that they are viewing
-        study_to_load = Study.query.filter(Study.name==request.form.get('study_to_load')).first()
-        # The other studies should be those that are:
-        # a - published
-        # b - have dataexplorer data
-        # c - are unpublished but have the current user in their users_with_access list
-        # We also want to exclude the study_to_load study.
-        if current_user.is_anonymous:
-            published_and_authorised_studies = Study.query\
-                .filter(Study.data_explorer==True, Study.is_published==True, Study.display_online==True).all()
-        elif current_user.is_admin:
-            # If user is admin then we just want to display all of the studies that have dataexplorer available
-            # regardless of whether the user is in the users_with_access list
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True).all()
-        else:
-            # If not admin but signed in, then we want to return the published articles
-            # and those that the user is authorised to have.
-            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
-                .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
-                .filter(Study.name != study_to_load.name).all()
-        return render_template('data_explorer.html', study_to_load=study_to_load,
-                               published_and_authorised_studies=published_and_authorised_studies, map_key=map_key)
+
+@app.route('/data_explorer/', methods=['POST'])
+def data_explorer():
+    # get the google maps api key to be used
+    map_key_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'utils', 'google_maps_api_key.txt')
+    with open(map_key_path) as f:
+        map_key = f.read().rstrip()
+    # Here we are going to load the data_explorer page
+    # We will need to provide the database object that represents the study_to_load string
+    # provided by the request.
+    # We will also need to provide a list of studies to load in the dataexplorer drop
+    # down that allows users to switch between the DataSet that they are viewing
+    study_to_load = Study.query.filter(Study.name==request.form.get('study_to_load')).first()
+    # The other studies should be those that are:
+    # a - published
+    # b - have dataexplorer data
+    # c - are unpublished but have the current user in their users_with_access list
+    # We also want to exclude the study_to_load study.
+    if current_user.is_anonymous:
+        published_and_authorised_studies = Study.query\
+            .filter(Study.data_explorer==True, Study.is_published==True, Study.display_online==True).all()
+    elif current_user.is_admin:
+        # If user is admin then we just want to display all of the studies that have dataexplorer available
+        # regardless of whether the user is in the users_with_access list
+        published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True).all()
+    else:
+        # If not admin but signed in, then we want to return the published articles
+        # and those that the user is authorised to have.
+        sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+        published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
+            .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
+            .filter(Study.name != study_to_load.name).all()
+    return render_template('data_explorer.html', study_to_load=study_to_load,
+                           published_and_authorised_studies=published_and_authorised_studies, map_key=map_key)
     
 EXPLORER_DATA_DIR = '/Users/humebc/Documents/symportal.org/sp_app/explorer_data'
 @app.route('/get_study_data/<string:study_name>/<path:file_path>/')

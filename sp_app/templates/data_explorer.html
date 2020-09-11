@@ -63,7 +63,7 @@ Have a network window for when the sample is clicked on (this can be later)
         </a>
         <!--This should be the data set header that we are working with-->
         <p class="nav navbar-text">SymPortal Explorer:</p>
-        <form action="", method="POST">
+        <form action="{{ url_for('data_explorer') }}" method="POST">
             <div class="form-group">
                 <select id="study_select" class="form-control" name="study_to_load" onchange="this.form.submit()">
                     <option value="{{ study_to_load.name }}">{{ study_to_load.name }}</option>
