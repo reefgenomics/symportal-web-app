@@ -85,25 +85,31 @@ def get_study_data(study_name, file_path):
     file_dir = os.path.join(EXPLORER_DATA_DIR, study_name, os.path.dirname(file_path))
     filename = ntpath.basename(file_path)
     study_obj = Study.query.filter(Study.name == study_name).one()
-    if study_obj.is_published or current_user.is_admin:
-        if filename == 'study_data.js':
-            return send_from_directory(directory=file_dir, filename=filename)
-        else:
-            return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
-    else:
-        # Then study is not published
-        sp_user = SPUser.query.filter(SPUser.name == current_user.username).one()
+
+    # NB if the current user is anonymous and we try to call .is_admin, we get an attribute error
+    if not study_obj.is_published:
         if current_user.is_anonymous:
             # Then divert to index
             # This code shouldn't be reachable as study links won't be displayed to a non-logged in user
             # unless they are public
-            redirect(url_for('index'))
-        if sp_user in study_obj.users:
-            # Then this study belongs to the logged in user and we should send the data
-            if filename == 'study_data.js':
-                return send_from_directory(directory=file_dir, filename=filename)
+            return redirect(url_for('index'))
+        else:
+            sp_user = SPUser.query.filter(SPUser.name == current_user.username).one()
+            if (sp_user in study_obj.users) or current_user.is_admin:
+                # Then this study belongs to the logged in user and we should release the data
+                # Or the user is an admin and we should release the data
+                if filename == 'study_data.js':
+                    return send_from_directory(directory=file_dir, filename=filename)
+                else:
+                    return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
             else:
-                return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
+                return redirect(url_for('index'))
+    else:
+        # Study is published
+        if filename == 'study_data.js':
+            return send_from_directory(directory=file_dir, filename=filename)
+        else:
+            return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
 
 @app.route('/submit_data_learn_more')
 def submit_data_learn_more():
