@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, flash, url_for
+from flask import render_template, request, redirect, flash, url_for, send_from_directory
 from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
@@ -8,6 +8,7 @@ from werkzeug.urls import url_parse
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
+import ntpath
 
 #TODO remove "Title" and make this a hyper link to the paper
 #TODO hide 'Your unpublished analyses if this is empty
@@ -71,6 +72,37 @@ def index():
         return render_template('data_explorer.html', study_to_load=study_to_load,
                                published_and_authorised_studies=published_and_authorised_studies, map_key=map_key)
     
+EXPLORER_DATA_DIR = '/Users/humebc/Documents/symportal.org/sp_app/explorer_data'
+@app.route('/get_study_data/<string:study_name>/<path:file_path>/')
+def get_study_data(study_name, file_path):
+    # This route will be picked up whenever we want to load the data explorer page
+    # If the study is published or belongs to the currently logged in user, it will
+    # return the study_data.js file of the corresponding study
+    # Else it will return to index
+
+    # If the study requested is published, send the study_data.js
+    file_dir = os.path.join(EXPLORER_DATA_DIR, study_name, os.path.dirname(file_path))
+    filename = ntpath.basename(file_path)
+    study_obj = Study.query.filter(Study.name == study_name).one()
+    if study_obj.is_published or current_user.is_admin:
+        if filename == 'study_data.js':
+            return send_from_directory(directory=file_dir, filename=filename)
+        else:
+            return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
+    else:
+        # Then study is not published
+        sp_user = SPUser.query.filter(SPUser.name == current_user.username).one()
+        if current_user.is_anonymous:
+            # Then divert to index
+            # This code shouldn't be reachable as study links won't be displayed to a non-logged in user
+            # unless they are public
+            redirect(url_for('index'))
+        if sp_user in study_obj.users:
+            # Then this study belongs to the logged in user and we should send the data
+            if filename == 'study_data.js':
+                return send_from_directory(directory=file_dir, filename=filename)
+            else:
+                return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
 
 @app.route('/submit_data_learn_more')
 def submit_data_learn_more():

@@ -96,7 +96,7 @@ class DownloadResourcesPopulator{
             // is found in the output of this study
             if (this.data_file_paths_keys.includes(this.file_type_array[i])) {
                 $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${this.file_type_array[i] + ':'}</div>`);
-                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + this.data_file_paths[this.file_type_array[i]]}.zip" download>${this.data_file_paths[this.file_type_array[i]]}</a></div>`);
+                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="/get_study_data/${study_to_load}/${this.data_file_paths[this.file_type_array[i]]}.zip" download>${this.data_file_paths[this.file_type_array[i]]}</a></div>`);
             }
         };
     }
@@ -113,18 +113,18 @@ class DownloadResourcesPopulator{
                     
                     // We will do a check here for the older style of files that do not have the sqrt transformation indication
                     let f_name_dist_no_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_dist";
-                    this._populate_rows_in_download_card(f_name_dist_no_transformation);
+                    this._populate_dist_pcoa_rows_in_download_card(f_name_dist_no_transformation);
                     let f_name_pcoa_no_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_pcoa";
-                    this._populate_rows_in_download_card(f_name_pcoa_no_transformation);
+                    this._populate_dist_pcoa_rows_in_download_card(f_name_pcoa_no_transformation);
 
                     // Then check for the files that have the sqrt or no_sqrt infomation in the file name
                     for (let m = 0; m < this.sqrt_array.length; m++) {
                         
                         let f_name_dist_w_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_dist_" + this.sqrt_array[m];
-                        this._populate_rows_in_download_card(f_name_dist_w_transformation);
+                        this._populate_dist_pcoa_rows_in_download_card(f_name_dist_w_transformation);
                         
                         let f_name_pcoa_w_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_pcoa_" + this.sqrt_array[m];
-                        this._populate_rows_in_download_card(f_name_pcoa_w_transformation);
+                        this._populate_dist_pcoa_rows_in_download_card(f_name_pcoa_w_transformation);
 
                     }
                 }
@@ -132,10 +132,10 @@ class DownloadResourcesPopulator{
         }
     }
 
-    _populate_rows_in_download_card(file_name){
+    _populate_dist_pcoa_rows_in_download_card(file_name){
         if (this.data_file_paths_keys.includes(file_name)) {
             $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_name + ':'}</div>`);
-            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + this.data_file_paths[file_name]}.zip" download>${this.data_file_paths[file_name]}</a></div>`);
+            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="/get_study_data/${study_to_load}/${this.data_file_paths[file_name]}.zip" download>${this.data_file_paths[file_name]}</a></div>`);
         }
     }
 };
