@@ -10,9 +10,6 @@ from sqlalchemy.orm.exc import NoResultFound
 import json
 import ntpath
 
-#TODO remove "Title" and make this a hyper link to the paper
-#TODO hide 'Your unpublished analyses if this is empty
-#TODO add the table of citations.
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
@@ -166,8 +163,7 @@ def change_password():
     # We reach here if this is the first navigation to this page
     return render_template('change_password.html', form=form)
 
-# TODO still need to work out what to do with the timestamp as an upload time stamp will be overwritten everytime
-# The database is synced.
+
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if request.method == 'GET':

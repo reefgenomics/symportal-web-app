@@ -6,8 +6,7 @@ I don't think its a good idea to work with a base class is extended. It will be 
 complicated and the abstraction will not be clear. Instead I think it will be
 easiest and clearest to have a seperate class. We can call the classes
 SimpleStackedBarPlot and ModalStackedBarPlot.*/
-//TODO remove the sample_meta_info_method and profile_meta_info_method parameters
-// and instead just use the explit calls to the functions as they will not change.
+
 class SimpleStackedBarPlot{
     // This base class will hold most of the setup for the stacked bar
     // plots

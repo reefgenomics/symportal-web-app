@@ -47,8 +47,6 @@ $(document).ready(function () {
     // Init the two distance plots
     // First need to check to see if we are working with the bray curtis
     // or the unifrac distance
-    // TODO this will need updating to incorporate all distance types
-    // For the time being we will leave the code as it is
     const btwn_sample_plot = new DistancePlot({
         name_of_html_svg_object: "#chart_btwn_sample", 
         plot_type: 'sample'});

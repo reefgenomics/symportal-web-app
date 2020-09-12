@@ -45,7 +45,6 @@ class SampleLocationMap{
             });
 
             marker.addListener('click', function () {
-                //TODO create the content that will be displayed here
                 let $content_object = $("<div></div>", {
                     "class": "map_info_window"
                 });

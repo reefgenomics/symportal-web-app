@@ -2,9 +2,9 @@
 //We will aim to abstract both the between sample and between profile
 //plots using this class
 
-// TODO we are going to incorporate multiple ouputs with multiple distance methods and with
+// We incorporate multiple ouputs with multiple distance methods and with
 // and without tranformations (sqrt) applied.
-// todo this we are going to add two new variables to the class that will be current dist method
+// We do this by adding two new variables to the class that will be current dist method
 // and current sqrt. We will add a layer of keys to the data, pc_variances and available_pcs
 // that will be made up of a combination of the two new variables. We wil therefore be able to 
 // do plotting according to the state of these variables. We will need to add new listeners for their
@@ -108,7 +108,6 @@ class DistancePlot{
         // get the color scale to use
         // get the key used to access the data
         // Finally, log whether we are using the default value or not (i.e. )
-        // TODO change the default value of the between profiles to no_color.
         [this.selected_color_category, this.current_color_scale, this.current_color_key, this.selected_color_category_is_default] = this._get_current_color_settings();
         this.current_second_pc = this._get_second_pc();
         // Assign the principal component section item to a instance variable so that we can
