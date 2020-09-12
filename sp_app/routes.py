@@ -69,8 +69,8 @@ def data_explorer():
             .filter(Study.name != study_to_load.name).all()
     return render_template('data_explorer.html', study_to_load=study_to_load,
                            published_and_authorised_studies=published_and_authorised_studies, map_key=map_key)
-    
-EXPLORER_DATA_DIR = '/Users/humebc/Documents/symportal.org/sp_app/explorer_data'
+
+EXPLORER_DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'explorer_data')
 @app.route('/get_study_data/<string:study_name>/<path:file_path>/')
 def get_study_data(study_name, file_path):
     # This route will be picked up whenever we want to load the data explorer page
@@ -96,16 +96,20 @@ def get_study_data(study_name, file_path):
                 # Then this study belongs to the logged in user and we should release the data
                 # Or the user is an admin and we should release the data
                 if filename == 'study_data.js':
+                    print(f'returning {os.path.join(file_dir, filename)}')
                     return send_from_directory(directory=file_dir, filename=filename)
                 else:
+                    print(f'returning {os.path.join(file_dir, filename)}')
                     return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
             else:
                 return redirect(url_for('index'))
     else:
         # Study is published
         if filename == 'study_data.js':
+            print(f'returning {os.path.join(file_dir, filename)}')
             return send_from_directory(directory=file_dir, filename=filename)
         else:
+            print(f'returning {os.path.join(file_dir, filename)}')
             return send_from_directory(directory=file_dir, filename=filename, as_attachment=True)
 
 @app.route('/submit_data_learn_more')
