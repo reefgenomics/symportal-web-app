@@ -96,7 +96,18 @@ Have a network window for when the sample is clicked on (this can be later)
     <!--LHS-->
     <div class="col-md-7">
         <!--Title of the paper-->
-        <h5 class="display-4" id='study_title' style="font-size:2rem;">Title: {{ study_to_load.title }}</h5>
+        <!-- If article URL available then make this a hyper link else keep the curent title -->
+        <h5 class="display-4" id='study_title' style="font-size:2rem;">
+        {% if study_to_load.article_url %}
+            {% if study_to_load.article_url != '--' %}
+                <a href="{{ study_to_load.article_url}}">{{ study_to_load.title }}</a>
+            {% else %}
+                {{ study_to_load.title }}
+            {% endif %}
+        {% else %}
+            {{ study_to_load.title }}
+        {% endif %}
+        </h5>
         <!--Authors of the paper-->
         <div class="d-flex flex-column p-3" style="color:#777">
             <P id="authors">Authors: {{ study_to_load.author_list_string }}</P>
