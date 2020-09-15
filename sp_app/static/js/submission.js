@@ -373,7 +373,6 @@ $(document).ready(function() {
                 // TODO we are here.
                 formData.append("datasheet_filename", current_datasheet_filename);
             }else{
-                //TODO implement
                 // length is one. we just send it as it is without adding additional data.
             }
 
@@ -417,7 +416,6 @@ $(document).ready(function() {
         // Disable the reset button
         document.querySelector("#reset").setAttribute("disabled", "");
     }
-    
 
     document.querySelector("#actions .start").onclick = function() {
       myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
@@ -427,6 +425,5 @@ $(document).ready(function() {
     document.querySelector("#reset").onclick = function() {
         reset_submission_buttons_and_display_message();
     };
-
 
 });
