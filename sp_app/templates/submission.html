@@ -72,27 +72,37 @@
         </div>
 
         <!--  STAGING AREA TABLE -->
-        <div class="container" class="files" id="previews">
-          <div id="template" class="row">
-            <!-- This is used as the file preview template -->
-            <div class="col-8">
-                <p class="name m-0 staged-file-name" data-dz-name></p>
-            </div>
-            <div class="col-2">
-                <p class="size m-0" data-dz-size></p>
-            </div>
-            <div class="col-md-1 my-auto">
-              <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
-                </div>
-            </div>
-            <div class="col-md-1 my-auto">
-              <button data-dz-remove class="btn btn-danger delete btn-sm">
-                <i class="fa fa-trash"></i>
-              </button>
-            </div>
-          </div>
+        <div class="container" class="files">
+            <div class="table-responsive-xl">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 70%">filename</th>
+                            <th scope="col" style="width: 15%">size</th>
+                            <th scope="col" style="width: 10%"></th>
+                            <th scope="col" style="width: 5%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="previews">
+                        <tr id="template">
+                            <td class="name m-0 staged-file-name" data-dz-name></td>
+                            <td class="size m-0" data-dz-size></td>
+                            <td class="align-middle">
 
+                                <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                    <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
+                                </div>
+
+                            </td>
+                            <td>
+                                <button data-dz-remove class="btn btn-danger delete btn-sm">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         
 

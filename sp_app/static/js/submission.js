@@ -290,6 +290,12 @@ $(document).ready(function() {
     }
 
     // Dropzone class:
+    // To use a table row as the template with dropzone:
+    // https://stackoverflow.com/questions/25753030/dropzone-js-how-to-use-tr-or-tbody-as-preview-template/26520218
+    Dropzone.createElement = function(string) {
+        var el = $(string);
+        return el[0];
+    };
     var myDropzone = new Dropzone("div#dropZone", {
         url: "/_check_submission",
         parallelUploads: 20,
