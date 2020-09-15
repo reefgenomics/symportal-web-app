@@ -65,6 +65,12 @@ class DownloadResourcesPopulator{
         this.dist_type_array = ['unifrac', 'braycurtis'];
         this.sample_profile_array = ['sample', 'profile'];
         this.sqrt_array = ['sqrt', 'no_sqrt'];
+        // We have both profile_absolute_meta_only_count and profile_meta in here
+        // This is because we have moved from outputing two profile meta only files
+        // (relative and abosulte) to only one (because they are identical).
+        // We removed the profile_relative_meta_only_count so that this is not displayed
+        // for the older outputs. For the newer outputs profile_absolute_meta_only_count won't exist
+        // because we renamed it profile_meta. As such this will be output.
         this.file_type_array = [
             "post_med_absolute_abund_meta_count", "post_med_absolute_abund_only_count",
             "post_med_absolute_meta_only_count", "post_med_relative_abund_meta_count",
@@ -73,7 +79,7 @@ class DownloadResourcesPopulator{
             "pre_med_relative_count", "pre_med_fasta", "profile_absolute_abund_meta_count",
             "profile_absolute_abund_only_count", "profile_absolute_meta_only_count",
             "profile_relative_abund_meta_count", "profile_relative_abund_only_count",
-            "profile_relative_meta_only_count", "profile_additional_info_file"
+            "profile_meta", "profile_additional_info_file"
         ];
     }
     populate_downloads(){
@@ -90,7 +96,7 @@ class DownloadResourcesPopulator{
             // is found in the output of this study
             if (this.data_file_paths_keys.includes(this.file_type_array[i])) {
                 $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${this.file_type_array[i] + ':'}</div>`);
-                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + this.data_file_paths[this.file_type_array[i]]}.zip" download>${this.data_file_paths[this.file_type_array[i]]}</a></div>`);
+                $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="/get_study_data/${study_to_load}/${this.data_file_paths[this.file_type_array[i]]}.zip" download>${this.data_file_paths[this.file_type_array[i]]}</a></div>`);
             }
         };
     }
@@ -107,18 +113,18 @@ class DownloadResourcesPopulator{
                     
                     // We will do a check here for the older style of files that do not have the sqrt transformation indication
                     let f_name_dist_no_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_dist";
-                    this._populate_rows_in_download_card(f_name_dist_no_transformation);
+                    this._populate_dist_pcoa_rows_in_download_card(f_name_dist_no_transformation);
                     let f_name_pcoa_no_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_pcoa";
-                    this._populate_rows_in_download_card(f_name_pcoa_no_transformation);
+                    this._populate_dist_pcoa_rows_in_download_card(f_name_pcoa_no_transformation);
 
                     // Then check for the files that have the sqrt or no_sqrt infomation in the file name
                     for (let m = 0; m < this.sqrt_array.length; m++) {
                         
                         let f_name_dist_w_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_dist_" + this.sqrt_array[m];
-                        this._populate_rows_in_download_card(f_name_dist_w_transformation);
+                        this._populate_dist_pcoa_rows_in_download_card(f_name_dist_w_transformation);
                         
                         let f_name_pcoa_w_transformation = "btwn_" + this.sample_profile_array[j] + "_" + this.dist_type_array[k] + "_" + this.clade_array[i] + "_pcoa_" + this.sqrt_array[m];
-                        this._populate_rows_in_download_card(f_name_pcoa_w_transformation);
+                        this._populate_dist_pcoa_rows_in_download_card(f_name_pcoa_w_transformation);
 
                     }
                 }
@@ -126,10 +132,10 @@ class DownloadResourcesPopulator{
         }
     }
 
-    _populate_rows_in_download_card(file_name){
+    _populate_dist_pcoa_rows_in_download_card(file_name){
         if (this.data_file_paths_keys.includes(file_name)) {
             $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_property">${file_name + ':'}</div>`);
-            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="${study_to_load_path + this.data_file_paths[file_name]}.zip" download>${this.data_file_paths[file_name]}</a></div>`);
+            $("#resource_download_info_collapse").find(".row").append(`<div class="col-sm-6 data_value"><a href="/get_study_data/${study_to_load}/${this.data_file_paths[file_name]}.zip" download>${this.data_file_paths[file_name]}</a></div>`);
         }
     }
 };
