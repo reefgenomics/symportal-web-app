@@ -383,7 +383,6 @@ def _check_submission():
                         "border_class": "border-success"
                     }
                     return jsonify(response)
-                # TODO message class is now redundant. Remove
                 except DatasheetGeneralFormattingError as e:
                     if e.data["error_type"] == "non_unique":
                         response = {

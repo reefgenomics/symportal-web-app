@@ -93,7 +93,8 @@ class DatasheetChecker:
         self.sample_meta_info_df = self.sample_meta_info_df[~pd.isnull(self.sample_meta_info_df['sample_name'])]
         if self.sample_meta_info_df.empty:
             raise DatasheetGeneralFormattingError(
-                message="The datasheet appears to be empty. Please fix this problem and upload again.",
+                message='<strong class="text-danger">The datasheet appears to be empty.</strong><br>'
+                        'Please fix this problem and upload again.',
                 data={"error_type": "df_empty"}
             )
         self._format_sample_names()

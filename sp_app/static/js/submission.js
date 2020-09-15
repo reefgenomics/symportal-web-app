@@ -27,8 +27,6 @@ $(document).ready(function() {
         feedback_message.textContent = "";
     }
 
-
-
     function send_files_for_checking(){
 
         // Functions for only the send_files_for_checking function
@@ -292,9 +290,6 @@ $(document).ready(function() {
     }
 
     // Dropzone class:
-    // We can create a class of DatasheetCounter here and then access it within the addedfiles event.
-    // This class can already have all of the relevant objects selected
-    const datasheet_counter = new DatasheetCounter();
     var myDropzone = new Dropzone("div#dropZone", {
         url: "/_check_submission",
         parallelUploads: 20,
@@ -309,51 +304,43 @@ $(document).ready(function() {
             console.log(response);
         },
         successmultiple: function (files, response) {
-            //TODO we are here. Handle the return from upload
+            function progress_user_to_seq_file_select(response){
+                // The following actions will progress the user
+                // Change the datasheet label to indicate the datasheet we are working with
+                document.querySelector("#datasheet_filename").textContent = `Datasheet: ${response.datasheet_filename}`;
+                document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename", `${response.datasheet_filename}`);
+                // Change the text of the Select datasheet to select seqfiles
+                document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select seq files';
+                // Enable this button
+                document.querySelector("#fileinput-button").removeAttribute("disabled");
+                // Change the Upload datasheet text to Upload seq files
+                document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload seq files';
+                // Disable this button
+                document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+                // Change the message box to show successful upload
+                display_feedback(response.message, response.border_class);
+                // Remove the uploaded datasheet. This is already saved on the server
+                // and its name will be sent up using the Datasheet label data value when seq files are staged
+                // This way the user cannot click the delete button on the uploaded datasheet that will cause a
+                // staging check to happen and leaves us in a strange state.
+                myDropzone.removeAllFiles(true);
+            }
+
             // We are either handling the upload response for a datasheet being sent up
             // Or we are handling a successful submission.
             if (response.response_type == "datasheet"){
                 // Then this is the upload of a datasheet rather than the upload of sequencing files
                 if (response.error === true){
-                    // We are also handling general errors which have an error type of unhandled_error.
-                    // There was a problem with the datasheet
-                    // The following actions will take the user back to the upload datasheet
-                    // The file should be removed from the dropzone object
-                    myDropzone.removeAllFiles();
-                    // Error message should be displayed
-                    // It should give an informative error AND instruct user to reupload
-                    display_feedback(response.message, response.border_class);
-                    // The Select datasheet button should be enabled
-                    document.querySelector("#fileinput-button").removeAttribute("disabled");
-                    // The upload datasheet button should be disabled
-                    document.querySelector("#start_upload_btn").setAttribute("disabled", "");
-                    // The reset button should be disabled
-                    document.querySelector("#reset").setAttribute("disabled", "");
+                    // We are routing DatasheetGeneralFormattingError and unhandled errors here
+                    // We will provide an informative message and reset
+                    reset_submission_buttons_and_display_message(response.message, response.border_class);
                 }else{
-                    // Then the datasheet looks good
-                    // Now it is time to allow the user to upload seq files
-                    // Once they have been selected we will check them against the datasheet that has
-                    // been uploaded
-                    // The following actions will progress the user
-                    // Change the datasheet label to indicate the datasheet we are working with
-                    document.querySelector("#datasheet_filename").textContent = `Datasheet: ${response.datasheet_filename}`;
-                    document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename", `${response.datasheet_filename}`);
-                    // Change the text of the Select datasheet to select seqfiles
-                    document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select seq files';
-                    // Enable this button
-                    document.querySelector("#fileinput-button").removeAttribute("disabled");
-                    // Change the Upload datasheet text to Upload seq files
-                    document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload seq files';
-                    // Disable this button
-                    document.querySelector("#start_upload_btn").setAttribute("disabled", "");
-                    // Change the message box to show successful upload
-                    display_feedback(response.message, response.border_class);
-                    // Remove the uploaded datasheet. This is already saved on the server
-                    // and its name will be sent up using the Datasheet label data value when seq files are staged
-                    // This way the user cannot click the delete button on the uploaded datasheet that will cause a
-                    // staging check to happen and leaves us in a strange state.
-                    myDropzone.removeAllFiles(true);
+                    // Then the datasheet looks good. Allow user to select seq files
+                    // Once they have been selected we will check them against the datasheet that has been uploaded
+                    progress_user_to_seq_file_select(response);
                 }
+            }else{
+                // TODO this needs to be implemented. This is after a successful upload of seq files.
             }
 
         },
@@ -369,8 +356,7 @@ $(document).ready(function() {
             // In this case, the event is of type "load". We do not want to do checking in this case
             file.previewElement.remove();
             if (event.type != "load"){
-                // This event is also fired when we hit the Reset button. When the reset button is hit
-                // we do not want to send each of the removed files for checking
+                // Only send files for checking if the delete button was clicked.
                 if (event.currentTarget.classList.contains("delete")){
                     send_files_for_checking();
                 }
@@ -381,17 +367,19 @@ $(document).ready(function() {
             // This will be fired either when we are uploading a datasheet, or when we are doing the final submission
             // (i.e. after having checked that only a single .csv/.xlsx has been uploaded or after checking that
             // all is in agreement between an uploaded datasheet and a set of sequencing files).
-            // Both cases are easily distinguishable. In the first, files will contain only a sinlge .csv/.xlsx
-            // In the other, files will contain at least two sequencing files.
+            // If this.files.length > 1 then it is final upload of seq data
             if (this.files.length > 1){
                 // Then this is a submission of the sequencing datafiles and we want to send up the datasheetfile name
+                // TODO we are here.
                 formData.append("datasheet_filename", current_datasheet_filename);
+            }else{
+                //TODO implement
+                // length is one. we just send it as it is without adding additional data.
             }
-            // length is one. we just send it as it is without adding additional data.
+
         }
         });
 
-    // TODO Refactor reset functionality so that it can be used with and without a feedback message
     function reset_submission_buttons_and_display_message(message, border_class){
         // There are multiple times when we want to essentially start again with the submission process
         // The only thing that differs between the instances in which we want to do this reset is the
