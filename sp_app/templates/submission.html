@@ -72,8 +72,8 @@
         </div>
 
         <!--  STAGING AREA TABLE -->
-        <div class="container" class="files">
-            <div class="table-responsive-xl">
+        <div class="container">
+            <div class="table-responsive-xl invisible" id="staging_table">
                 <table class="table table-striped table-sm">
                     <thead>
                         <tr>
@@ -88,11 +88,9 @@
                             <td class="name m-0 staged-file-name" data-dz-name></td>
                             <td class="size m-0" data-dz-size></td>
                             <td class="align-middle">
-
                                 <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                                     <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
                                 </div>
-
                             </td>
                             <td>
                                 <button data-dz-remove class="btn btn-danger delete btn-sm">

@@ -27,6 +27,18 @@ $(document).ready(function() {
         feedback_message.textContent = "";
     }
 
+    function hide_staging_table(){
+        // hide the table
+        document.querySelector("#staging_table").classList.remove("visible")
+        document.querySelector("#staging_table").classList.add("invisible")
+    }
+
+    function reveal_staging_table(){
+        // Display the table
+        document.querySelector("#staging_table").classList.remove("invisible")
+        document.querySelector("#staging_table").classList.add("visible")
+    }
+
     function send_files_for_checking(){
 
         // Functions for only the send_files_for_checking function
@@ -54,6 +66,8 @@ $(document).ready(function() {
             display_feedback(response["message"], response["border_class"]);
             // Enable the reset button
             document.querySelector("#reset").removeAttribute("disabled");
+            // Display the table
+            reveal_staging_table();
         }
 
         function process_datasheet_select_ajax_response(response){
@@ -147,6 +161,7 @@ $(document).ready(function() {
             document.querySelector("#reset").removeAttribute("disabled");
             // Disable the Upload seq files button
             document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+            reveal_staging_table();
         }
 
         function construct_and_display_warning_message_seq_file_select(response){
@@ -221,6 +236,7 @@ $(document).ready(function() {
             document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload seq files';
             // Enable the reset button
             document.querySelector("#reset").removeAttribute("disabled");
+            reveal_staging_table();
         }
 
         function construct_and_display_success_message_seq_file_select(response){
@@ -234,6 +250,7 @@ $(document).ready(function() {
             document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload seq files';
             // Enable the reset button
             document.querySelector("#reset").removeAttribute("disabled");
+            reveal_staging_table();
         }
 
         // When a datasheet is added, or when seq files are added, we will need to send the added files
@@ -330,6 +347,7 @@ $(document).ready(function() {
                 // This way the user cannot click the delete button on the uploaded datasheet that will cause a
                 // staging check to happen and leaves us in a strange state.
                 myDropzone.removeAllFiles(true);
+                hide_staging_table();
             }
 
             // We are either handling the upload response for a datasheet being sent up
@@ -421,6 +439,9 @@ $(document).ready(function() {
 
         // Disable the reset button
         document.querySelector("#reset").setAttribute("disabled", "");
+
+        // Hide the staging table
+        hide_staging_table();
     }
 
     document.querySelector("#actions .start").onclick = function() {
