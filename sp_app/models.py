@@ -138,7 +138,7 @@ class SPUser(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), index=True, unique=True, nullable=False)
     studies = db.relationship('Study', secondary=SPUser__Study, lazy='dynamic',
-     backref=db.backref('users', lazy='dynamic'))
+     backref=db.backref('users', lazy='joined'))
     # This is set to False when User is created. Upon upload to symportal.org
     # a user that matches this name will be searched for in the app.db database.
     # If no matching user if found, an error will be thrown. If a user is found,

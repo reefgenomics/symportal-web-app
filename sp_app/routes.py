@@ -13,18 +13,27 @@ import shutil
 import traceback
 import ntpath
 
+# As we start to work with the remote database we will want to minimise calls to it.
+# As such we will make an initial call to get all studies
+# We have specified some lazy='joined' calls in the models.py file so that
+# we collect all required information in one connection to the database.
+# If we modify the database in any way (we don't do this yet), we will explicitly call code to update this variable
+# so that our queries are still up to date.
+# Once this variable is set, we can work with the ORM objects for the remainder of the routes.py
+ALL_STUDIES = Study.query.all()
+SP_USERS = SPUser.query.all()
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
 def index():
     if request.method == 'GET':
         # get the studies that will be loaded into the published data set table
-        published_studies = Study.query.filter(Study.is_published==True, Study.display_online==True).all()
-        
+        published_studies = [study for study in ALL_STUDIES if study.is_published is True and study.display_online is True]
+
         # get the studies that belong to the user that are not yet published
         try:
-            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
-            user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False, Study.display_online==True) if sp_user in study.users]
+            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+            user_unpublished_studies = [study for study in ALL_STUDIES if study.is_published is False and study.display_online is True and sp_user in study.users]
         except AttributeError as e:
             user_unpublished_studies = []
         except NoResultFound:
@@ -39,6 +48,22 @@ def index():
             resource_info_dict = dict(json.load(f))
         return render_template('index.html', published_studies=published_studies, user_unpublished_studies=user_unpublished_studies, resource_info_dict=resource_info_dict)
 
+def get_spuser_by_name_from_orm_spuser_list(user_to_match):
+    """ A sort of wrapper method that gets an ORM object that is the SPUser object from
+    the currently logged in user.
+    """
+    sp_user = [spuser for spuser in SP_USERS if spuser.name == user_to_match.username]
+    assert (len(sp_user) == 1)
+    return sp_user[0]
+
+def get_study_by_name_from_orm_study_list(study_name_to_match):
+    """ A sort of wrapper method that gets an ORM object that is the Study object from
+    a study name.
+    """
+    study = [study for study in ALL_STUDIES if study.name == study_name_to_match]
+    assert (len(study) == 1)
+    return study[0]
+
 @app.route('/data_explorer/', methods=['POST'])
 def data_explorer():
     # get the google maps api key to be used
@@ -50,26 +75,27 @@ def data_explorer():
     # provided by the request.
     # We will also need to provide a list of studies to load in the dataexplorer drop
     # down that allows users to switch between the DataSet that they are viewing
-    study_to_load = Study.query.filter(Study.name==request.form.get('study_to_load')).first()
+    study_to_load = get_study_by_name_from_orm_study_list(study_name_to_match=request.form.get('study_to_load'))
     # The other studies should be those that are:
     # a - published
     # b - have dataexplorer data
     # c - are unpublished but have the current user in their users_with_access list
     # We also want to exclude the study_to_load study.
     if current_user.is_anonymous:
-        published_and_authorised_studies = Study.query\
-            .filter(Study.data_explorer==True, Study.is_published==True, Study.display_online==True).all()
+        published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.is_published and study.display_online]
     elif current_user.is_admin:
         # If user is admin then we just want to display all of the studies that have dataexplorer available
         # regardless of whether the user is in the users_with_access list
-        published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True).all()
+        published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.display_online]
     else:
         # If not admin but signed in, then we want to return the published articles
         # and those that the user is authorised to have.
-        sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
-        published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
-            .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
-            .filter(Study.name != study_to_load.name).all()
+        # Must be data_explorer=True, display_online=True, then either (is_published, users.contains sp_user) and not study to load name
+        sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+        published_and_authorised_studies = [
+            study for study in ALL_STUDIES if
+            study.data_explorer and study.display_online and
+            (study.name != study_to_load.name) and (study.is_published or sp_user in study.users)]
     return render_template('data_explorer.html', study_to_load=study_to_load,
                            published_and_authorised_studies=published_and_authorised_studies, map_key=map_key)
 
@@ -84,7 +110,7 @@ def get_study_data(study_name, file_path):
     # If the study requested is published, send the study_data.js
     file_dir = os.path.join(EXPLORER_DATA_DIR, study_name, os.path.dirname(file_path))
     filename = ntpath.basename(file_path)
-    study_obj = Study.query.filter(Study.name == study_name).one()
+    study_obj = get_study_by_name_from_orm_study_list(study_name_to_match=study_name)
 
     # NB if the current user is anonymous and we try to call .is_admin, we get an attribute error
     if not study_obj.is_published:
@@ -94,7 +120,7 @@ def get_study_data(study_name, file_path):
             # unless they are public
             return redirect(url_for('index'))
         else:
-            sp_user = SPUser.query.filter(SPUser.name == current_user.username).one()
+            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
             if (sp_user in study_obj.users) or current_user.is_admin:
                 # Then this study belongs to the logged in user and we should release the data
                 # Or the user is an admin and we should release the data
@@ -134,7 +160,7 @@ def login():
             # may not have been created in the symportal_database. If this is the case, the
             # administrator will need to fix this and the user will need to be told to get in contact
             # with the administrator.
-            sp_user = SPUser.query.filter(SPUser.name==user.username).one()
+            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
         except NoResultFound:
             flash("User has not been synced to the symportal_database.\nPlease contact the administrator to fix this.")
         login_user(user, remember=form.remember_me.data)
@@ -177,14 +203,16 @@ def profile():
         if current_user.is_anonymous:
             return redirect(url_for('index'))
         # We will populate a table that shows the studies that the user is authorised for
-        sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
-        user_authorised_studies = list(Study.query.filter(Study.users.contains(sp_user), Study.display_online==True).all())
+        sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+        user_authorised_studies = [study for study in ALL_STUDIES if sp_user in study.users and study.display_online]
         # We will also populate a table that will only be visible is the user is an admin
         # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
         if current_user.is_admin:
-            admin_authorised_studies = list(Study.query.filter(~Study.is_published).filter(~Study.users.contains(sp_user)).filter(Study.display_online==True).all())
+            admin_authorised_studies = [
+                study for study in ALL_STUDIES if
+                not study.is_published and not sp_user in study.users and study.display_online]
         else:
-            admin_authorised_studies= list()
+            admin_authorised_studies = []
         return render_template('profile.html', user_authorised_studies=user_authorised_studies, admin_authorised_studies=admin_authorised_studies)
     if request.method == 'POST':
         # Then someone has clicked on one of the study titles
@@ -198,25 +226,27 @@ def profile():
         # provided by the request.
         # We will also need to provide a list of studies to load in the dataexplorer drop
         # down that allows users to switch between the DataSet that they are viewing
-        study_to_load = Study.query.filter(Study.name==request.form.get('study_to_load')).first()
+        study_to_load = get_study_by_name_from_orm_study_list(study_name_to_match=request.form.get('study_to_load'))
         # The other studies should be those that are:
         # a - published
         # b - have dataexplorer data
         # c - are unpublished but have the current user in their users_with_access list
         # We also want to exclude the study_to_load study.
         if current_user.is_anonymous:
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.is_published==True, Study.display_online==True).all()
+            published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.is_published and study.display_online]
         elif current_user.is_admin:
             # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True).all()
+            published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.display_online]
         else:
-            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
-            published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
-                .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
-                .filter(Study.name != study_to_load.name).all()
+            published_and_authorised_studies = [
+                study for study in ALL_STUDIES if
+                study.data_explorer and study.display_online and study.name != study_to_load.name and
+                (study.is_published or sp_user in study.users)
+            ]
         return render_template('data_explorer.html', study_to_load=study_to_load,
                                published_and_authorised_studies=published_and_authorised_studies ,map_key=map_key)
 
