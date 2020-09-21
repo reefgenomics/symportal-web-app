@@ -32,3 +32,4 @@ published_articles_archive/
 published_articles_sp.json_backup
 .vscode/*
 nginx/conf.d/virtual*
+sp_app/explorer_data/

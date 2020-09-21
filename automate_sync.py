@@ -423,7 +423,7 @@ class AutomateSync:
         self.parser.add_argument(
             '--local_symportal_data_directory', 
             help='The base directory where the individual study directories are held on the local machine', 
-            default='/Users/humebc/Documents/symportal.org/sp_app/static/data/data_explorer_data')
+            default='/Users/humebc/Documents/symportal.org/sp_app/explorer_data')
         self.parser.add_argument('--pem_file_path', help='Full path to the .pem file to connect to the AWS instance', default=None),
         self.parser.add_argument('--local_bak_dir', help="Path to the directory on the local machine where the .bak file should be deposited", default="/Users/humebc/Documents/symportal.org/symportal_database_versions")
         
@@ -468,6 +468,6 @@ class AutomateSync:
         self.parser.add_argument(
             '--remote_web_symportal_data_directory', 
             help='The base directory where the individual study directories are held on the web machine', 
-            default='/home/humebc/symportal.org/sp_app/static/data/data_explorer_data')
+            default='/home/humebc/symportal.org/sp_app/explorer_data')
         
 AutomateSync().start_sync()
