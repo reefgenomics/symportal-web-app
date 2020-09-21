@@ -122,7 +122,11 @@ class Study(db.Model):
     creation_time_stamp = db.Column(db.String(100), default=set_creation_time_stamp_default)
     data_set_samples = db.relationship('DataSetSample', secondary=Study__DataSetSample, lazy='dynamic',
      backref=db.backref('studies', lazy='dynamic'))
-    # num_samples = self.get_num_samples()
+    # This will be either compilation or dataset_representative
+    # A dataset_representative type study will be created for every DataSet object created
+    # compilation type Study objects will be made when a study is associated with DataSetSamples that are
+    # not exactly represented by a single DataSet object
+    study_type = db.Column(db.String(50), default="dataset_representative")
     
     def __str__(self):
         return self.name
@@ -131,6 +135,30 @@ class Study(db.Model):
 
     def get_num_samples(self):
         return len(list(self.data_set_samples))
+
+
+class Submission(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_submission'
+    id = db.Column(db.Integer, primary_key=True)
+    # This name will be used for the DataSet object and the Study object that will be associated to this object
+    name = db.Column(db.String(60), nullable=False, unique=True)
+    # The optional title that will be given to the Study object that is created
+    title = db.Column(db.String(250), nullable=True)
+    # The optional location to be transferred to the associated Study object
+    location = db.Column(db.String(50), nullable=True)
+    # The location of the directory holding the seq files and datasheet on the web hosting server, i.e. linode
+    web_local_dir_path = db.Column(db.String(300), nullable=False, unique=True)
+    # The location of the directory holding the seq files and datasheet on the symportal framework server, i.e. zygote
+    framework_local_dir_path = db.Column(db.String(300), nullable=False, unique=True)
+    # The progress of the submission
+    progress_status = db.Column(db.String(50), nullable=False, default='pending_submission')
+    # If an Error has occured
+    error_has_occured = db.Column(db.Boolean, default=False)
+    # associated DataSet
+    associated_dataset_id = db.Column(db.Integer, db.ForeignKey('dbApp_dataset.id'), nullable=True)
+    # associated Study
+    associated_study_id = db.Column(db.Integer, db.ForeignKey('dbApp_study.id'), nullable=True)
 
 class SPUser(db.Model):
     __bind_key__ = 'symportal_database'
