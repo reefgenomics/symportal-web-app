@@ -137,6 +137,26 @@ class Study(db.Model):
         return len(list(self.data_set_samples))
 
 
+class SPUser(db.Model):
+    __bind_key__ = 'symportal_database'
+    __tablename__ = 'dbApp_user'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), index=True, unique=True, nullable=False)
+    studies = db.relationship('Study', secondary=SPUser__Study, lazy='dynamic',
+     backref=db.backref('users', lazy='joined'))
+    # This is set to False when User is created. Upon upload to symportal.org
+    # a user that matches this name will be searched for in the app.db database.
+    # If no matching user if found, an error will be thrown. If a user is found,
+    # This value will be set to true, and the ID of the User in the app.db database
+    # will be stored in app_db_key below.
+    # The id of this object will also be stored in the app.db User object that matches
+    app_db_key_is_set = db.Column(db.Boolean, default=False)
+    app_db_key_id = db.Column(db.Integer, nullable=True)
+
+    def __repr__(self):
+        return f'<SPUser {self.name}>'
+
+
 class Submission(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_submission'
@@ -159,25 +179,8 @@ class Submission(db.Model):
     associated_dataset_id = db.Column(db.Integer, db.ForeignKey('dbApp_dataset.id'), nullable=True)
     # associated Study
     associated_study_id = db.Column(db.Integer, db.ForeignKey('dbApp_study.id'), nullable=True)
-
-class SPUser(db.Model):
-    __bind_key__ = 'symportal_database'
-    __tablename__ = 'dbApp_user'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), index=True, unique=True, nullable=False)
-    studies = db.relationship('Study', secondary=SPUser__Study, lazy='dynamic',
-     backref=db.backref('users', lazy='joined'))
-    # This is set to False when User is created. Upon upload to symportal.org
-    # a user that matches this name will be searched for in the app.db database.
-    # If no matching user if found, an error will be thrown. If a user is found,
-    # This value will be set to true, and the ID of the User in the app.db database
-    # will be stored in app_db_key below.
-    # The id of this object will also be stored in the app.db User object that matches
-    app_db_key_is_set = db.Column(db.Boolean, default=False)
-    app_db_key_id = db.Column(db.Integer, nullable=True)
-
-    def __repr__(self):
-        return f'<SPUser {self.name}>'
+    # submitting User
+    submitting_user_id = db.Column(db.Integer, db.ForeignKey('dbApp_user.id'), nullable=False)
 
 class DataAnalysis(db.Model):
     __bind_key__ = 'symportal_database'
