@@ -101,7 +101,7 @@ class DataSetSample(db.Model):
         return f'<DataSetSample {self.name}>'
 
 def set_creation_time_stamp_default():
-    return str(datetime.now()).replace(' ', '_').replace(':', '-')
+    return str(datetime.utcnow()).split('.')[0].replace('-','').replace(' ','T').replace(':','')
 
 class Study(db.Model):
     __bind_key__ = 'symportal_database'
@@ -181,6 +181,19 @@ class Submission(db.Model):
     associated_study_id = db.Column(db.Integer, db.ForeignKey('dbApp_study.id'), nullable=True)
     # submitting User
     submitting_user_id = db.Column(db.Integer, db.ForeignKey('dbApp_user.id'), nullable=False)
+    # number of samples
+    number_samples = db.Column(db.Integer, nullable=False, default=0)
+    # These fields will hold the times that various checkpoints are reached
+    # submission time
+    submission_date_time  = db.Column(db.String(25), nullable=False, default=set_creation_time_stamp_default)
+    transfer_to_framework_server_date_time  = db.Column(db.String(25), nullable=True)
+    loading_started_date_time = db.Column(db.String(25), nullable=True)
+    loading_complete_date_time = db.Column(db.String(25), nullable=True)
+    analysis_started_date_time = db.Column(db.String(25), nullable=True)
+    analysis_complete_date_time = db.Column(db.String(25), nullable=True)
+    study_output_started_date_time = db.Column(db.String(25), nullable=True)
+    study_output_complete_date_time = db.Column(db.String(25), nullable=True)
+    transfer_to_web_server_date_time = db.Column(db.String(25), nullable=True)
 
 
 class DataAnalysis(db.Model):
