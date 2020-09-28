@@ -182,6 +182,7 @@ class Submission(db.Model):
     # submitting User
     submitting_user_id = db.Column(db.Integer, db.ForeignKey('dbApp_user.id'), nullable=False)
 
+
 class DataAnalysis(db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_dataanalysis'

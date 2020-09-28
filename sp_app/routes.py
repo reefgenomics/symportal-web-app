@@ -35,12 +35,12 @@ def index():
             sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
             user_unpublished_studies = [study for study in ALL_STUDIES if study.is_published is False and study.display_online is True and sp_user in study.users]
         except AttributeError as e:
+            # Anonymous user
             user_unpublished_studies = []
         except NoResultFound:
             # We should never get here as we have checked for this at the login route.
             logout_user()
             return redirect(url_for('index'))
-
 
         # Finally get the resource_info_dict that is jsoned out and pass this in
         json_resource_info_dict_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'resources', 'resource_info.json')
@@ -160,7 +160,7 @@ def login():
             # may not have been created in the symportal_database. If this is the case, the
             # administrator will need to fix this and the user will need to be told to get in contact
             # with the administrator.
-            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=user)
         except NoResultFound:
             flash("User has not been synced to the symportal_database.\nPlease contact the administrator to fix this.")
         login_user(user, remember=form.remember_me.data)

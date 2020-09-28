@@ -272,90 +272,76 @@
     </section>
 
     <!-- Your unpublished analyses -->
-    <section class="bg-light" >
-        <!--<header3></header3>-->
-        
-        
-        {% if current_user.is_anonymous %}
-        <h3 class="light_header">Your unpublished analyses</h3>
-        <p class="center">No unpublished analyses to load</p>
-        {% else %}
-            {% if user_unpublished_studies %}
-                <table id="unpublished_articles_table" class="table table-striped table-bordered">
-                    <caption>Your unpublished analyses</caption>
-                    <thead>
+    {% if user_unpublished_studies %}
+        <section class="bg-light" >
+            <table id="unpublished_articles_table" class="table table-striped table-bordered">
+                <caption>Your unpublished analyses</caption>
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Title</th>
+                        <th>Location</th>
+                        <th>#Samples</th>
+                        <th>Additional markers</th>
+                        <th>Run type</th>
+                        <th>Article</th>
+                        <th>Data</th>
+                        <th>DataExplorer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for upd in user_unpublished_studies %}
                         <tr>
-                            <th>Article</th>
-                            <th>Title</th>
-                            <th>Location</th>
-                            <th>#Samples</th>
-                            <th>Additional markers</th>
-                            <th>Run type</th>
-                            <th>Article</th>
-                            <th>Data</th>
-                            <th>DataExplorer</th>
+                            <td label="Article">{{ upd.name }}</td>
+                            <td label="Title">{{ upd.title }}</td>
+                            <td label="Location">{{ upd.location }}</td>
+                            <td label="#Samples">{{ upd.get_num_samples() }}</td>
+                            {% if upd.additional_markers == 'psbAncr' %}
+                            <td label="Additional markers">
+                                <i>psbA<sup>ncr</sup></i>
+                            </td>
+                            {% else %}
+                            <td label="Additional markers">{{ upd.additional_markers }}</td>
+                            {% endif %}
+                            <td label="Run type">{{ upd.run_type }}</td>
+                            {% if (upd.article_url != '--') and upd.article_url %}
+                            <td label="Article URL">
+                                <a href="{{ upd.article_url }}">
+                                    <div style="height:100%;width:100%">Article</div>
+                                </a>
+                            </td>
+                            {% else %}
+                            <td label="Article URL">--</td>
+                            {% endif %}
+                            {% if (upd.data_url != '--') and upd.data_url %}
+                            <td label="Seq data URL">
+                                <a href="{{ upd.data_url }}">
+                                    <div style="height:100%;width:100%">Data</div>
+                                </a>
+                            </td>
+                            {% else %}
+                            <td label="Seq data URL">--</td>
+                            {% endif %}
+                            <!-- DataExplorer icon -->
+                            {% if upd.data_explorer %}
+                            <td align="center">
+                                <form action="{{ url_for('data_explorer') }}" method="POST">
+                                    <button class="DEbtn" name="study_to_load" value="{{ upd.name }}">
+                                        <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
+                                    </button>
+                                </form>
+                            </td>
+                            {% else %}
+                            <td align="center">
+                                <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
+                            </td>
+                            {% endif %}
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for upd in user_unpublished_studies %}
-                            <tr>
-                                <td label="Article">{{ upd.name }}</td>
-                                <td label="Title">{{ upd.title }}</td>
-                                <td label="Location">{{ upd.location }}</td>
-                                <td label="#Samples">{{ upd.get_num_samples() }}</td>
-                                {% if upd.additional_markers == 'psbAncr' %}
-                                <td label="Additional markers">
-                                    <i>psbA<sup>ncr</sup></i>
-                                </td>
-                                {% else %}
-                                <td label="Additional markers">{{ upd.additional_markers }}</td>
-                                {% endif %}
-                                <td label="Run type">{{ upd.run_type }}</td>
-                                {% if (upd.article_url != '--') and upd.article_url %}
-                                <td label="Article URL">
-                                    <a href="{{ upd.article_url }}">
-                                        <div style="height:100%;width:100%">Article</div>
-                                    </a>
-                                </td>
-                                {% else %}
-                                <td label="Article URL">--</td>
-                                {% endif %}
-                                {% if (upd.data_url != '--') and upd.data_url %}
-                                <td label="Seq data URL">
-                                    <a href="{{ upd.data_url }}">
-                                        <div style="height:100%;width:100%">Data</div>
-                                    </a>
-                                </td>
-                                {% else %}
-                                <td label="Seq data URL">--</td>
-                                {% endif %}
-                                <!-- DataExplorer icon -->
-                                {% if upd.data_explorer %}
-                                <td align="center">
-                                    <form action="{{ url_for('data_explorer') }}" method="POST">
-                                        <button class="DEbtn" name="study_to_load" value="{{ upd.name }}">
-                                            <img src="{{ url_for('static', filename='images/sp_logo_green.svg') }}" style="height:20px;">
-                                        </button>
-                                    </form>
-                                </td>
-                                {% else %}
-                                <td align="center">
-                                    <img src="{{ url_for('static', filename='images/sp_logo.svg') }}" style="height:20px;">
-                                </td>
-                                {% endif %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                    
-                </table>
-                
-                
-            {% else %}
-            <p class="center">No unpublished analyses to load</p>
-            {% endif %}
-        {% endif %}
-        
-    </section>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
 
     <!-- Cite Us -->
     <section class="bg-light">

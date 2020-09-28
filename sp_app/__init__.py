@@ -10,7 +10,7 @@ app.config.from_object(Config)
 with open(os.path.join(basedir, 'sp_app', 'password.txt'), 'r') as f:
     password = f.read().rstrip()
 # app.config['SQLALCHEMY_BINDS'] = {'symportal_database': f'postgres://humebc:{password}@localhost:5432/symportal_database'}
-app.config['SQLALCHEMY_BINDS'] = {'symportal_database': f'postgres://humebc:{password}@134.34.126.43:5432/symportal_database'}
+app.config['SQLALCHEMY_BINDS'] = {'symportal_database': f'postgres://humebc:{password}@134.34.126.43:5432/testing_submission_symportal_database'}
 db = SQLAlchemy(app)
 migrate = Migrate(app,db)
 login = LoginManager(app)
