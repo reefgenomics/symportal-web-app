@@ -108,25 +108,36 @@
 
     <!-- Operations-->
     <section class="operations bg-light">
-        <div class="container grid-2">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 col-md-12 center my-3">
+                    <img src="{{ url_for('static', filename='images/landing_one.jpg') }}" class="img-rnd" alt="pic01">
 
+                        {% if allow_submission %}
+                            <h3>Upload data</h3>
+                            <p>Upload sequencing data for SymPortal analysis.<br><a href="{{ url_for('submit_data_learn_more') }}">[Learn more]</a></p>
+                            <a class="btn" href="{{ url_for('upload_data') }}">Upload</a>
+                        {% else %}
+                            <h3>Submit data</h3>
+                            <p>To submit your data and run it against the remote database, please contact: <a class="email_a" href="mailto:benjamincchume@gmail.com?Subject=new submission enquiry">&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#099;&#099;&#104;&#117;&#109;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;</a>
+                                    </p>
+                            <a class="btn" href="{{ url_for('submit_data_learn_more') }}">Learn more</a>
+                        {% endif %}
+                </div>
+
+                <!--Run locally-->
+                <div class="col-lg-6 col-md-12 center my-3">
+                    <img src="{{ url_for('static', filename='images/landing_two.jpeg') }}" class="img-rnd" alt="pic02">
+                    <h3>Run locally</h3>
+                    <p>You can run the SymPortal analysis locally using your own machine and your own database.</p>
+                    <a class="btn" href="https://github.com/SymPortal/SymPortal_framework/wiki">SymPortal Local</a>
+                </div>
+            </div>
             <!--Submit data -->
-            <div class="center">
-                <img src="{{ url_for('static', filename='images/landing_one.jpg') }}" class="img-rnd" alt="pic01">
-                <h3>Submit data</h3>
-                <p>To submit your data and run it against the remote database, please contact: <a class="email_a" href="mailto:benjamincchume@gmail.com?Subject=new submission enquiry">&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#099;&#099;&#104;&#117;&#109;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;</a>
-                        </p>
-                <a class="btn" href="{{ url_for('submit_data_learn_more') }}">Learn more</a>
-            </div>
 
 
-            <!--Run locally-->
-            <div class="center">
-                <img src="{{ url_for('static', filename='images/landing_two.jpeg') }}" class="img-rnd" alt="pic02">
-                <h3>Run locally</h3>
-                <p>You can run the SymPortal analysis locally using your own machine and your own database.</p>
-                <a class="btn" href="https://github.com/SymPortal/SymPortal_framework/wiki">SymPortal Local</a>
-            </div>
+
+
 
         </div>
     </section>

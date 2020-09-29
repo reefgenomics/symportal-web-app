@@ -141,13 +141,6 @@ nav a {
 
 
 /* Operations */
-.grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 40px;
-}
-
-
 
 .img-rnd {
     border-radius: 50%;
@@ -346,12 +339,6 @@ caption{
     .content .text {
         display: None;
     }
-
-    /* .grid-2, .grid-3 {
-        
-        grid-template-columns: 1fr;
-        
-    } */
 
     .container {
         max-width: 960px;

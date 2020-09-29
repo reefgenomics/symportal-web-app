@@ -48,10 +48,19 @@ def index():
         json_resource_info_dict_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'resources', 'resource_info.json')
         with open(json_resource_info_dict_path, 'r') as f:
             resource_info_dict = dict(json.load(f))
+        # Use a Bool temporarily to enable access to the submission page
+        if current_user.is_anonymous:
+            allow_submission = False
+        else:
+            if current_user.username == 'humebc':
+                # Only enable for me at the moment
+                allow_submission = True
+            else:
+                allow_submission = False
         return render_template(
             'index.html', published_studies=published_studies,
             user_unpublished_studies=user_unpublished_studies, resource_info_dict=resource_info_dict,
-            user_pending_submissions=user_pending_submissions)
+            user_pending_submissions=user_pending_submissions, allow_submission=allow_submission)
 
 def get_spuser_by_name_from_orm_spuser_list(user_to_match):
     """ A sort of wrapper method that gets an ORM object that is the SPUser object from
@@ -268,7 +277,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/submission', methods=['GET', 'POST'])
 @login_required
-def upload_file():
+def upload_data():
     if request.method == 'GET':
         return render_template('submission.html')
 
