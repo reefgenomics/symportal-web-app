@@ -3,7 +3,7 @@ from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user, login_required
-from sp_app.models import User, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
+from sp_app.models import User, Study, SPUser, Submission
 from werkzeug.urls import url_parse
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
@@ -22,6 +22,7 @@ import ntpath
 # Once this variable is set, we can work with the ORM objects for the remainder of the routes.py
 ALL_STUDIES = Study.query.all()
 SP_USERS = SPUser.query.all()
+ALL_SUBMISSION = Submission.query.all()
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
@@ -34,19 +35,23 @@ def index():
         try:
             sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
             user_unpublished_studies = [study for study in ALL_STUDIES if study.is_published is False and study.display_online is True and sp_user in study.users]
+            user_pending_submissions = [sub for sub in ALL_SUBMISSION if sub.user.id == sp_user.id]
         except AttributeError as e:
             # Anonymous user
             user_unpublished_studies = []
+            user_pending_submissions = []
         except NoResultFound:
             # We should never get here as we have checked for this at the login route.
             logout_user()
             return redirect(url_for('index'))
-
         # Finally get the resource_info_dict that is jsoned out and pass this in
         json_resource_info_dict_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'resources', 'resource_info.json')
         with open(json_resource_info_dict_path, 'r') as f:
             resource_info_dict = dict(json.load(f))
-        return render_template('index.html', published_studies=published_studies, user_unpublished_studies=user_unpublished_studies, resource_info_dict=resource_info_dict)
+        return render_template(
+            'index.html', published_studies=published_studies,
+            user_unpublished_studies=user_unpublished_studies, resource_info_dict=resource_info_dict,
+            user_pending_submissions=user_pending_submissions)
 
 def get_spuser_by_name_from_orm_spuser_list(user_to_match):
     """ A sort of wrapper method that gets an ORM object that is the SPUser object from

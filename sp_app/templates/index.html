@@ -370,25 +370,25 @@
                             {% if ups.transfer_to_web_server_date_time %}
                                 <td label="Status">Complete</td>
                                 <td label="Last_update">{{ups.transfer_to_web_server_date_time}}</td>
-                            {% if ups.study_output_complete_date_time %}
+                            {% elif ups.study_output_complete_date_time %}
                                 <td label="Status">Awaiting transfer to web server</td>
                                 <td label="Last_update">{{ups.study_output_complete_date_time}}</td>
-                            {% if ups.study_output_started_date_time %}
+                            {% elif ups.study_output_started_date_time %}
                                 <td label="Status">Study output in progress</td>
                                 <td label="Last_update">{{ups.study_output_started_date_time}}</td>
-                            {% if ups.analysis_complete_date_time %}
+                            {% elif ups.analysis_complete_date_time %}
                                 <td label="Status">Awaiting study output</td>
                                 <td label="Last_update">{{ups.analysis_complete_date_time}}</td>
-                            {% if ups.analysis_started_date_time %}
+                            {% elif ups.analysis_started_date_time %}
                                 <td label="Status">Analysis in progress</td>
                                 <td label="Last_update">{{ups.analysis_started_date_time}}</td>
-                            {% if ups.loading_complete_date_time %}
+                            {% elif ups.loading_complete_date_time %}
                                 <td label="Status">Awaiting analysis</td>
                                 <td label="Last_update">{{ups.loading_complete_date_time}}</td>
-                            {% if ups.loading_started_date_time %}
+                            {% elif ups.loading_started_date_time %}
                                 <td label="Status">Data loading in progress</td>
                                 <td label="Last_update">{{ups.loading_started_date_time}}</td>
-                            {% if ups.transfer_to_framework_server_date_time %}
+                            {% elif ups.transfer_to_framework_server_date_time %}
                                 <td label="Status">Awaiting data loading</td>
                                 <td label="Last_update">{{ups.transfer_to_framework_server_date_time}}</td>
                             {% else %}
