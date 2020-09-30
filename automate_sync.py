@@ -347,6 +347,10 @@ class AutomateSync:
         # Now its time to process them
         # 1 - mv the html/study.js file out from in the html directory.
         shutil.move(os.path.join(local_data_dir, 'html', 'study_data.js'), os.path.join(local_data_dir, 'study_data.js'))
+        # 1b if this is a loading output (i.e. no analysis) then delete the non_sym_and_size_violation_sequences
+        # directory so that we don't take up valuable space
+        if os.path.exists(os.path.join(local_data_dir, 'non_sym_and_size_violation_sequences')):
+            shutil.rmtree(os.path.join(local_data_dir, 'non_sym_and_size_violation_sequences'))
         # 2 - zip into one file that we will temporarily hold in the base data directory
         # 3 - at the same time create an idividual zip of the file
         # https://thispointer.com/python-how-to-create-a-zip-archive-from-multiple-files-or-directory/
@@ -414,6 +418,9 @@ class AutomateSync:
                     self.sftp_client.get(os.path.join(remote, get_file), os.path.join(local, get_file))
             else:
                 # Then this is a directory and we need to drop into it after creating it
+                # Skip it if it is the non_sym_and_size_violation_sequences dir
+                if get_file == 'non_sym_and_size_violation_sequences':
+                    continue
                 os.makedirs(os.path.join(local, get_file), exist_ok=True)
                 self._get_all(remote=os.path.join(remote, get_file), local=os.path.join(local, get_file))
         return
