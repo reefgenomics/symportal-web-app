@@ -39,6 +39,17 @@ class AddedFilesError(Exception):
     def __str__(self):
         return str(self.message)
 
+class UploadedFilesError(Exception):
+    """
+    Raised when something has gone wrong when uploading seq files to the server
+    """
+    def __init__(self, message, data):
+        self.message = message
+        self.data = data
+
+    def __str__(self):
+        return str(self.message)
+
 class DatasheetChecker:
     """
     This class is responsible for checking the format of the datasheet and also for checking the contents

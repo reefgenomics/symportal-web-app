@@ -315,7 +315,7 @@ $(document).ready(function() {
     };
     var myDropzone = new Dropzone("div#dropZone", {
         url: "/_check_submission",
-        parallelUploads: 20,
+        parallelUploads: 4,
         previewTemplate: previewTemplate,
         autoQueue: false, // Make sure the files aren't queued until manually added
         previewsContainer: "#previews", // Define the container to display the previews
@@ -365,6 +365,7 @@ $(document).ready(function() {
                 }
             }else{
                 // TODO this needs to be implemented. This is after a successful upload of seq files.
+                let foo = 'bar';
             }
 
         },
@@ -394,8 +395,9 @@ $(document).ready(function() {
             // If this.files.length > 1 then it is final upload of seq data
             if (this.files.length > 1){
                 // Then this is a submission of the sequencing datafiles and we want to send up the datasheetfile name
-                // TODO we are here.
+                current_datasheet_filename = document.querySelector("#datasheet_filename").getAttribute("data-datasheet-filename");
                 formData.append("datasheet_filename", current_datasheet_filename);
+                formData.append("add_or_upload", "upload");
             }else{
                 // length is one. we just send it as it is without adding additional data.
             }
@@ -444,7 +446,7 @@ $(document).ready(function() {
         hide_staging_table();
     }
 
-    document.querySelector("#actions .start").onclick = function() {
+    document.querySelector("#start_upload_btn").onclick = function() {
       myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
     };
 

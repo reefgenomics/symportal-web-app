@@ -8,10 +8,11 @@ from werkzeug.urls import url_parse
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
-from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError, AddedFilesError
+from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError, AddedFilesError, UploadedFilesError
 import shutil
 import traceback
 import ntpath
+import pandas as pd
 
 # As we start to work with the remote database we will want to minimise calls to it.
 # As such we will make an initial call to get all studies
@@ -279,22 +280,31 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @login_required
 def upload_data():
     if request.method == 'GET':
-        return render_template('submission.html')
+        # Check to see that the user requesting the page is allowed to perform an upload
+        # I.e. to prevent users by passing navigation controls
+        if current_user.is_anonymous:
+            return redirect(url_for('index'))
+        if current_user.username == 'humebc':
+            return render_template('submission.html')
+        else:
+            return redirect(url_for('index'))
 
 @app.route('/_check_submission', methods=['POST'])
 @login_required
 def _check_submission():
-    """This is where the AJAX requests are sent when a user clicks the
-    Add datasheet or Add seq files.
-    We have sent up a jsonified object that contains keys of datasheet_data, files or add_or_upload
-    We can tell what sort of checks we should be doing based on the value of
-    datasheet_data and add_or_upload. If the value is '' and add_or_upload is 'add'
-    then we know we should only be looking for the user to have submitted a single *.xlsx or .csv. This is all we will
-    be checking at this point."""
-    if request.form:
-    # Then this is checking files in the staged area
+    """
+    This is called when a user selects a new data sheet or new seq files.
+    This is also called when a user clicks the #start_upload_btn, to upload either the datasheet or
+    the seq files.
+    """
+    if not request.files:
+    # Then this is checking files in the staged area, i.e. files have been added (selected from the users OS file
+    # system) or removed from the staging area.
+        # We have created a data_dict json object and sent it up with the form.
         data_dict = json.loads(list(request.form.keys())[0])
         if data_dict["add_or_upload"] == "add" and data_dict["datasheet_data"] == "":
+            # Then the user has selected a datasheet from their OS file system and we do very basic checks
+            # to see that it is a single file and that it has the correct extension
             if len(data_dict["files"]) != 1:
                 response = {
                     "check_type": "datasheet",
@@ -325,6 +335,8 @@ def _check_submission():
                 return jsonify(response)
         else:
             # Checking sequencing files that are in the staged area
+            # Here we are checking to see that the currently staged seq files match those listed in the
+            # datasheet and that there are no other errors with the datasheet and seq files
             try:
                 datasheet_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username, data_dict["datasheet_data"])
                 dc = DatasheetChecker(
@@ -405,7 +417,6 @@ def _check_submission():
             # If the general checking fails then we will output the errors to show where it failed.
             # TODO display a spinner when we send it up and switch it off once checking is complete
             # can set a delay of 1 sec or something.
-            # TODO catch unhandled errors during the init of the DatasheetChecker
             try:
                 dc = DatasheetChecker(
                     request=request,
@@ -483,7 +494,118 @@ def _check_submission():
         else:
             # Then we are handling the upload of sequence data that has already been through the checking.
             # At this point we will be saving files doing final checks and then sending back good news to the user
-            raise NotImplementedError
+            # Here we want to save all of the files to the local users directory
+
+            # 1 - Check that they have not already been saved
+            # 2 - save the files.
+            # 3 - Check to see if all files are now saved
+            # If they are then create Submission object
+            # else return data that will allow us to update the staging area status
+            # 4 - finally have this all wrapped in a try to catch an error.
+            # Here I forsee 3 response types
+            # 1 - Error of some sort
+            # 2 - response after saving some files
+            # 3 - Response after saving all files.
+
+            # TODO implement the ability to upload an md5sum file that can be verified
+
+            # Create a pending submission objects
+            # TODO implement checks for unique files, I.e. md5sum and also the unique name of sequencing runs
+
+            # TODO setup and send up the extra form that allows users to add a title and location to the
+            #  submission object. This information will be used in for the Study and Dataset objects too.
+            try:
+                df, user_upload_path = _load_data_sheet_df()
+
+                # get a list of file names that should be there
+                # check that each of the four uploaded files are in the datasheet
+                uploaded_filename_list = [str(file) for file in request.files]
+                saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('fastq.gz')]
+                filenames_in_datasheet = list(df['fastq_fwd_file_name']).extend(list(df['fastq_rev_file_name']))
+                for _filename in uploaded_filename_list:
+                    if _filename not in filenames_in_datasheet:
+                        raise UploadedFilesError(f'{_filename} is uploaded but not found in the datasheet', data=None)
+                    if _filename not in saved_files:
+                        # Then save the file
+                        file = request.files.get(_filename)
+                        secure_filename = secure_filename(file.filename)
+                        file_path = os.path.join(user_upload_path, secure_filename)
+                        file.save(file_path)
+
+                # Now check to see if this batch of uploads has completed the uploads or whether files
+                # still remain to be loaded.
+                saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('fastq.gz')]
+                if set(saved_files) == set(filenames_in_datasheet):
+                    # TODO we are going to need to make this more water tight and find a diffrent event when all of
+                    # the files should have been received and check that this is indeed true
+                    # We may have to do this as a seperate ajax call.
+                    # Then we have finished we have all of the files
+                    # Create a submission object
+                    # TODO make the submission object.
+                    # new_submission = Submission()
+                    # Return a completed response
+                    response = {
+                        'error': False,
+                        'message': '<strong class="text-success">UPLOAD COMPLETE</strong><br>'
+                                   'your submission status is: <strong>pending.</strong><br>'
+                                   'Please check your homepage for status updates on your submission.',
+                        "response_type": "complete",
+                        "border_class": "border-success"
+                    }
+                    return jsonify(response)
+                else:
+                    # Then this is a partial completion of the upload and we will want to send back information
+                    # that allows the updating of the staged area to show that the files have been uploaded.
+                    # Something like an update to the status and a green outline to the cell.
+                    response = {
+                        'error': False,
+                        "response_type": "partial",
+                        "file_list": uploaded_filename_list
+                    }
+                    return jsonify(response)
+
+
+            except Exception:
+                # Catch any unhandled errors and present on to the user with a full traceback of the error and
+                # a 'please contact us' message
+                tb = traceback.format_exc().replace("\n", "<br>")
+                response = {
+                    'error': True,
+                    'message': '<strong class="text-danger">ERROR: an unexpected error has occured when trying to '
+                               'upload your sequencing files.</strong><br>'
+                               'Please try again.<br>'
+                               'If the error persists, please get in contact at:<br>'
+                               '&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#099;&#099;&#104;&#117;&#109;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;<br>'
+                               f'The full backend traceback is:<br><br>{tb}',
+                    "error_type": "unhandled_error",
+                    "response_type": "datasheet",
+                    "border_class": "border-danger"
+                }
+
+                return jsonify(response)
+
+
+def _load_data_sheet_df():
+    # Load the datasheet as a df
+    user_upload_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username)
+    datasheet_path = os.path.join(user_upload_path, request.form['datasheet_filename'])
+    if datasheet_path.endswith('.xlsx'):
+        df = pd.read_excel(
+            io=datasheet_path, header=0, usecols='A:N', skiprows=[0])
+    elif datasheet_path.endswith('.csv'):
+        with open(datasheet_path, 'r') as f:
+            datasheet_as_file = [line.rstrip() for line in f]
+        if datasheet_as_file[0].split(',')[0] == 'sample_name':
+            df = pd.read_csv(
+                filepath_or_buffer=datasheet_path)
+        else:
+            df = pd.read_csv(
+                filepath_or_buffer=datasheet_path, skiprows=[0])
+    else:
+        raise RuntimeError(f'Data sheet: {datasheet_path} is in an unrecognised format. '
+                           f'Please ensure that it is either in .xlsx or .csv format.')
+    return df, user_upload_path
+
 
 @app.route('/_reset_submission', methods=['POST'])
 @login_required
