@@ -5,7 +5,6 @@ from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user, login_required
 from sp_app.models import User, Study, SPUser, Submission
 from werkzeug.urls import url_parse
-from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 import json
 from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError, AddedFilesError, UploadedFilesError
@@ -13,6 +12,8 @@ import shutil
 import traceback
 import ntpath
 import pandas as pd
+from werkzeug.utils import secure_filename
+from datetime import datetime
 
 # As we start to work with the remote database we will want to minimise calls to it.
 # As such we will make an initial call to get all studies
@@ -519,17 +520,18 @@ def _check_submission():
 
                 # get a list of file names that should be there
                 # check that each of the four uploaded files are in the datasheet
-                uploaded_filename_list = [str(file) for file in request.files]
+                uploaded_filename_dict = {request.files[str(file_key)].filename: str(file_key) for file_key in request.files}
                 saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('fastq.gz')]
-                filenames_in_datasheet = list(df['fastq_fwd_file_name']).extend(list(df['fastq_rev_file_name']))
-                for _filename in uploaded_filename_list:
+                filenames_in_datasheet = list(df['fastq_fwd_file_name'])
+                filenames_in_datasheet.extend(list(df['fastq_rev_file_name']))
+                for _filename in uploaded_filename_dict.keys():
                     if _filename not in filenames_in_datasheet:
                         raise UploadedFilesError(f'{_filename} is uploaded but not found in the datasheet', data=None)
                     if _filename not in saved_files:
                         # Then save the file
-                        file = request.files.get(_filename)
-                        secure_filename = secure_filename(file.filename)
-                        file_path = os.path.join(user_upload_path, secure_filename)
+                        file = request.files.get(uploaded_filename_dict[_filename])
+                        secured_filename = secure_filename(file.filename)
+                        file_path = os.path.join(user_upload_path, secured_filename)
                         file.save(file_path)
 
                 # Now check to see if this batch of uploads has completed the uploads or whether files
@@ -538,20 +540,43 @@ def _check_submission():
                 if set(saved_files) == set(filenames_in_datasheet):
                     # TODO we are going to need to make this more water tight and find a diffrent event when all of
                     # the files should have been received and check that this is indeed true
-                    # We may have to do this as a seperate ajax call.
+                    # We may have to do this as a separate ajax call.
                     # Then we have finished we have all of the files
                     # Create a submission object
                     # TODO make the submission object.
-                    # new_submission = Submission()
+                    # The submission name will be datetime string with the username appended
+                    # NB we will temporarily se framework_local_dir_path to the submission name as I don't want
+                    # to hard code in the zygote path into this code. We will update this once we transfer to
+                    # Zygote or whichever server is hosting the framework.
+                    sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+                    dt_string = str(datetime.utcnow()).split('.')[0].replace('-','').replace(' ','T').replace(':','')
+                    submission_name = f"{dt_string}_{sp_user.name}"
+                    new_submission = Submission(
+                        name=submission_name, web_local_dir_path=user_upload_path, progress_status='submitted',
+                        submitting_user_id=sp_user.id, number_samples=len(df.index),
+                        framework_local_dir_path=submission_name, submission_date_time=dt_string
+                    )
+                    db.session.add(new_submission)
+                    db.session.commit()
                     # Return a completed response
                     response = {
                         'error': False,
                         'message': '<strong class="text-success">UPLOAD COMPLETE</strong><br>'
-                                   'your submission status is: <strong>pending.</strong><br>'
-                                   'Please check your homepage for status updates on your submission.',
-                        "response_type": "complete",
+                                   'Your submission status is: <strong>SUBMITTED</strong><br>'
+                                   'The following Submission Object was created:<br><br>'
+                                   f'submission.id:{new_submission.id}<br>'
+                                   f'submission.name:{new_submission.name}<br>'
+                                   f'submission.submitting_user_id:{sp_user.id}<br>'
+                                   f'submission.submitting_user_name:{sp_user.name}<br>'
+                                   f'submission.status:{new_submission.progress_status}<br>'
+                                   f'submission.submission_date_time:{new_submission.submission_date_time}<br><br>'
+                                   'Please check your homepage for status updates.<br>'
+                                   'This submission form has been reset.',
+                        "complete_partial": "complete",
+                        "response_type": "seq_file_upload",
                         "border_class": "border-success"
                     }
+
                     return jsonify(response)
                 else:
                     # Then this is a partial completion of the upload and we will want to send back information
@@ -559,26 +584,27 @@ def _check_submission():
                     # Something like an update to the status and a green outline to the cell.
                     response = {
                         'error': False,
-                        "response_type": "partial",
-                        "file_list": uploaded_filename_list
+                        "complete_partial": "partial",
+                        "file_list": list(uploaded_filename_dict.keys()),
+                        "response_type": "seq_file_upload"
                     }
                     return jsonify(response)
 
 
-            except Exception:
+            except Exception as e:
                 # Catch any unhandled errors and present on to the user with a full traceback of the error and
                 # a 'please contact us' message
                 tb = traceback.format_exc().replace("\n", "<br>")
                 response = {
                     'error': True,
-                    'message': '<strong class="text-danger">ERROR: an unexpected error has occured when trying to '
+                    'message': '<strong class="text-danger">ERROR: an unhandled error has occurred when trying to '
                                'upload your sequencing files.</strong><br>'
                                'Please try again.<br>'
                                'If the error persists, please get in contact at:<br>'
                                '&#098;&#101;&#110;&#106;&#097;&#109;&#105;&#110;&#099;&#099;&#104;&#117;&#109;&#101;&#064;&#103;&#109;&#097;&#105;&#108;&#046;&#099;&#111;&#109;<br>'
                                f'The full backend traceback is:<br><br>{tb}',
                     "error_type": "unhandled_error",
-                    "response_type": "datasheet",
+                    "response_type": "seq_file_upload",
                     "border_class": "border-danger"
                 }
 

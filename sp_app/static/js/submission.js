@@ -363,12 +363,34 @@ $(document).ready(function() {
                     // Once they have been selected we will check them against the datasheet that has been uploaded
                     progress_user_to_seq_file_select(response);
                 }
-            }else{
-                // TODO this needs to be implemented. This is after a successful upload of seq files.
-                let foo = 'bar';
+            }else if (response.response_type == 'seq_file_upload'){
+                // There are three options here.
+                // First there is error True or error False
+                // If error is True then we need to report the error
+                // If no error then we need to check the value of key "complete_partial"
+                // This will either be "complete" or "partial"
+                // Partial means that we have uploaded some but not all of the sequencing files successfully to
+                // the server. Complete means that we have uploaded all of the seq files.
+                if (response.error){
+                    // An error has occurred.
+                    reset_submission_buttons_and_display_message(response.message, response.border_class);
+                }else{
+                    // No error.
+                    // Check to see if partial or complete upload
+                    if (response.complete_partial == 'partial'){
+                        // There are still files remaining that need to be uploaded
+                        // The completed files will be given a green background by the CSS
+                        // There is nothing else to do.
+                    }else if (response.complete_partial == 'complete'){
+                        // All files have now been successfully uploaded and a Submission object has been created
+                        // The response message will tell that submission is complete, it will also
+                        // display key attributes of the created Submission object.
+                        reset_submission_buttons_and_display_message(response.message, response.border_class);
+                    }
+                }
             }
-
         },
+
         addedfiles: function(files){
             send_files_for_checking();
         },
@@ -400,10 +422,11 @@ $(document).ready(function() {
                 formData.append("add_or_upload", "upload");
             }else{
                 // length is one. we just send it as it is without adding additional data.
+                let foo = 'bar';
             }
 
         }
-        });
+    });
 
     function reset_submission_buttons_and_display_message(message, border_class){
         // There are multiple times when we want to essentially start again with the submission process
