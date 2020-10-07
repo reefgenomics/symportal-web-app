@@ -39,6 +39,24 @@ $(document).ready(function() {
         document.querySelector("#staging_table").classList.add("visible")
     }
 
+    function reset_datasheet_filename(){
+        // Hide the DIV that contains the name of the datasheet file name
+        let datasheet = document.querySelector("#datasheet_filename");
+        datasheet.textContent = "Datasheet: ";
+        datasheet.setAttribute("data-datasheet-filename", "");
+        datasheet.classList.remove("visible");
+        datasheet.classList.add("invisible");
+
+    }
+
+    function set_datasheet_filename(filename){
+        let datasheet = document.querySelector("#datasheet_filename");
+        datasheet.classList.remove("invisible");
+        datasheet.classList.add("visible");
+        datasheet.innerHTML = `<strong>Datasheet:</strong> ${filename}`;
+        datasheet.setAttribute("data-datasheet-filename", `${filename}`);
+    }
+
     function send_files_for_checking(){
 
         // Functions for only the send_files_for_checking function
@@ -330,8 +348,7 @@ $(document).ready(function() {
             function progress_user_to_seq_file_select(response){
                 // The following actions will progress the user
                 // Change the datasheet label to indicate the datasheet we are working with
-                document.querySelector("#datasheet_filename").textContent = `Datasheet: ${response.datasheet_filename}`;
-                document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename", `${response.datasheet_filename}`);
+                set_datasheet_filename(response.datasheet_filename);
                 // Change the text of the Select datasheet to select seqfiles
                 document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select seq files';
                 // Enable this button
@@ -453,8 +470,7 @@ $(document).ready(function() {
         document.querySelector("#start_upload_btn").setAttribute("disabled", "");
         document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload datasheet';
         // Change the text and attribute of the Datasheet indicator
-        document.querySelector("#datasheet_filename").textContent = "Datasheet: ";
-        document.querySelector("#datasheet_filename").setAttribute("data-datasheet-filename", "");
+        reset_datasheet_filename();
         // Make feedback invisible
         if (message){
             display_feedback(message, border_class);
