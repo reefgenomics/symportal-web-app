@@ -37,7 +37,7 @@ def index():
         try:
             sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
             user_unpublished_studies = [study for study in ALL_STUDIES if study.is_published is False and study.display_online is True and sp_user in study.users]
-            user_pending_submissions = [sub for sub in ALL_SUBMISSION if sub.user.id == sp_user.id]
+            user_pending_submissions = [sub for sub in ALL_SUBMISSION if sub.submitting_user_id == sp_user.id]
         except AttributeError as e:
             # Anonymous user
             user_unpublished_studies = []

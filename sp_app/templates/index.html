@@ -358,12 +358,10 @@
     {% if user_pending_submissions %}
         <section class="bg-light" >
             <table id="pending_submissions_table" class="table table-striped table-bordered">
-                <caption>Your unpublished analyses</caption>
+                <caption>Your pending submissions</caption>
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Title</th>
-                        <th>Location</th>
                         <th>#Samples</th>
                         <th>Submitted</th>
                         <th>Status</th>
@@ -374,8 +372,6 @@
                     {% for ups in user_pending_submissions %}
                         <tr>
                             <td label="Name">{{ ups.name }}</td>
-                            <td label="Title">{{ ups.title }}</td>
-                            <td label="Location">{{ ups.location }}</td>
                             <td label="#Samples">{{ ups.number_samples }}</td>
                             <td label="Submitted">{{ ups.submission_date_time }}</td>
                             {% if ups.transfer_to_web_server_date_time %}

@@ -290,7 +290,7 @@ caption{
     margin-right: auto;
 }
 
-#unpublished_articles_table_info, #resources_table_info, #published_articles_table_info{
+#unpublished_articles_table_info, #resources_table_info, #published_articles_table_info, #pending_submissions_table{
     padding-top: 0;
 }
 
