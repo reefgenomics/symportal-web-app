@@ -554,22 +554,26 @@ def _check_submission():
                     # submission specific directory.
                     submission_dir = os.path.join(user_upload_path, submission_name)
                     os.makedirs(submission_dir, exist_ok=False)
-                    md5sum = []
-                    for root, dirs, files in os.walk(user_upload_path):
-                        for filename in files:
-                            shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
-                            # capture the md5sum and add to file
-                            # NB it was a lot of effor to get this working. The shell expansion was not working
-                            # so we now do it file by file (even when using shell=True) and the fact that
-                            # md5sum is an alias on the mac was also confusing things. So I advise you don't try to
-                            # spend more time on this further.
-                            try:
-                                md5sum.append(subprocess.run(['md5sum', os.path.join(submission_dir, filename)],
-                                                             capture_output=True).stdout.decode("utf-8"))
-                            except FileNotFoundError:
-                                md5sum.append(subprocess.run(['md5', '-r', os.path.join(submission_dir, filename)], capture_output=True).stdout.decode("utf-8"))
-                            foo = 'bar'
-                        break
+                    with open(os.path.join(submission_dir, f'{submission_name}.md5sum'), 'w') as f:
+                        for root, dirs, files in os.walk(user_upload_path):
+                            for filename in files:
+                                shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
+                                # capture the md5sum and add to file
+                                # NB it was a lot of effor to get this working. The shell expansion was not working
+                                # so we now do it file by file (even when using shell=True) and the fact that
+                                # md5sum is an alias on the mac was also confusing things. So I advise you don't try to
+                                # spend more time on this further.
+                                try:
+                                    f.write(subprocess.run(['md5sum', os.path.join(submission_dir, filename)],
+                                                                 capture_output=True).stdout.decode("utf-8"))
+                                except FileNotFoundError:
+                                    f.write(
+                                        subprocess.run(
+                                            ['md5', '-r', os.path.join(submission_dir, filename)],
+                                            capture_output=True
+                                        ).stdout.decode("utf-8")
+                                    )
+                            break
 
                     new_submission = Submission(
                         name=submission_name, web_local_dir_path=user_upload_path, progress_status='submitted',
