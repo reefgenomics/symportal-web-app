@@ -194,6 +194,10 @@ class Submission(db.Model):
     study_output_started_date_time = db.Column(db.String(25), nullable=True)
     study_output_complete_date_time = db.Column(db.String(25), nullable=True)
     transfer_to_web_server_date_time = db.Column(db.String(25), nullable=True)
+    # Whether this submission should be going into an analysis or not
+    # I.e. if it contains seawater samples or something similar then it should not be going into analysis
+    # conservatively set as False
+    for_analysis = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class DataAnalysis(db.Model):
