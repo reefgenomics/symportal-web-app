@@ -125,7 +125,7 @@ class DatasheetChecker:
         for sample_name in self.sample_meta_info_df.index:
             fwd_str = self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name'].rstrip().lstrip()
             rev_str = self.sample_meta_info_df.at[sample_name, 'fastq_rev_file_name'].rstrip().lstrip()
-            if (not fwd_str.endswith('fastq.gz')) or (not rev_str.endswith('fastq.gz')):
+            if (not fwd_str.endswith('fastq.gz') and not fwd_str.endswith('fq.gz')) or (not rev_str.endswith('fastq.gz') and not rev_str.endswith('fq.gz')):
 
                 raise DatasheetGeneralFormattingError(
                     message=f'<strong class="text-danger">Invalid file name.</strong><br>'
