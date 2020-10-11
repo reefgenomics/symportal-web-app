@@ -14,6 +14,8 @@ import ntpath
 import pandas as pd
 from werkzeug.utils import secure_filename
 from datetime import datetime
+import subprocess
+from subprocess import CalledProcessError
 
 # As we start to work with the remote database we will want to minimise calls to it.
 # As such we will make an initial call to get all studies
@@ -521,7 +523,7 @@ def _check_submission():
                 # get a list of file names that should be there
                 # check that each of the four uploaded files are in the datasheet
                 uploaded_filename_dict = {request.files[str(file_key)].filename: str(file_key) for file_key in request.files}
-                saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('fastq.gz')]
+                saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('q.gz')]
                 filenames_in_datasheet = list(df['fastq_fwd_file_name'])
                 filenames_in_datasheet.extend(list(df['fastq_rev_file_name']))
                 for _filename in uploaded_filename_dict.keys():
@@ -536,14 +538,10 @@ def _check_submission():
 
                 # Now check to see if this batch of uploads has completed the uploads or whether files
                 # still remain to be loaded.
-                saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('fastq.gz')]
+                saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('q.gz')]
                 if set(saved_files) == set(filenames_in_datasheet):
-                    # TODO we are going to need to make this more water tight and find a diffrent event when all of
-                    # the files should have been received and check that this is indeed true
-                    # We may have to do this as a separate ajax call.
                     # Then we have finished we have all of the files
                     # Create a submission object
-                    # TODO make the submission object.
                     # The submission name will be datetime string with the username appended
                     # NB we will temporarily se framework_local_dir_path to the submission name as I don't want
                     # to hard code in the zygote path into this code. We will update this once we transfer to
@@ -551,6 +549,28 @@ def _check_submission():
                     sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
                     dt_string = str(datetime.utcnow()).split('.')[0].replace('-','').replace(' ','T').replace(':','')
                     submission_name = f"{dt_string}_{sp_user.name}"
+                    # Now that we have a unique string for this submission, create a directory of this name
+                    # and move the files that are currently saved in the more generic user directory into this
+                    # submission specific directory.
+                    submission_dir = os.path.join(user_upload_path, submission_name)
+                    os.makedirs(submission_dir, exist_ok=False)
+                    md5sum = []
+                    for root, dirs, files in os.walk(user_upload_path):
+                        for filename in files:
+                            shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
+                            # capture the md5sum and add to file
+                            # NB it was a lot of effor to get this working. The shell expansion was not working
+                            # so we now do it file by file (even when using shell=True) and the fact that
+                            # md5sum is an alias on the mac was also confusing things. So I advise you don't try to
+                            # spend more time on this further.
+                            try:
+                                md5sum.append(subprocess.run(['md5sum', os.path.join(submission_dir, filename)],
+                                                             capture_output=True).stdout.decode("utf-8"))
+                            except FileNotFoundError:
+                                md5sum.append(subprocess.run(['md5', '-r', os.path.join(submission_dir, filename)], capture_output=True).stdout.decode("utf-8"))
+                            foo = 'bar'
+                        break
+
                     new_submission = Submission(
                         name=submission_name, web_local_dir_path=user_upload_path, progress_status='submitted',
                         submitting_user_id=sp_user.id, number_samples=len(df.index),
@@ -558,6 +578,7 @@ def _check_submission():
                     )
                     db.session.add(new_submission)
                     db.session.commit()
+
                     # Return a completed response
                     response = {
                         'error': False,
