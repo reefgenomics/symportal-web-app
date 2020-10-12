@@ -576,7 +576,7 @@ def _check_submission():
                             break
 
                     new_submission = Submission(
-                        name=submission_name, web_local_dir_path=user_upload_path, progress_status='submitted',
+                        name=submission_name, web_local_dir_path=submission_dir, progress_status='submitted',
                         submitting_user_id=sp_user.id, number_samples=len(df.index),
                         framework_local_dir_path=submission_name, submission_date_time=dt_string
                     )
@@ -589,12 +589,12 @@ def _check_submission():
                         'message': '<strong class="text-success">UPLOAD COMPLETE</strong><br>'
                                    'Your submission status is: <strong>SUBMITTED</strong><br>'
                                    'The following Submission Object was created:<br><br>'
-                                   f'submission.id:{new_submission.id}<br>'
-                                   f'submission.name:{new_submission.name}<br>'
-                                   f'submission.submitting_user_id:{sp_user.id}<br>'
-                                   f'submission.submitting_user_name:{sp_user.name}<br>'
-                                   f'submission.status:{new_submission.progress_status}<br>'
-                                   f'submission.submission_date_time:{new_submission.submission_date_time}<br><br>'
+                                   f'<strong>submission.id:</strong> {new_submission.id}<br>'
+                                   f'<strong>submission.name:</strong> {new_submission.name}<br>'
+                                   f'<strong>submission.submitting_user_id:</strong> {sp_user.id}<br>'
+                                   f'<strong>submission.submitting_user_name:</strong> {sp_user.name}<br>'
+                                   f'<strong>submission.status:</strong> {new_submission.progress_status}<br>'
+                                   f'<strong>submission.submission_date_time:</strong> {new_submission.submission_date_time}<br><br>'
                                    'Please check your homepage for status updates.<br>'
                                    'This submission form has been reset.',
                         "complete_partial": "complete",
@@ -666,8 +666,14 @@ def _reset_submission():
     Delete user upload dir. Recreate dir.
     """
     user_dir = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username)
-    if os.path.exists(user_dir):
-        shutil.rmtree(user_dir)
-    os.makedirs(user_dir)
+    # We want to delete the files that ae in the main user_dir, but not the sub directories
+    # that will contain submitted files that are waiting for transfer to the framework server
+    for root, dirs, files in os.walk(user_dir):
+        for fn in files:
+            os.remove(fn)
+        # Exit out before walking further down the tree
+        break
+    if not os.path.isdir(user_dir):
+        os.makedirs(user_dir)
     response = "user files deleted"
     return response
