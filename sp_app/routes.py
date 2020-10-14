@@ -670,7 +670,7 @@ def _reset_submission():
     # that will contain submitted files that are waiting for transfer to the framework server
     for root, dirs, files in os.walk(user_dir):
         for fn in files:
-            os.remove(fn)
+            os.remove(os.path.join(user_dir, fn))
         # Exit out before walking further down the tree
         break
     if not os.path.isdir(user_dir):
