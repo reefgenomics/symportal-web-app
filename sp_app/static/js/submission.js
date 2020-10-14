@@ -192,7 +192,10 @@ $(document).ready(function() {
             let depth_missing = response.data.depth_missing;
 
 
-            let message = "<strong>WARNING: some meta data fields are incomplete or causing format errors</strong><br><br>";
+            let message = "<strong>WARNING: some meta data fields are incomplete or causing format errors.</strong><br><br>";
+            message += "Your seq files can be submitted despite the above warnings.<br>"
+            message += "To begin uploading your seq files, click the 'Upload seq files' button.<br>"
+            message += "To act on any of the above warnings, click 'Reset' then upload your modified datasheet.<br><br>"
             if (taxonomy_missing.length > 0){
                 message += "The following samples are missing taxonomy data: <br>"
                 taxonomy_missing.forEach(function(sample_name){
@@ -244,9 +247,7 @@ $(document).ready(function() {
                 });
                 message += "<br>"
             }
-            message += "Your seq files can be submitted despite the above warnings<br>"
-            message += "To begin uploading your seq files, click the 'Upload seq files' button.<br>"
-            message += "To act on any of the above warnings, click 'Reset' then upload your modified datasheet"
+
             display_feedback(message, response["border_class"]);
             // Enable the upload datasheet button
             document.querySelector("#start_upload_btn").removeAttribute("disabled");
@@ -407,7 +408,6 @@ $(document).ready(function() {
                 }
             }
         },
-
         addedfiles: function(files){
             send_files_for_checking();
         },
@@ -432,8 +432,16 @@ $(document).ready(function() {
             // (i.e. after having checked that only a single .csv/.xlsx has been uploaded or after checking that
             // all is in agreement between an uploaded datasheet and a set of sequencing files).
             // If this.files.length > 1 then it is final upload of seq data
+            function disable_buttons(){
+                document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+                document.querySelector("#fileinput-button").setAttribute("disabled", "");
+            }
             if (this.files.length > 1){
                 // Then this is a submission of the sequencing datafiles and we want to send up the datasheetfile name
+                // Disable all buttons while the upload is ongoing
+                // Remove any messages that are currently displayed
+                hide_feedback();
+                disable_buttons();
                 current_datasheet_filename = document.querySelector("#datasheet_filename").getAttribute("data-datasheet-filename");
                 formData.append("datasheet_filename", current_datasheet_filename);
                 formData.append("add_or_upload", "upload");
@@ -458,9 +466,13 @@ $(document).ready(function() {
         // This POST to the server will delete all user uploaded files that are currently held on the server
         // When calling this function, there will not always be data saved to the server but there is
         // no harm in completing this ajax request anyway.
+        let ajax_message = '';
         $.ajax({
                 type: 'POST',
-                url: "/_reset_submission"
+                url: "/_reset_submission",
+                success: function(file_list){
+                    // TODO Return a list of the files that were delted during the reset
+                }
                 });
 
         // Rename and enable select datasheet button
@@ -473,6 +485,8 @@ $(document).ready(function() {
         reset_datasheet_filename();
         // Make feedback invisible
         if (message){
+            // TODO Append the files deleted component of the messages.
+            // If the list is empty then say so.
             display_feedback(message, border_class);
         }else{
             hide_feedback();
@@ -486,12 +500,15 @@ $(document).ready(function() {
     }
 
     document.querySelector("#start_upload_btn").onclick = function() {
-      myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
+        // NB that the enqueueFiles function of the myDropzone will also fire the sendingmultiple event
+        // It is this event of the myDropzone where have put our code logic
+        // https://www.dropzonejs.com/#event-sending
+        myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
     };
 
     // Setup the reset button
     document.querySelector("#reset").onclick = function() {
-        reset_submission_buttons_and_display_message();
+        reset_submission_buttons_and_display_message("Submission reset.", "text-danger");
     };
 
 });
