@@ -555,6 +555,8 @@ def _check_submission():
                     submission_dir = os.path.join(user_upload_path, submission_name)
                     os.makedirs(submission_dir, exist_ok=False)
                     with open(os.path.join(submission_dir, f'{submission_name}.md5sum'), 'w') as f:
+                        # TODO make this more specific so that we only move over the files that are listed in the
+                        # datasheet and the datasheet itself
                         for root, dirs, files in os.walk(user_upload_path):
                             for filename in files:
                                 shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
@@ -574,6 +576,9 @@ def _check_submission():
                                         ).stdout.decode("utf-8")
                                     )
                             break
+                    # TODO after we've done the moving, delete any files that might remain in the generic
+                    # user directory
+
 
                     new_submission = Submission(
                         name=submission_name, web_local_dir_path=submission_dir, progress_status='submitted',
@@ -582,6 +587,9 @@ def _check_submission():
                     )
                     db.session.add(new_submission)
                     db.session.commit()
+
+                    # Refresh the database Submission objects so that the user sees updates on the homepage
+                    ALL_SUBMISSIONS = Submission.query.all()
 
                     # Return a completed response
                     response = {
