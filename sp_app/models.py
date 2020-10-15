@@ -199,6 +199,12 @@ class Submission(db.Model):
     # conservatively set as False
     for_analysis = db.Column(db.Boolean, nullable=False, default=False)
 
+    # The path to the directory in which the result files are output for:
+    # Framework server
+    framework_results_dir_path = db.Column(db.String(300), nullable=True)
+    # Web server
+    web_results_dir_path = db.Column(db.String(300), nullable=True)
+
 
 class DataAnalysis(db.Model):
     __bind_key__ = 'symportal_database'
