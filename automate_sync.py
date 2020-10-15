@@ -274,12 +274,12 @@ class AutomateSync:
                 self.sftp_client.mkdir(remote_web_data_dir)
                 self._put_all(remote=remote_web_data_dir, local=local_data_dir)
             
-            # Transfer up the bak only once.
-            if ntpath.basename(self.remote_bak_path) not in self.sftp_client.listdir(self.args.remote_web_bak_dir):
-                print(f'Transfering {os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))} to {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}\nThis may take some time...')
-                # Transfer up the .bak
-                self.sftp_client.put(os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path)), os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path)))
-                print('Transfer complete')
+        # Transfer up the bak only once.
+        if ntpath.basename(self.remote_bak_path) not in self.sftp_client.listdir(self.args.remote_web_bak_dir):
+            print(f'Transfering {os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))} to {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}\nThis may take some time...')
+            # Transfer up the .bak
+            self.sftp_client.put(os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path)), os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path)))
+            print('Transfer complete')
             
     def _update_sp_json_file(self, template_json_file_name):
         # For each sync object add the Study and User if not already contained to the published
