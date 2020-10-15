@@ -668,12 +668,13 @@ def _reset_submission():
     user_dir = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username)
     # We want to delete the files that ae in the main user_dir, but not the sub directories
     # that will contain submitted files that are waiting for transfer to the framework server
+    deleted_files = []
     for root, dirs, files in os.walk(user_dir):
         for fn in files:
             os.remove(os.path.join(user_dir, fn))
+            deleted_files.append(fn)
         # Exit out before walking further down the tree
         break
     if not os.path.isdir(user_dir):
         os.makedirs(user_dir)
-    response = "user files deleted"
-    return response
+    return jsonify(deleted_files)

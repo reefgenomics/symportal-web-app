@@ -466,37 +466,50 @@ $(document).ready(function() {
         // This POST to the server will delete all user uploaded files that are currently held on the server
         // When calling this function, there will not always be data saved to the server but there is
         // no harm in completing this ajax request anyway.
-        let ajax_message = '';
         $.ajax({
                 type: 'POST',
                 url: "/_reset_submission",
                 success: function(file_list){
-                    // TODO Return a list of the files that were delted during the reset
+                    // Rename and enable select datasheet button
+                    document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select datasheet';
+                    document.querySelector("#fileinput-button").removeAttribute("disabled");
+                    // Rename and disable upload datasheet button
+                    document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+                    document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload datasheet';
+                    // Change the text and attribute of the Datasheet indicator
+                    reset_datasheet_filename();
+                    // Make feedback invisible
+                    if (message){
+                        // Append the files deleted component of the messages.
+                        // If the list is empty then say so.
+                        if (file_list.length > 0){
+                            message += "<br>The following files were deleted from the server:</strong><br>";
+                            file_list.forEach(filename => message += `&emsp;&emsp;${filename}<br>` );
+                        }else{
+                            message += "<br>There were no files to delete from the server.</strong><br>";
+                        }
+                        display_feedback(message, border_class);
+                    }else{
+                        if (file_list.length > 0){
+                            let message = "<strong><br>The following files were deleted from the server:</strong><br>";
+                            for(var filename in file_list){
+                                message = `&emsp;&emsp;${filename}<br>`
+                            }
+                            display_feedback(message, "border-primary");
+                        }else{
+                            hide_feedback();
+                        }
+                    }
+
+                    // Disable the reset button
+                    document.querySelector("#reset").setAttribute("disabled", "");
+
+                    // Hide the staging table
+                    hide_staging_table();
                 }
-                });
+        });
 
-        // Rename and enable select datasheet button
-        document.querySelector("#fileinput-button").innerHTML = '<i class="fa fa-plus-circle"></i> Select datasheet';
-        document.querySelector("#fileinput-button").removeAttribute("disabled");
-        // Rename and disable upload datasheet button
-        document.querySelector("#start_upload_btn").setAttribute("disabled", "");
-        document.querySelector("#start_upload_btn").innerHTML = '<i class="fa fa-upload"></i> Upload datasheet';
-        // Change the text and attribute of the Datasheet indicator
-        reset_datasheet_filename();
-        // Make feedback invisible
-        if (message){
-            // TODO Append the files deleted component of the messages.
-            // If the list is empty then say so.
-            display_feedback(message, border_class);
-        }else{
-            hide_feedback();
-        }
 
-        // Disable the reset button
-        document.querySelector("#reset").setAttribute("disabled", "");
-
-        // Hide the staging table
-        hide_staging_table();
     }
 
     document.querySelector("#start_upload_btn").onclick = function() {
@@ -508,7 +521,7 @@ $(document).ready(function() {
 
     // Setup the reset button
     document.querySelector("#reset").onclick = function() {
-        reset_submission_buttons_and_display_message("Submission reset.", "text-danger");
+        reset_submission_buttons_and_display_message("<strong>Submission reset.</strong>", "border-primary");
     };
 
 });
