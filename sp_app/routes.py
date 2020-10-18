@@ -557,6 +557,7 @@ def _check_submission():
                     with open(os.path.join(submission_dir, f'{submission_name}.md5sum'), 'w') as f:
                         # TODO make this more specific so that we only move over the files that are listed in the
                         # datasheet and the datasheet itself
+                        # TODO rename the datasheet to a standard format
                         for root, dirs, files in os.walk(user_upload_path):
                             for filename in files:
                                 shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
@@ -579,11 +580,22 @@ def _check_submission():
                     # TODO after we've done the moving, delete any files that might remain in the generic
                     # user directory
 
+                    # Determine if the Submission object for_analysis is True or False
+                    # We will make the Submission for_analysis False if there are sample types of
+                    # sponge, other_animal_host, seawater, sediment, epiphytic or other
+                    sample_types = set(df['sample_type'].values)
+                    for_analysis = True
+                    for_analysis_falsifying_types = []
+                    for sample_type in 'sponge other_animal_host seawater sediment epiphytic other'.split():
+                        if sample_type in sample_types:
+                            for_analysis = False
+                            for_analysis_falsifying_types.append(sample_type)
 
                     new_submission = Submission(
                         name=submission_name, web_local_dir_path=submission_dir, progress_status='submitted',
                         submitting_user_id=sp_user.id, number_samples=len(df.index),
-                        framework_local_dir_path=submission_name, submission_date_time=dt_string
+                        framework_local_dir_path=submission_name, submission_date_time=dt_string,
+                        for_analysis=for_analysis
                     )
                     db.session.add(new_submission)
                     db.session.commit()
@@ -591,6 +603,7 @@ def _check_submission():
                     # Refresh the database Submission objects so that the user sees updates on the homepage
                     ALL_SUBMISSIONS = Submission.query.all()
 
+                    # TODO if for_analysis is False then report this in the message here
                     # Return a completed response
                     response = {
                         'error': False,
@@ -602,13 +615,29 @@ def _check_submission():
                                    f'<strong>submission.submitting_user_id:</strong> {sp_user.id}<br>'
                                    f'<strong>submission.submitting_user_name:</strong> {sp_user.name}<br>'
                                    f'<strong>submission.status:</strong> {new_submission.progress_status}<br>'
-                                   f'<strong>submission.submission_date_time:</strong> {new_submission.submission_date_time}<br><br>'
-                                   'Please check your homepage for status updates.<br>'
-                                   'This submission form has been reset.',
+                                   f'<strong>submission.submission_date_time:</strong> '
+                                   f'{new_submission.submission_date_time}<br><br>',
                         "complete_partial": "complete",
                         "response_type": "seq_file_upload",
                         "border_class": "border-success"
                     }
+
+                    #TODO also put up a warning pop up or something to tell the user that they will not be able to
+                    # run an analysis when they have uploaded their datasheet. This should be incorporated into the
+                    # checks for the datasheet after it is uploaded.
+                    if not for_analysis:
+                        # If for_analysis is False then warn the user of this so that they will not be expecting
+                        # ITS2 type profiles. It will likely be a good idea to include the for_analysis details
+                        # on the homepage Submissions table.
+                        response['message'] += 'At least one of your samples originates from a non-selective environment e.g. seawater<br>'
+                        response['message'] += 'As such, no ITS2 type profiles will be predicted ' \
+                                               'for this Submission<br>'
+                        response['message'] += 'Your samples will be run through the SymPortal Quality Control ' \
+                                               'pipeline producing a full set of sequence count tables ' \
+                                               'and associated similarity outputs<br><br>'
+
+                    response['message'] += 'Please check your homepage for status updates.<br>' \
+                                           'This submission form has been reset.'
 
                     return jsonify(response)
                 else:
