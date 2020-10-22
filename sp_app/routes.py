@@ -585,12 +585,13 @@ def _check_submission():
                     # sponge, other_animal_host, seawater, sediment, epiphytic or other
                     sample_types = set(df['sample_type'].values)
                     for_analysis = True
-                    for_analysis_falsifying_types = []
                     for sample_type in 'sponge other_animal_host seawater sediment epiphytic other'.split():
                         if sample_type in sample_types:
                             for_analysis = False
-                            for_analysis_falsifying_types.append(sample_type)
-
+                    # TODO allow a user other than the logged in user to be assigned to the submission.
+                    # In the case that the user doesn't already exist, create the user and password credentials
+                    # This will only be possible if admin. Also provide a dropdown menu for the admin of users.
+                    # If a new user is created output the user credentials to the admin in the response message.
                     new_submission = Submission(
                         name=submission_name, web_local_dir_path=submission_dir, progress_status='submitted',
                         submitting_user_id=sp_user.id, number_samples=len(df.index),
