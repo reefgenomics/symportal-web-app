@@ -20,13 +20,14 @@ This will be the signal for the symportal.org code to display these new Study ob
 """
 
 import sys
+import chron_config
 import os
 import subprocess
 import platform
 from sp_app import app, db
 from sp_app.models import Submission
 import paramiko
-from . import chron_config
+
 import shutil
 from zipfile import ZipFile
 from datetime import datetime
@@ -60,16 +61,7 @@ class TransferFrameworkToWeb:
 
         # Dynamics for convenience that will be updated with each Submission object
         self.submission_to_transfer = None
-        self.framework_source_dir = None
         self.web_dest_dir = None
-
-    def _update_submission_objects(self):
-        self.submission_to_transfer.associated_study.display_online = True
-        self.submission_to_transfer.associated_study.data_explorer = True
-        self.submission_to_transfer.progress_status = 'transfer_to_web_server_complete'
-        self.submission_to_transfer.transfer_to_web_server_date_time = self._get_date_time()
-        self.submission_to_transfer.associated_study.save()
-        self.submission_to_transfer.save()
 
     def transfer_and_prep(self):
         for sub in self.submissions_to_transfer:
@@ -77,8 +69,7 @@ class TransferFrameworkToWeb:
 
             # check to see if a directory already exists for the study in question
             self.web_dest_dir = os.path.join(
-                self.explorer_data_dir,
-                os.path.basename(self.submission_to_transfer.framework_results_dir_path)
+                self.explorer_data_dir, self.submission_to_transfer.name
             )
 
             if os.path.exists(self.web_dest_dir):
@@ -92,16 +83,23 @@ class TransferFrameworkToWeb:
 
                 # For the time being, we will simply delete the directory that is currently present
                 shutil.rmtree(self.web_dest_dir)
-                raise RuntimeError
-            else:
-                # We need to pull down the data and then process it
-                os.makedirs(self.web_dest_dir)
-                print(f'Pulling down data from {self.submission_to_transfer.framework_results_dir_path}')
-                self._get_all(remote=self.framework_source_dir, local=self.web_dest_dir)
-                print('Processing data for upload')
-                self._process_sp_output_data()
+            # We need to pull down the data and then process it
+            os.makedirs(self.web_dest_dir)
+            print(f'Pulling down data from {self.submission_to_transfer.framework_results_dir_path}')
+            self._get_all(remote=self.submission_to_transfer.framework_results_dir_path, local=self.web_dest_dir)
+            print('Processing data for upload')
+            self._process_sp_output_data()
 
             self._update_submission_objects()
+
+    def _update_submission_objects(self):
+        #TODO check out our model definitions.
+        self.submission_to_transfer.associated_study.display_online = True
+        self.submission_to_transfer.associated_study.data_explorer = True
+        self.submission_to_transfer.progress_status = 'transfer_to_web_server_complete'
+        self.submission_to_transfer.transfer_to_web_server_date_time = self._get_date_time()
+        self.submission_to_transfer.associated_study.save()
+        self.submission_to_transfer.save()
 
     def _process_sp_output_data(self):
         """
@@ -178,3 +176,6 @@ class TransferFrameworkToWeb:
         return str(
             datetime.utcnow()
         ).split('.')[0].replace('-', '').replace(' ', 'T').replace(':', '')
+
+tftw = TransferFrameworkToWeb()
+tftw.transfer_and_prep()
