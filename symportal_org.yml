@@ -6,6 +6,7 @@ dependencies:
   - astroid
   - ca-certificates
   - certifi
+  - colorama
   - click
   - flask
   - flask-login
@@ -27,6 +28,7 @@ dependencies:
   - mccabe
   - ncurses
   - openssl
+  - paramiko
   - pip
   - psycopg2
   - pylint

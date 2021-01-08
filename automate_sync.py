@@ -154,7 +154,7 @@ class AutomateSync:
         # the local version. We do not need to pull down the symportal_database as no changes have been made ot it
         # since it was pulled down.
         print('Getting app.db from remote web server')
-        self.sftp_client.get("/home/humebc/symportal.org/app.db", "/Users/humebc/Documents/symportal.org/app.db")
+        self.sftp_client.get("/home/humebc/symportal.org/app.db", "/Users/benjaminhume/Documents/symportal.org/app.db")
         print('Complete')
         
         # At this point we need to restore the .bak.
@@ -430,9 +430,9 @@ class AutomateSync:
         self.parser.add_argument(
             '--local_symportal_data_directory', 
             help='The base directory where the individual study directories are held on the local machine', 
-            default='/Users/humebc/Documents/symportal.org/sp_app/explorer_data')
+            default='/Users/benjaminhume/Documents/symportal.org/sp_app/explorer_data')
         self.parser.add_argument('--pem_file_path', help='Full path to the .pem file to connect to the AWS instance', default=None),
-        self.parser.add_argument('--local_bak_dir', help="Path to the directory on the local machine where the .bak file should be deposited", default="/Users/humebc/Documents/symportal.org/symportal_database_versions")
+        self.parser.add_argument('--local_bak_dir', help="Path to the directory on the local machine where the .bak file should be deposited", default="/Users/benjaminhume/Documents/symportal.org/symportal_database_versions")
         
         # Parameters for symportal_framework_server
         self.parser.add_argument(
