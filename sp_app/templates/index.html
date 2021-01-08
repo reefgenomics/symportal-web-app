@@ -362,6 +362,7 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>UID</th>
                         <th>#Samples</th>
                         <th>Submitted</th>
                         <th>Status</th>
@@ -372,6 +373,7 @@
                     {% for ups in user_pending_submissions %}
                         <tr>
                             <td label="Name">{{ ups.name }}</td>
+                            <td label="UID">{{ ups.id }} </td>
                             <td label="#Samples">{{ ups.number_samples }}</td>
                             <td label="Submitted">{{ ups.submission_date_time }}</td>
                             {% if ups.transfer_to_web_server_date_time %}
