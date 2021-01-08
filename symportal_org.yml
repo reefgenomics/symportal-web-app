@@ -28,6 +28,7 @@ dependencies:
   - ncurses
   - openssl
   - pandas
+  - paramiko
   - pip
   - psycopg2
   - pylint
