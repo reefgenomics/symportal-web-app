@@ -5,13 +5,18 @@ It will be responsible for transfering the output results from datasets/studies 
 output on the SymPortal framework over to the web server so that they can be displayed to the user.
 It will do much of the work that was previously done by the combination of the automate_sync.py
 and sync_db.py scripts. However, now that we are working with a single instance of the database via remote connection
-to the framework server, everything can be done in a a single script.
+to the framework server, everything can be done in a single script.
 
 This script will search for submission objects that have had results outputted for them. This will happen at two
-different points. For those Submission objects where for_analysis is False, they will have status
-framework_loading_complete. For those Submissions where for_analysis is True,
-they will have status framework_analysis_complete. In both cases, any Submission object will have the
-path of the output directory stored in framework_local_dir_path and the progress_status will be set to framework_output_complete.
+different points.
+1 - For those Submission objects where for_analysis is False, they will have been loaded
+into the database and an output completed.
+2 - For those Submissions where for_analysis is True, an analysis will have been conducted and then
+an output will have been gerenated.
+In both cases, any Submission object will have the
+path of the output directory stored in framework_local_dir_path and the progress_status
+will be set to framework_output_complete.
+
 This script will be responsible for pulling over this data to the web server, and processing it in preparation of
 use for the DataExplorer. Users should already have been created.
 
@@ -27,7 +32,6 @@ import platform
 from sp_app import app, db
 from sp_app.models import Submission
 import paramiko
-
 import shutil
 from zipfile import ZipFile
 from datetime import datetime
@@ -74,7 +78,7 @@ class TransferFrameworkToWeb:
 
             if os.path.exists(self.web_dest_dir):
                 # TODO possibility of checking to see if the directory contents is identical to
-                # wheat we are trying to pull down.
+                # what we are trying to pull down.
                 # TODO to do this we would need to produce an md5sum of the output directory and
                 # possibly assign this to the Submission object
                 # Then we could check here to see if the data that is already present is an exact match
