@@ -3,6 +3,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from sp_app import login
+from sqlalchemy.orm import relationship
 
 @login.user_loader
 def load_user(id):
@@ -41,6 +42,7 @@ class SPDataSet(db.Model):
     time_stamp = db.Column(db.String(100), nullable=False)
     loading_complete_time_stamp = db.Column(db.String(100), nullable=False)
     data_set_samples = db.relationship('DataSetSample', backref='dataset')
+
     def __str__(self):
         return self.name
     def __repr__(self):
@@ -127,6 +129,7 @@ class Study(db.Model):
     # compilation type Study objects will be made when a study is associated with DataSetSamples that are
     # not exactly represented by a single DataSet object
     study_type = db.Column(db.String(50), default="dataset_representative")
+    submission = relationship("Submission", back_populates="study")
     
     def __str__(self):
         return self.name
@@ -179,6 +182,10 @@ class Submission(db.Model):
     associated_dataset_id = db.Column(db.Integer, db.ForeignKey('dbApp_dataset.id'), nullable=True)
     # associated Study
     associated_study_id = db.Column(db.Integer, db.ForeignKey('dbApp_study.id'), nullable=True)
+    #https://docs.sqlalchemy.org/en/13/orm/tutorial.html#building-a-relationship
+    #NB it appears that sqlalchemy is smart enough to know that the associated_study_id
+    # attribute holds the id that allows the link of study to submission.
+    study = relationship("Study", back_populates="submission")
     # submitting User
     submitting_user_id = db.Column(db.Integer, db.ForeignKey('dbApp_user.id'), nullable=False)
     # number of samples

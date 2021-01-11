@@ -83,7 +83,7 @@ class TransferFrameworkToWeb:
                 # possibly assign this to the Submission object
                 # Then we could check here to see if the data that is already present is an exact match
                 # In which case no download needed.
-                # Else, delte what is currently here and redownload.
+                # Else, delete what is currently here and redownload.
 
                 # For the time being, we will simply delete the directory that is currently present
                 shutil.rmtree(self.web_dest_dir)
@@ -98,12 +98,11 @@ class TransferFrameworkToWeb:
 
     def _update_submission_objects(self):
         #TODO check out our model definitions.
-        self.submission_to_transfer.associated_study.display_online = True
-        self.submission_to_transfer.associated_study.data_explorer = True
+        self.submission_to_transfer.study.display_online = True
+        self.submission_to_transfer.study.data_explorer = True
         self.submission_to_transfer.progress_status = 'transfer_to_web_server_complete'
         self.submission_to_transfer.transfer_to_web_server_date_time = self._get_date_time()
-        self.submission_to_transfer.associated_study.save()
-        self.submission_to_transfer.save()
+        db.session.commit()
 
     def _process_sp_output_data(self):
         """
