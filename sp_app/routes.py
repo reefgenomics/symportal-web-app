@@ -26,7 +26,7 @@ from subprocess import CalledProcessError
 # Once this variable is set, we can work with the ORM objects for the remainder of the routes.py
 ALL_STUDIES = Study.query.all()
 SP_USERS = SPUser.query.all()
-ALL_SUBMISSION = Submission.query.all()
+ALL_SUBMISSIONS = Submission.query.all()
 
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
@@ -39,7 +39,7 @@ def index():
         try:
             sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
             user_unpublished_studies = [study for study in ALL_STUDIES if study.is_published is False and study.display_online is True and sp_user in study.users]
-            user_pending_submissions = [sub for sub in ALL_SUBMISSION if sub.submitting_user_id == sp_user.id]
+            user_pending_submissions = [sub for sub in ALL_SUBMISSIONS if sub.submitting_user_id == sp_user.id]
         except AttributeError as e:
             # Anonymous user
             user_unpublished_studies = []
@@ -602,6 +602,7 @@ def _check_submission():
                     db.session.commit()
 
                     # Refresh the database Submission objects so that the user sees updates on the homepage
+                    global ALL_SUBMISSIONS
                     ALL_SUBMISSIONS = Submission.query.all()
 
                     # TODO if for_analysis is False then report this in the message here
