@@ -119,22 +119,23 @@ class DatasheetChecker:
     def _check_valid_file_names(self):
         """
         Check that every file name cell has a valid fastq.gz filename listed in it
-        If a fastq file is listed explicitly warn that files must be compressed
+        If a fastq file is listed change this to a fastq.gz file extension.
         """
         self.sample_meta_info_df.set_index('sample_name', inplace=True)
         for sample_name in self.sample_meta_info_df.index:
             fwd_str = self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name'].rstrip().lstrip()
             rev_str = self.sample_meta_info_df.at[sample_name, 'fastq_rev_file_name'].rstrip().lstrip()
             if (not fwd_str.endswith('fastq.gz') and not fwd_str.endswith('fq.gz')) or (not rev_str.endswith('fastq.gz') and not rev_str.endswith('fq.gz')):
-
-                raise DatasheetGeneralFormattingError(
-                    message=f'<strong class="text-danger">Invalid file name.</strong><br>'
-                            f"A fwd and rev seq file must be provided for every sample<br>"
-                            f"All seq files must be in fastq.gz format.<br>"
-                            f"Please fix this problem and upload again.",
-                    data={"error_type": "invalid_file_format"}
-                )
-
+                if (not fwd_str.endswith('fastq') and not fwd_str.endswith('fq')) or (
+                        not rev_str.endswith('fastq') and not rev_str.endswith('fq')):
+                    raise DatasheetGeneralFormattingError(
+                        message=f'<strong class="text-danger">Invalid file name.</strong><br>'
+                                f"A fwd and rev seq file must be provided for every sample.<br>"
+                                f"All seq files must be in fastq.gz format.<br>"
+                                f"Please fix this problem and upload again.<br>"
+                                f"This error was raised because one of the file names for '{sample_name}' did have a valid '.fastq' or 'fastq.gz' extension.",
+                        data={"error_type": "invalid_file_format"}
+                    )
 
     def _format_sample_names(self):
         # Convert sample names to strings and remove white space and greek characters
