@@ -51,6 +51,18 @@
                       <i class="fa fa-ban"></i> Reset
                     </button>
                 </div>
+                <div class="col-sm-auto">
+                    <form>
+                        <div class="form-group">
+                            <select class="form-control form-control-sm" id="exampleFormControlSelect1">
+                                <option value="" selected disabled>Select user</option>
+                                {% for u in current_users %}
+                                    <option>{{u.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
             </div>
             <div data-datasheet-filename="" id="datasheet_filename" class="col-12 invisible"><strong>Datasheet:</strong></div>
             <!-- FEEDBACK MESSAGE HOLDER -->

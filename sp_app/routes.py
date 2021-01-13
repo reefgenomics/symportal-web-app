@@ -288,7 +288,7 @@ def upload_data():
         if current_user.is_anonymous:
             return redirect(url_for('index'))
         if current_user.username == 'humebc':
-            return render_template('submission.html')
+            return render_template('submission.html', current_users=SPUser.query.order_by(SPUser.name).all())
         else:
             return redirect(url_for('index'))
 
@@ -524,6 +524,18 @@ def _check_submission():
                 # check that each of the four uploaded files are in the datasheet
                 uploaded_filename_dict = {request.files[str(file_key)].filename: str(file_key) for file_key in request.files}
                 saved_files = [filename for filename in os.listdir(user_upload_path) if filename.endswith('q.gz')]
+                for _filename in uploaded_filename_dict.keys():
+                    if _filename.endswith('fastq') or _filename.endswith('fq'):
+                        response = {
+                            'error': True, 'message':
+                                '<strong class="text-danger">ERROR: '
+                                'You are attempting to upload uncompressed fastq files. '
+                                'Files must be gzipped. I.e. extension fastq.gz.</strong><br>',
+                            "error_type": "invalid_file_format",
+                            "response_type": "datasheet",
+                            "border_class": "border-danger"
+                        }
+                        return jsonify(response)
                 filenames_in_datasheet = list(df['fastq_fwd_file_name'])
                 filenames_in_datasheet.extend(list(df['fastq_rev_file_name']))
                 for _filename in uploaded_filename_dict.keys():
