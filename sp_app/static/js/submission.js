@@ -335,6 +335,7 @@ $(document).ready(function() {
     var myDropzone = new Dropzone("div#dropZone", {
         url: "/_check_submission",
         parallelUploads: 4,
+	    timeout: 3600000,
         previewTemplate: previewTemplate,
         autoQueue: false, // Make sure the files aren't queued until manually added
         previewsContainer: "#previews", // Define the container to display the previews
