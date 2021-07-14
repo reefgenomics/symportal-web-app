@@ -204,6 +204,14 @@ padding-bottom: 2.5%;
 border-bottom: 1px solid #e4e6e8;
 }
 
+.notification{
+background: #f4f4f4;
+color: #333333;
+border-bottom: 1px solid #e4e6e8;
+}
+
+
+
 
 
 .bg-dark {
