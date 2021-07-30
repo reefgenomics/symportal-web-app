@@ -6,6 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from datetime import datetime
 import os
 import subprocess
+from sqlalchemy import distinct
 
 class OutputResourceFastas:
     """
@@ -39,44 +40,34 @@ class OutputResourceFastas:
         self.json_dict = {}
         
     def _get_objects_from_db(self):
-        self.published_studies = db.session.query(Study.id).filter(Study.is_published==True).all()
-        self.unpublished_studies = db.session.query(Study.id).filter(Study.is_published==False).all()
+        self.published_studies = [ps.id for ps in db.session.query(Study).filter(Study.is_published==True)]
+        self.unpublished_studies = [ups.id for ups in db.session.query(Study).filter(Study.is_published==False)]
         
         print('Retrieving published DataSetSamples')
-        self.published_data_set_samples = []
-        for study_id in self.published_studies:
-            self.published_data_set_samples.extend(db.session.query(Study__DataSetSample.c.datasetsample_id).filter(Study__DataSetSample.c.study_id==study_id))
+        self.published_data_set_samples = [dss.datasetsample_id for dss in db.session.query(Study__DataSetSample.c.datasetsample_id).filter(Study__DataSetSample.c.study_id.in_(self.published_studies)).distinct()]
         print(f'Retrieved {len(self.published_data_set_samples)} DataSetSamples')
         
         print('Retrieving unpublished DataSetSamples')
-        self.unpublished_data_set_samples = []
-        for study_id in self.unpublished_studies:
-            self.unpublished_data_set_samples.extend(db.session.query(Study__DataSetSample.c.datasetsample_id).filter(Study__DataSetSample.c.study_id==study_id))
+        self.unpublished_data_set_samples = [dss.datasetsample_id for dss in db.session.query(Study__DataSetSample.c.datasetsample_id).filter(Study__DataSetSample.c.study_id.in_(self.unpublished_studies)).distinct()]
         print(f'Retrieved {len(self.unpublished_data_set_samples)} DataSetSamples')
 
         # NB we timed if it would be quicker to return specific columns of ReferenceSequence rather than the
         # whole object, and surprisingly, it wasn't.
         print('Retrieving pre-MED seqs from published DataSetSamples')
-        self.pre_med_reference_sequences_published = []
-        for dss_id in self.published_data_set_samples:
-            self.pre_med_reference_sequences_published.extend(db.session.query(DataSetSampleSequencePM.reference_sequence_of_id).filter(DataSetSampleSequencePM.data_set_sample_from_id==dss_id))
-        
+        self.pre_med_reference_sequences_published = [_.reference_sequence_of_id for _ in db.session.query(DataSetSampleSequencePM.reference_sequence_of_id).filter(DataSetSampleSequencePM.data_set_sample_from_id.in_(self.published_data_set_samples)).distinct()]
         self.pre_med_reference_sequences_published = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.pre_med_reference_sequences_published)).all()
         print(f'Retrieved {len(self.pre_med_reference_sequences_published)} ReferenceSeqeuences')
         
         print('Retrieving post-MED seqs from published DataSetSamples')
-        self.post_med_reference_sequences_published = []
-        for dss_id in self.published_data_set_samples:
-            self.post_med_reference_sequences_published.extend(db.session.query(DataSetSampleSequence.reference_sequence_of_id).filter(DataSetSampleSequence.data_set_sample_from_id==dss_id))
+        self.post_med_reference_sequences_published = [dsss.reference_sequence_of_id for dsss in db.session.query(DataSetSampleSequence.reference_sequence_of_id).filter(DataSetSampleSequence.data_set_sample_from_id.in_(self.published_data_set_samples)).distinct()]
         self.post_med_reference_sequences_published = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.post_med_reference_sequences_published)).all()
         print(f'Retrieved {len(self.published_data_set_samples)} ReferenceSeqeuences')
 
         print('Retrieving pre-MED seqs from unpublished DataSetSamples')
-        self.pre_med_reference_sequences_unpublished = []
-        for dss_id in self.unpublished_data_set_samples:
-            self.pre_med_reference_sequences_unpublished.extend(db.session.query(DataSetSampleSequencePM.reference_sequence_of_id).filter(DataSetSampleSequencePM.data_set_sample_from_id==dss_id))
+        self.pre_med_reference_sequences_unpublished = [_.reference_sequence_of_id for _ in db.session.query(DataSetSampleSequencePM.reference_sequence_of_id).filter(DataSetSampleSequencePM.data_set_sample_from_id.in_(self.unpublished_data_set_samples)).distinct()]
         self.pre_med_reference_sequences_unpublished = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.pre_med_reference_sequences_unpublished)).all()
-        print(f'Retrieved {len(self.pre_med_reference_sequences_unpublished)} ReferenceSeqeuences')
+        print(f'Retrieved {len(self.pre_med_reference_sequences_unpublished)} ReferenceSequences')
+        foo = "bar"
 
     def make_fasta_resources(self):
         self._pre_med()
@@ -167,3 +158,5 @@ class OutputResourceFastas:
                 f.write(f'{rs_obj.sequence}\n')
         # Then compress as this will be large
         subprocess.run(['gzip', '-f', path])
+
+OutputResourceFastas().make_fasta_resources()

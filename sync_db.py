@@ -7,7 +7,7 @@ to the SymPortal.org collection of studies.
 The first thing to do will be to drop the current database, create a newone and then restore with the new back.
 I think we should keep a total of 3 .bak files. We can keep the original names, but append a 0, 1 or 2 to them
 so that the 0 is the newest, the 1 is the next newest etc. If a 2 exists at the point of transfer, we will delete this.
-One the new database has been restored from the .bak, we will sync the database using the published_articles_sp
+Once the new database has been restored from the .bak, we will sync the database using the published_articles_sp
 that will also have been sent up. I think it will be a good idea to have a common part of the name between the 
 published articles sp json and the database. I think date and time are probably a good idea. Like the .bak, we
 can keep some versions of the published articles sp json.

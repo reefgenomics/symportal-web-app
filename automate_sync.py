@@ -26,10 +26,6 @@ pull down the app.db
 pg_dump out to a .bak, drop, create, restore on local.
 # Now local should be good to go.
 
-# we can in theory test this all using th AWS instance
-# For the time being we can also manually put the .bak and the json file
-# in the output directory of the bongaerts study.
-
 
 On Zygote:
 This will be fired either from within SymPortal itself or manually.
@@ -113,7 +109,7 @@ class AutomateSync:
 
         print('Running /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py. stdout:')
         stdin, stdout, stderr = self.ssh_client.exec_command(f'sudo /home/humebc/miniconda3/envs/symportal_org/bin/python3 /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py', get_pty=True)
-        stdin.write(f'{self.remote_web_password}\n')
+        
         stdin.flush()
         while True:
             line = stdout.readline()
