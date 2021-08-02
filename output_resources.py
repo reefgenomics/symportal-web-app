@@ -63,11 +63,24 @@ class OutputResourceFastas:
         self.post_med_reference_sequences_published = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.post_med_reference_sequences_published)).all()
         print(f'Retrieved {len(self.published_data_set_samples)} ReferenceSeqeuences')
 
+        # NB without chunking this runs out of memory on the Linode server that has about 3.5GB of memory.
         print('Retrieving pre-MED seqs from unpublished DataSetSamples')
         self.pre_med_reference_sequences_unpublished = [_.reference_sequence_of_id for _ in db.session.query(DataSetSampleSequencePM.reference_sequence_of_id).filter(DataSetSampleSequencePM.data_set_sample_from_id.in_(self.unpublished_data_set_samples)).distinct()]
-        self.pre_med_reference_sequences_unpublished = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.pre_med_reference_sequences_unpublished)).all()
+        self.pre_med_reference_sequences_unpublished = self._chunk_pre_med_ref_seq_unpub(list_of_ids=self.pre_med_reference_sequences_unpublished)
+        # self.pre_med_reference_sequences_unpublished = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.pre_med_reference_sequences_unpublished)).all()
         print(f'Retrieved {len(self.pre_med_reference_sequences_unpublished)} ReferenceSequences')
         foo = "bar"
+
+    def _chunk_pre_med_ref_seq_unpub(self, list_of_ids):
+        list_to_return = []
+        all_ids = list_of_ids
+        all_ids.sort()
+        while all_ids:
+            chunk = all_ids[:200000]
+            all_ids = all_ids[200000:]
+            list_to_return.extend(db.session.query(ReferenceSequence).filter(
+                ReferenceSequence.id.in_(chunk)).all())
+        return list_to_return
 
     def make_fasta_resources(self):
         self._pre_med()
