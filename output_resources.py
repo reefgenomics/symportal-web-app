@@ -32,7 +32,8 @@ class OutputResourceFastas:
     """
     def __init__(self, cache=False):
         self.resource_dir = os.path.join(os.getcwd(), 'sp_app', 'static', 'resources')
-        self._get_objects_from_db() 
+        self.pre_med_unpublished_temp_path = os.path.join(self.resource_dir, "pre_med_unpublished_tmp")
+        self._get_objects_from_db()
         self.pre_med_fasta_path = os.path.join(self.resource_dir, 'published_pre_med.fasta')
         self.post_med_fasta_path = os.path.join(self.resource_dir, 'published_post_med.fasta')
         self.div_fasta_path = os.path.join(self.resource_dir, 'published_div.fasta')
@@ -63,24 +64,28 @@ class OutputResourceFastas:
         self.post_med_reference_sequences_published = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.post_med_reference_sequences_published)).all()
         print(f'Retrieved {len(self.published_data_set_samples)} ReferenceSeqeuences')
 
-        # NB without chunking this runs out of memory on the Linode server that has about 3.5GB of memory.
+        # NB we were running out of memory on the Linode server when trying to work with the
+        # ReferenceSequence objects. As such we will use only the list of IDs for the RefSeq objects
+
         print('Retrieving pre-MED seqs from unpublished DataSetSamples')
-        self.pre_med_reference_sequences_unpublished = [_.reference_sequence_of_id for _ in db.session.query(DataSetSampleSequencePM.reference_sequence_of_id).filter(DataSetSampleSequencePM.data_set_sample_from_id.in_(self.unpublished_data_set_samples)).distinct()]
-        self.pre_med_reference_sequences_unpublished = self._chunk_pre_med_ref_seq_unpub(list_of_ids=self.pre_med_reference_sequences_unpublished)
-        # self.pre_med_reference_sequences_unpublished = db.session.query(ReferenceSequence).filter(ReferenceSequence.id.in_(self.pre_med_reference_sequences_unpublished)).all()
-        print(f'Retrieved {len(self.pre_med_reference_sequences_unpublished)} ReferenceSequences')
-        foo = "bar"
+        self.pre_med_reference_sequence_ids_unpublished = [_.reference_sequence_of_id for _ in db.session.query(DataSetSampleSequencePM.reference_sequence_of_id).filter(DataSetSampleSequencePM.data_set_sample_from_id.in_(self.unpublished_data_set_samples)).distinct()]
+        print(f'Identified {len(self.pre_med_reference_sequence_ids_unpublished)} ReferenceSequences')
 
     def _chunk_pre_med_ref_seq_unpub(self, list_of_ids):
-        list_to_return = []
         all_ids = list_of_ids
         all_ids.sort()
+        count = 0
         while all_ids:
             chunk = all_ids[:200000]
             all_ids = all_ids[200000:]
-            list_to_return.extend(db.session.query(ReferenceSequence).filter(
-                ReferenceSequence.id.in_(chunk)).all())
-        return list_to_return
+            ref_seqs = db.session.query(ReferenceSequence).filter(
+                ReferenceSequence.id.in_(chunk)).all()
+            count += len(ref_seqs)
+            with open(self.pre_med_unpublished_temp_path, "a") as f:
+                for rs_obj in ref_seqs:
+                    f.write(f'>{rs_obj}\n')
+                    f.write(f'{rs_obj.sequence}\n')
+        return count
 
     def make_fasta_resources(self):
         self._pre_med()
@@ -154,7 +159,7 @@ class OutputResourceFastas:
         # add the good DIVS directly to the published_named_ref_seqs_list
         withheld_divs = []
         for div in unpub_and_starter:
-            if div not in self.pre_med_reference_sequences_unpublished:
+            if div.id not in self.pre_med_reference_sequence_ids_unpublished:
                 published_named_ref_seqs.append(div)
             else:
                 withheld_divs.append(div)
