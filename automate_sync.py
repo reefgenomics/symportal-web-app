@@ -107,15 +107,17 @@ class AutomateSync:
         Then run the start_symportal.py to get symportal back online.
         """
 
-        print('Running /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py. stdout:')
-        stdin, stdout, stderr = self.ssh_client.exec_command(f'sudo /home/humebc/miniconda3/envs/symportal_org/bin/python3 /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py', get_pty=True)
-        
-        stdin.flush()
-        while True:
-            line = stdout.readline()
-            if not line:
-                break
-            print(line)
+        # print('Running /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py. stdout:')
+        # stdin, stdout, stderr = self.ssh_client.exec_command(f'sudo /home/humebc/miniconda3/envs/symportal_org/bin/python3 /home/humebc/symportal.org/nginx/conf.d/stop_symportal.py', get_pty=True)
+        #
+        # stdout.channel.recv_exit_status()
+        #
+        # stdin.flush()
+        # while True:
+        #     line = stdout.readline()
+        #     if not line:
+        #         break
+        #     print(line)
 
         print(f'\nRunning {self.args.remote_web_sync_script_path} on remote web server. This may take some time.')
         stdin, stdout, stderr = self.ssh_client.exec_command(f'/home/humebc/miniconda3/envs/symportal_org/bin/python3 {self.args.remote_web_sync_script_path} -y --path_to_new_bak {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}')
@@ -244,10 +246,10 @@ class AutomateSync:
         self.ssh_client.load_system_host_keys()
         if self.args.remote_web_connection_type == 'IP':
             # Working with linode instance
-            self.ssh_client.connect(hostname=self.args.remote_web_host, username=self.args.remote_web_user, password=self.remote_web_password)
+            self.ssh_client.connect(hostname=self.args.remote_web_host, username=self.args.remote_web_user, password=self.remote_web_password, timeout=5.0)
         else:
             # Working with the amazon aws ec2 instance
-            self.ssh_client.connect(hostname=self.args.remote_web_host, username=self.args.remote_web_user, key_filename=self.pem_file_path)
+            self.ssh_client.connect(hostname=self.args.remote_web_host, username=self.args.remote_web_user, key_filename=self.pem_file_path, timeout=5.0)
         
         # Open sftp client
         self.sftp_client = self.ssh_client.open_sftp()
