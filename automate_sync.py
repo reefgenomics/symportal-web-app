@@ -74,11 +74,11 @@ class AutomateSync:
         self.json_info_object_list = []
         # If we are working with multiple datasets worth of syncing here, then we should be working from
         # a single .bak file rather than one .bak file per dataset.
-        if len(self.remote_sp_output_paths) > 1:
-            if self.args.remote_bak_path is None:
-                raise RuntimeError('The --remote_bak_path parameter should be passed as multiple datasets are being synced.')
+        if self.args.remote_bak_path is None and len(self.remote_sp_output_paths) > 1:
+            raise RuntimeError('The --remote_bak_path parameter should be passed as multiple datasets are being synced.')
+        elif self.args.remote_bak_path:
             self.remote_bak_path = self.args.remote_bak_path
-            self.time_stamp_str = str(datetime.datetime.now()).split('.')[0].replace('-','').replace(' ','T').replace(':','')
+
         # This is a convenience list that is created from joining the local data dir
         # with the study name in question.
         self.local_data_dirs = []
