@@ -137,7 +137,10 @@ class DBSync:
                 print(f"Match for symportal_database User '{sp_user.name}' was not found")
                 print('Creating a new non-admin User in the symportal_org database')
                 new_user = User(username=sp_user.name)
-                study_name_to_hash_from = sp_user.studies.first().name
+                try:
+                    study_name_to_hash_from = sp_user.studies.first().name
+                except AttributeError:
+                    study_name_to_hash_from = "first_study_281723"
                 # Set the initial password for the user
                 sum_numbers_from_study_name_as_str = str(sum([int(i) for i in list(study_name_to_hash_from) if i.isdigit()]))
                 to_hash = f'{sp_user.name}{sum_numbers_from_study_name_as_str}'.encode('utf-8')
