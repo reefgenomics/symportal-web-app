@@ -136,7 +136,7 @@ class AutomateSync:
 
     def start_sync(self):
         self._read_json_info_from_sp_server()
-        if len(self.json_info_object_list) == 1:
+        if len(self.json_info_object_list) == 1 and self.args.remote_bak_path is None:
             # set the self.remote_bak_path
             self.remote_bak_path = self.json_info_object_list[0]["bak_path"]
         
