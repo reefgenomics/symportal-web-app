@@ -20,7 +20,7 @@ def index():
         
         # get the studies that belong to the user that are not yet published
         try:
-            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+            sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
             user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False, Study.display_online==True) if sp_user in study.users]
         except AttributeError as e:
             user_unpublished_studies = []
@@ -63,7 +63,7 @@ def data_explorer():
     else:
         # If not admin but signed in, then we want to return the published articles
         # and those that the user is authorised to have.
-        sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+        sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
         published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
             .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
             .filter(Study.name != study_to_load.name).all()
@@ -91,7 +91,7 @@ def get_study_data(study_name, file_path):
             # unless they are public
             return redirect(url_for('index'))
         else:
-            sp_user = SPUser.query.filter(SPUser.name == current_user.username).one()
+            sp_user = SPUser.query.filter(SPUser.name == current_user.name).one()
             if (sp_user in study_obj.users) or current_user.is_admin:
                 # Then this study belongs to the logged in user and we should release the data
                 # Or the user is an admin and we should release the data
@@ -166,7 +166,7 @@ def profile():
         if current_user.is_anonymous:
             return redirect(url_for('index'))
         # We will populate a table that shows the studies that the user is authorised for
-        sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+        sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
         user_authorised_studies = list(Study.query.filter(Study.users.contains(sp_user), Study.display_online==True).all())
         # We will also populate a table that will only be visible is the user is an admin
         # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
@@ -200,7 +200,7 @@ def profile():
             # regardless of whether the user is in the users_with_access list
             published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True).all()
         else:
-            sp_user = SPUser.query.filter(SPUser.name==current_user.username).one()
+            sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
             published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
