@@ -3,7 +3,7 @@ from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user
-from sp_app.models import User, ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
+from sp_app.models import ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser
 from werkzeug.urls import url_parse
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
@@ -122,18 +122,10 @@ def login():
         return redirect(url_for('index'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter(User.username==form.username.data).first()
+        user = SPUser.query.filter(SPUser.name==form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash("Invalid username or password")
             return redirect(url_for('login'))
-        try:
-            # We do this as the user may be logged in the local sqlite db but the corresponding object
-            # may not have been created in the symportal_database. If this is the case, the
-            # administrator will need to fix this and the user will need to be told to get in contact
-            # with the administrator.
-            sp_user = SPUser.query.filter(SPUser.name==user.username).one()
-        except NoResultFound:
-            flash("User has not been synced to the symportal_database.\nPlease contact the administrator to fix this.")
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -152,7 +144,7 @@ def change_password():
         return redirect(url_for('index'))
     form=ChangePassword()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = SPUser.query.filter_by(name=form.username.data).first()
         if user is None or not user.check_password(form.current_password.data):
             print("Invalid username or password")
             flash("Invalid username or password")

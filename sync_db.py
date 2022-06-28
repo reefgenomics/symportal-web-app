@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+20220628
+We are now connecting remotely to the zygote postgres db so we no longer need to do the syncing
+
+Old
 This script will be run when we transfer a datbase version from the remote symportal instance
 to the symportal.org server. This transfer will always be in one directrion. From the symportal
 instance, to the symportal server. This transfer will most often occur when we are adding a new study and or user
@@ -58,14 +62,9 @@ class DBSync:
         self.prompt = self.args.no_prompt
 
     def _define_args(self):
-        self.parser.add_argument('--path_to_new_bak', help='The path to the new .bak file that will be used to create the new symportal_database version.', required=True)
-        self.parser.add_argument('--bak_archive_dir', help="The path to the directory that holds the archived .bak symportal_database files", default="/home/humebc/symportal.org/symportal_database_versions")
-        self.parser.add_argument('--psql_user', help="Username for postgresql commands", default='humebc')
         self.parser.add_argument('-y', '--no_prompt', help="Do not prompt before making commits", action='store_false', default=True)     
 
     def sync(self):
-        self._archive_bak()
-        self._restore_from_bak()
         self._verfiy_and_create_users()
         print('Sync complete.')
 

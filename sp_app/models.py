@@ -6,7 +6,7 @@ from sp_app import login
 
 @login.user_loader
 def load_user(id):
-    return User.query.get(int(id))
+    return SPUser.query.get(int(id))
 
 cladeCollectionType = db.Table('dbApp_cladecollectiontype',
     db.Column('id', db.Integer, primary_key=True),
@@ -132,21 +132,22 @@ class Study(db.Model):
     def get_num_samples(self):
         return len(list(self.data_set_samples))
 
-class SPUser(db.Model):
+class SPUser(UserMixin, db.Model):
     __bind_key__ = 'symportal_database'
     __tablename__ = 'dbApp_user'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), index=True, unique=True, nullable=False)
     studies = db.relationship('Study', secondary=SPUser__Study, lazy='dynamic',
      backref=db.backref('users', lazy='dynamic'))
-    # This is set to False when User is created. Upon upload to symportal.org
-    # a user that matches this name will be searched for in the app.db database.
-    # If no matching user if found, an error will be thrown. If a user is found,
-    # This value will be set to true, and the ID of the User in the app.db database
-    # will be stored in app_db_key below.
-    # The id of this object will also be stored in the app.db User object that matches
-    app_db_key_is_set = db.Column(db.Boolean, default=False)
-    app_db_key_id = db.Column(db.Integer, nullable=True)
+    
+    password_hash = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, default=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f'<SPUser {self.name}>'
@@ -228,13 +229,6 @@ class AnalysisType(db.Model):
     def get_ratio_list(self):
         return json.loads(self.footprint_sequence_ratios)
 
-    # def get_clade_collections(self):
-    #     uids_for_query = [int(x) for x in self.list_of_clade_collections.split(',')]
-    #     cc_objs_list = []
-    #     for uid_list in general.chunks(uids_for_query):
-    #         cc_objs_list.extend(list(CladeCollection.objects.filter(id__in=uid_list)))
-    #     return cc_objs_list
-
     def __str__(self):
         return self.name
 
@@ -294,27 +288,3 @@ class DataSetSampleSequencePM(db.Model):
             return self.referncesequence.name
         else:
             return 'ID=' + str(self.id)
-
-# This is the model class for User objects in the sqlite database. It's sole purpose
-# is to store the user passwords
-# There is also a user class in the symportal_database postgres database. The purpose of
-# this class is to be a proxy for the sqlite User class and allow the relation of symportal_database
-# objects to a user class.
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    # Temporarily remove the email field do reduce risk of emails being intercepted
-    # We can reinstate this once we have https setup.
-    # email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
-    is_admin = db.Column(db.Boolean, default=False)
-    
-
-    def __repr__(self):
-        return f'<User {self.username}>'
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
