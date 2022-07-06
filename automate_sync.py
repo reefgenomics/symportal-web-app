@@ -125,23 +125,6 @@ class AutomateSync:
             else:
                 print('Unrecognised response. Please answer y or n.')
 
-    def _user_and_study_populated(self, latest_json_file, json_info):
-        """
-        Check to see that the user is already present
-        in the published_articles_sp.json and that the study
-        is already related
-        """
-        with open(os.path.join(self.args.local_json_dir, latest_json_file), 'r') as f:
-            self.j_obj = json.load(f)
-        # first check to see whether the user already exists
-        for i in range(len(self.j_obj["users"])):
-            if self.j_obj["users"][i]["name"] == json_info["user"]:
-                if json_info["study"] in self.j_obj["users"][i]["studies"]:
-                    for i in range(len(self.j_obj["studies"])):
-                        if self.j_obj["studies"][i]["name"] == json_info["study"]:
-                            return True
-        return False
-
     def _read_json_info_from_sp_server(self):
         # first open up the info json file
         for remote_sp_json_info_path in self.remote_sp_json_info_paths:
@@ -175,14 +158,6 @@ class AutomateSync:
                 self._pull_down_data(remote_sp_output_path=remote_sp_output_path, local_data_dir=local_data_dir)
                 print('Processing data for upload')
                 self._process_sp_output_data(local_data_dir=local_data_dir, json_info=json_info)
-            
-            
-            if os.path.exists(os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))):
-                print(f'{os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))} already exists locally and will not be pulled down')
-            else:
-                print(f'pulling down {self.remote_bak_path}. This may take some time...')
-                #Finally pull down the .bak
-                self.sftp_client.get(remotepath=self.remote_bak_path, localpath=os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path)))
 
     def _connect_to_remote_web_server(self):
         self.ssh_client.close()
@@ -215,71 +190,6 @@ class AutomateSync:
                 remote_web_data_dir = os.path.join(self.args.remote_web_symportal_data_directory, json_info["study"])
                 self.sftp_client.mkdir(remote_web_data_dir)
                 self._put_all(remote=remote_web_data_dir, local=local_data_dir)
-            
-        # Transfer up the bak only once.
-        if ntpath.basename(self.remote_bak_path) not in self.sftp_client.listdir(self.args.remote_web_bak_dir):
-            print(f'Transfering {os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path))} to {os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path))}\nThis may take some time...')
-            # Transfer up the .bak
-            self.sftp_client.put(os.path.join(self.args.local_bak_dir, ntpath.basename(self.remote_bak_path)), os.path.join(self.args.remote_web_bak_dir, ntpath.basename(self.remote_bak_path)))
-            print('Transfer complete')
-            
-    def _update_sp_json_file(self, template_json_file_name):
-        # For each sync object add the Study and User if not already contained to the published
-        # articles json.
-        # We will work with the latest version of the published articles json as a template.
-        with open(os.path.join(self.local_json_dir, template_json_file_name), 'r') as f:
-            self.j_obj = json.load(f)
-        for json_info in self.json_info_object_list:
-            # first check to see whether the user already exists
-            user_to_look_for = json_info["user"]
-            u_exists = False
-            for i in range(len(self.j_obj["users"])):
-                if self.j_obj["users"][i]["name"] == user_to_look_for:
-                    u_exists = True
-                    # If the user exists, add the study to the list
-                    # if it doesn't already exist
-                    if json_info["study"] not in self.j_obj["users"][i]["studies"]:
-                        self.j_obj["users"][i]["studies"].append(json_info["study"])
-                    else:
-                        # User already has the study there so no need to add
-                        pass
-            
-            if not u_exists:
-                # Create a new user dict and add it
-                temp_dict = {
-                "name":json_info["user"],
-                "is_admin":False,
-                "studies":[json_info["study"]]
-                }
-                self.j_obj["users"].append(temp_dict)
-            
-            # In theory the study should not already exist
-            study_to_look_for = json_info["study"]
-            study_found = False
-            for i in range(len(self.j_obj["studies"])):
-                if self.j_obj["studies"][i]["name"] == study_to_look_for:
-                    print(f'{Fore.RED}The study {study_to_look_for} is already in the published articles json.{Style.RESET_ALL}')
-                    print('It will not be added again.')
-                    study_found = True
-            
-            if not study_found:
-                temp_dict = {
-                    "name":study_to_look_for,
-                    "title":study_to_look_for,
-                    "location":"--", "additional_markers":"--",
-                    "run_type":"remote",
-                    "article_url":"--",
-                    "data_url":"--", "is_published":False, "data_explorer":True,
-                    "author_list_string": "--",
-                    "analysis": True,
-                    "data_sets":[json_info["data_set_id"]],
-                    "data_set_samples":[]
-                }
-                self.j_obj["studies"].append(temp_dict)
-        
-        # Now we can write out the json
-        with open(os.path.join(self.local_json_dir, self.new_pub_art_file_name), 'w') as f:
-            json.dump(self.j_obj, f)
     
     def _process_sp_output_data(self, local_data_dir, json_info):
         """
