@@ -28,6 +28,7 @@ dependencies:
   - mccabe
   - ncurses
   - openssl
+  - openpyxl
   - pandas
   - paramiko
   - pip

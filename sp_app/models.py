@@ -119,7 +119,7 @@ class Study(db.Model):
     data_url = db.Column(db.String(250), nullable=True)
     data_explorer = db.Column(db.Boolean, default=False)
     analysis = db.Column(db.Boolean, default=True)
-    data_analysis_id = db.Column(db.Integer, db.ForeignKey('dbApp_dadtaanalysis.id'), nullable=False)
+    data_analysis_id = db.Column(db.Integer, db.ForeignKey('dbApp_dataanalysis.id'), nullable=False)
     author_list_string = db.Column(db.String(500))
     additional_markers = db.Column(db.String(200))
     creation_time_stamp = db.Column(db.String(100), default=set_creation_time_stamp_default)
@@ -130,7 +130,7 @@ class Study(db.Model):
     # # compilation type Study objects will be made when a study is associated with DataSetSamples that are
     # # not exactly represented by a single DataSet object
     # study_type = db.Column(db.String(50), default="dataset_representative")
-    submission = relationship("Submission", back_populates="study")
+    submission = db.relationship("Submission", back_populates="study")
     
     def __str__(self):
         return self.name
