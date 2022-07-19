@@ -549,7 +549,12 @@ def _check_submission():
                     # NB we will temporarily se framework_local_dir_path to the submission name as I don't want
                     # to hard code in the zygote path into this code. We will update this once we transfer to
                     # Zygote or whichever server is hosting the framework.
-                    sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
+                    # Check to see if a user has been selected in the drop down and if so
+                    # use this user
+                    if request.form['user_drop_down_val'] != "":
+                        sp_user = SPUser.query.filter(SPUser.name==request.form['user_drop_down_val']).one()
+                    else:
+                        sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
                     dt_string = str(datetime.utcnow()).split('.')[0].replace('-','').replace(' ','T').replace(':','')
                     submission_name = f"{dt_string}_{sp_user.name}"
                     # Now that we have a unique string for this submission, create a directory of this name

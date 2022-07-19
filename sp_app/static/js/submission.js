@@ -444,6 +444,11 @@ $(document).ready(function() {
                 hide_feedback();
                 disable_buttons();
                 current_datasheet_filename = document.querySelector("#datasheet_filename").getAttribute("data-datasheet-filename");
+                if ($("#exampleFormControlSelect1").val() == null){
+                    formData.append("user_drop_down_val", "");
+                }else{
+                    formData.append("user_drop_down_val", $("#exampleFormControlSelect1").val());
+                };
                 formData.append("datasheet_filename", current_datasheet_filename);
                 formData.append("add_or_upload", "upload");
             }else{
