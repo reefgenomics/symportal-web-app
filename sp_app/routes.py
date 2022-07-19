@@ -560,6 +560,13 @@ def _check_submission():
                     # change the file permissions so that other can execute so that the
                     # directory can be deleted remotely by the chron job from zygote
                     os.chmod(submission_dir, 0o777)
+                    # Change ownership to 
+                    os.chown(submission_dir, 1001, 1001)
+                    # Also change ownership of parent dir
+                    os.chmod(user_upload_path, 0o777)
+                    # Change ownership to 
+                    os.chown(user_upload_path, 1001, 1001)
+
                     with open(os.path.join(submission_dir, f'{submission_name}.md5sum'), 'w') as f:
                         # TODO make this more specific so that we only move over the files that are listed in the
                         # datasheet and the datasheet itself
