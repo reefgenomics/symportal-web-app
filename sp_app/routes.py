@@ -39,8 +39,11 @@ def index():
         # get the studies that belong to the user that are not yet published
         try:
             sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
+            if sp_user.is_admin: # List all pending submissions
+                user_pending_submissions = ALL_SUBMISSIONS
+            else:
+                user_pending_submissions = [sub for sub in ALL_SUBMISSIONS if sub.submitting_user_id == sp_user.id]
             user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False, Study.display_online==True) if sp_user in study.users]
-            user_pending_submissions = [sub for sub in ALL_SUBMISSIONS if sub.submitting_user_id == sp_user.id]
         except AttributeError as e:
             # Anonymous user
             user_unpublished_studies = []
