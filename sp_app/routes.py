@@ -25,24 +25,20 @@ import stat
 # If we modify the database in any way (we don't do this yet), we will explicitly call code to update this variable
 # so that our queries are still up to date.
 # Once this variable is set, we can work with the ORM objects for the remainder of the routes.py
-ALL_STUDIES = Study.query.all()
-SP_USERS = SPUser.query.all()
-ALL_SUBMISSIONS = Submission.query.all()
-
 @app.route('/', methods=['GET','POST'])
 @app.route('/index', methods=['GET','POST'])
 def index():
     if request.method == 'GET':
         # get the studies that will be loaded into the published data set table
-        published_studies = [study for study in ALL_STUDIES if study.is_published is True and study.display_online is True]
+        published_studies = [study for study in Study.query.all() if study.is_published is True and study.display_online is True]
 
         # get the studies that belong to the user that are not yet published
         try:
             sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
             if sp_user.is_admin: # List all pending submissions
-                user_pending_submissions = ALL_SUBMISSIONS
+                user_pending_submissions = Submission.query.all()
             else:
-                user_pending_submissions = [sub for sub in ALL_SUBMISSIONS if sub.submitting_user_id == sp_user.id]
+                user_pending_submissions = [sub for sub in Submission.query.all() if sub.submitting_user_id == sp_user.id]
             user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False, Study.display_online==True) if sp_user in study.users]
         except AttributeError as e:
             # Anonymous user
@@ -74,7 +70,7 @@ def get_spuser_by_name_from_orm_spuser_list(user_to_match):
     """ A sort of wrapper method that gets an ORM object that is the SPUser object from
     the currently logged in user.
     """
-    sp_user = [spuser for spuser in SP_USERS if spuser.name == user_to_match.username]
+    sp_user = [spuser for spuser in SPUser.query.all() if spuser.name == user_to_match.username]
     assert (len(sp_user) == 1)
     return sp_user[0]
 
@@ -82,7 +78,7 @@ def get_study_by_name_from_orm_study_list(study_name_to_match):
     """ A sort of wrapper method that gets an ORM object that is the Study object from
     a study name.
     """
-    study = [study for study in ALL_STUDIES if study.name == study_name_to_match]
+    study = [study for study in Study.query.all() if study.name == study_name_to_match]
     assert (len(study) == 1)
     return study[0]
 
@@ -104,11 +100,11 @@ def data_explorer():
     # c - are unpublished but have the current user in their users_with_access list
     # We also want to exclude the study_to_load study.
     if current_user.is_anonymous:
-        published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.is_published and study.display_online]
+        published_and_authorised_studies = [study for study in Study.query.all() if study.data_explorer and study.is_published and study.display_online]
     elif current_user.is_admin:
         # If user is admin then we just want to display all of the studies that have dataexplorer available
         # regardless of whether the user is in the users_with_access list
-        published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.display_online]
+        published_and_authorised_studies = [study for study in Study.query.all() if study.data_explorer and study.display_online]
     else:
         # If not admin but signed in, then we want to return the published articles
         # and those that the user is authorised to have.
@@ -221,7 +217,7 @@ def profile():
         # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
         if current_user.is_admin:
             admin_authorised_studies = [
-                study for study in ALL_STUDIES if
+                study for study in Study.query.all() if
                 not study.is_published and not sp_user in study.users and study.display_online]
         else:
             admin_authorised_studies = []
@@ -245,17 +241,17 @@ def profile():
         # c - are unpublished but have the current user in their users_with_access list
         # We also want to exclude the study_to_load study.
         if current_user.is_anonymous:
-            published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.is_published and study.display_online]
+            published_and_authorised_studies = [study for study in Study.query.all() if study.data_explorer and study.is_published and study.display_online]
         elif current_user.is_admin:
             # If user is admin then we just want to display all of the studies that have dataexplorer available
             # regardless of whether the user is in the users_with_access list
-            published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.display_online]
+            published_and_authorised_studies = [study for study in Study.query.all() if study.data_explorer and study.display_online]
         else:
             sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
             published_and_authorised_studies = [
-                study for study in ALL_STUDIES if
+                study for study in Study.query.all() if
                 study.data_explorer and study.display_online and study.name != study_to_load.name and
                 (study.is_published or sp_user in study.users)
             ]
@@ -627,10 +623,6 @@ def _check_submission():
                     )
                     db.session.add(new_submission)
                     db.session.commit()
-
-                    # Refresh the database Submission objects so that the user sees updates on the homepage
-                    global ALL_SUBMISSIONS
-                    ALL_SUBMISSIONS = Submission.query.all()
 
                     # TODO if for_analysis is False then report this in the message here
                     # Return a completed response
