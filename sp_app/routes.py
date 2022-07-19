@@ -16,6 +16,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 import subprocess
 from subprocess import CalledProcessError
+import stat
 
 # As we start to work with the remote database we will want to minimise calls to it.
 # As such we will make an initial call to get all studies
@@ -556,6 +557,9 @@ def _check_submission():
                     # submission specific directory.
                     submission_dir = os.path.join(user_upload_path, submission_name)
                     os.makedirs(submission_dir, exist_ok=False)
+                    # change the file permissions so that other can execute so that the
+                    # directory can be deleted remotely by the chron job from zygote
+                    os.chmod(submission_dir, stat.S_IWOTH | stat.S_IXOTH)
                     with open(os.path.join(submission_dir, f'{submission_name}.md5sum'), 'w') as f:
                         # TODO make this more specific so that we only move over the files that are listed in the
                         # datasheet and the datasheet itself
@@ -563,6 +567,7 @@ def _check_submission():
                         for root, dirs, files in os.walk(user_upload_path):
                             for filename in files:
                                 shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
+                                os.chmod(os.path.join(submission_dir, filename), stat.S_IWOTH | stat.S_IXOTH)
                                 # capture the md5sum and add to file
                                 # NB it was a lot of effor to get this working. The shell expansion was not working
                                 # so we now do it file by file (even when using shell=True) and the fact that
@@ -579,6 +584,7 @@ def _check_submission():
                                         ).stdout.decode("utf-8")
                                     )
                             break
+                    os.chmod(os.path.join(submission_dir, f'{submission_name}.md5sum'), stat.S_IWOTH | stat.S_IXOTH)
                     # TODO after we've done the moving, delete any files that might remain in the generic
                     # user directory
 
