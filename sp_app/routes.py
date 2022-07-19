@@ -559,15 +559,19 @@ def _check_submission():
                     os.makedirs(submission_dir, exist_ok=False)
                     # change the file permissions so that other can execute so that the
                     # directory can be deleted remotely by the chron job from zygote
-                    os.chmod(submission_dir, stat.S_IWOTH | stat.S_IXOTH)
+                    os.chmod(submission_dir, 0o777)
                     with open(os.path.join(submission_dir, f'{submission_name}.md5sum'), 'w') as f:
                         # TODO make this more specific so that we only move over the files that are listed in the
                         # datasheet and the datasheet itself
-                        # TODO rename the datasheet to a standard format
+                        
                         for root, dirs, files in os.walk(user_upload_path):
                             for filename in files:
-                                shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
-                                os.chmod(os.path.join(submission_dir, filename), stat.S_IWOTH | stat.S_IXOTH)
+                                if ".xlsx" in filename: # rename the datasheet to a standard format
+                                    shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, f"{submission_name}_datasheet.xlsx"))
+                                    os.chmod(os.path.join(submission_dir, f"{submission_name}_datasheet.xlsx"), 0o777)
+                                else:
+                                    shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
+                                    os.chmod(os.path.join(submission_dir, filename), 0o777)
                                 # capture the md5sum and add to file
                                 # NB it was a lot of effor to get this working. The shell expansion was not working
                                 # so we now do it file by file (even when using shell=True) and the fact that
@@ -584,7 +588,7 @@ def _check_submission():
                                         ).stdout.decode("utf-8")
                                     )
                             break
-                    os.chmod(os.path.join(submission_dir, f'{submission_name}.md5sum'), stat.S_IWOTH | stat.S_IXOTH)
+                    os.chmod(os.path.join(submission_dir, f'{submission_name}.md5sum'), 0o777)
                     # TODO after we've done the moving, delete any files that might remain in the generic
                     # user directory
 
