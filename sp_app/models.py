@@ -119,16 +119,17 @@ class Study(db.Model):
     data_url = db.Column(db.String(250), nullable=True)
     data_explorer = db.Column(db.Boolean, default=False)
     analysis = db.Column(db.Boolean, default=True)
+    data_analysis_id = db.Column(db.Integer, db.ForeignKey('dbApp_dadtaanalysis.id'), nullable=False)
     author_list_string = db.Column(db.String(500))
     additional_markers = db.Column(db.String(200))
     creation_time_stamp = db.Column(db.String(100), default=set_creation_time_stamp_default)
     data_set_samples = db.relationship('DataSetSample', secondary=Study__DataSetSample, lazy='dynamic',
      backref=db.backref('studies', lazy='dynamic'))
-    # This will be either compilation or dataset_representative
-    # A dataset_representative type study will be created for every DataSet object created
-    # compilation type Study objects will be made when a study is associated with DataSetSamples that are
-    # not exactly represented by a single DataSet object
-    study_type = db.Column(db.String(50), default="dataset_representative")
+    # # This will be either compilation or dataset_representative
+    # # A dataset_representative type study will be created for every DataSet object created
+    # # compilation type Study objects will be made when a study is associated with DataSetSamples that are
+    # # not exactly represented by a single DataSet object
+    # study_type = db.Column(db.String(50), default="dataset_representative")
     submission = relationship("Submission", back_populates="study")
     
     def __str__(self):
@@ -230,6 +231,7 @@ class DataAnalysis(db.Model):
     submitting_user = db.Column(db.String(100), nullable=False)
     submitting_user_email = db.Column(db.String(100), nullable=False)
     analysis_complete_time_stamp = db.Column(db.String(100), nullable=False)
+    studies = db.relationship('Study', backref='data_analysis')
 
 class CladeCollection(db.Model):
     __bind_key__ = 'symportal_database'
