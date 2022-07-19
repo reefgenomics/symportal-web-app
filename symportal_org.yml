@@ -6,6 +6,7 @@ dependencies:
   - astroid
   - ca-certificates
   - certifi
+  - colorama
   - click
   - flask
   - flask-login

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, ValidationError, EqualTo
-from sp_app.models import User
+from sp_app.models import SPUser
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -18,6 +18,6 @@ class ChangePassword(FlaskForm):
     submit = SubmitField('Change Password')
 
     def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
+        user = SPUser.query.filter_by(name=username.data).first()
         if user is None:
             raise ValidationError('Username not found in database. Please use a different username.')

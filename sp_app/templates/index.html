@@ -43,7 +43,7 @@
                 <span style="padding-right:1rem;">Logged in as: <b>anonymous</b></span>
                 <a href="{{ url_for('login') }}">Login</a>
                 {% else %}
-                <span style="padding-right:1rem;">Logged in as: <b><a href="{{ url_for('profile') }}" style="text-decoration: underline;">{{ current_user.username }}</a></b></span>
+                <span style="padding-right:1rem;">Logged in as: <b><a href="{{ url_for('profile') }}" style="text-decoration: underline;">{{ current_user.name }}</a></b></span>
                 <a href="{{ url_for('logout') }}">Logout</a>
                 {% endif %}
                 <a href="https://github.com/SymPortal/SymPortal_framework">source code</a><span class="vert_div_smll"></span><a href="https://github.com/SymPortal/SymPortal_framework/wiki">wiki</a><span class="vert_div_smll"></span><a href="/">home</a>
@@ -62,7 +62,25 @@
         <!-- showcase::After -->
     </header>
     
-    
+
+    <section class="notification">
+        <p class="notification_text" style="padding-top: 1em; padding-bottom: 1em; margin-bottom: 0em;"
+           align="center"><strong>Notice:</strong> From 14.07.2021 new submissions to SymPortal will be
+            embargoed for a period of 1 year.<br> After this time they will be made public
+            for querying via SymPortal's DataExplorer.
+            <br>Embargo extensions are available upon request.<br>
+            Submissions made before 14.07.2021 are unaffected by this change
+            and will remain embargoed indefinitely or until published.<br>
+            Please see <a href="{{ url_for('submit_data_learn_more') }}">Submit Data</a> for more details.</p>
+        <p style="padding-top: 1em; padding-bottom: 1em; margin-bottom: 0em;" align="center">
+            <strong>When submitting:</strong><br>
+            Please do not remove primers from your reads. These are required by the Symportal QC pipeline.<br>
+            Please ensure that your read length allows for at least a 30bp overlap: 2x150bp reads are generally insufficient!<br>
+            Please follow the format guidelines in the data submission sheet carefully.<br>
+            Please double check that you are submitting the correct dataset (submitting 16S or RNASeq datasets wastes everyones time :))<br>
+        </p>
+    </section>
+
     <!-- Services and DataExplorer-->
     <section class="services bg-dark">
         <div class="container">
@@ -100,9 +118,6 @@
     </section>
     
     <!-- Enter DataExplorer-->
-    
-
-
 
 
 
@@ -430,10 +445,10 @@
     </section>
 
     <footer class="bg-dark">
-        <p>SymPortal: an analytical framework and platform for coral algal symbiont next-generation sequencing ITS2 profiling</p>
-        <p>Collaborators: 	<a href="https://reefgenomics.kaust.edu.sa/Pages/Home.aspx">Reef Genomics Lab, KAUST</a>;
-							<a href="https://www.southampton.ac.uk/oes/research/facilities/corals.page">The Coral Reef Laboratory, Univerisity of Southampton</a>;
-							<a href="https://nyuad.nyu.edu/en/research/centers-labs-and-projects/marine-biology-lab.html">Marine Biology Lab, NYU Abu Dhabi</a>;
+        <p>SymPortal: a novel analytical framework and platform for coral algal symbiont next-generation sequencing ITS2 profiling</p>
+        <p>Hosted by the <a href="https://padlet.com/chrisvoolstra/tddb7auy6n961um7">Reef Genomics Laboratory, University of Konstanz</a></p>
+        <p>Collaborators: <a href="https://www.southampton.ac.uk/oes/research/facilities/corals.page">The Coral Reef Laboratory, Univerisity of Southampton</a>;
+						    <a href="https://nyuad.nyu.edu/en/research/centers-labs-and-projects/marine-biology-lab.html">Marine Biology Lab, NYU Abu Dhabi</a>;
 							<a href="http://www.personal.psu.edu/tcl3/">The Symbiosis Ecology and Evolution Laboratory, Penn State</a>;</p>
         <p>Images: <a href="https://rsrc.kaust.edu.sa/Pages/Radecker.aspx">N. Raedecker</a>, <a href="https://rsrc.kaust.edu.sa/Pages/Pogoreutz.aspx">C. Pogoreutz</a>, <a href="https://rsrc.kaust.edu.sa/Pages/Gegner.aspx">H. Gegner</a>. Acknowledgements logo: Alex Mercière.</p>
         <br>

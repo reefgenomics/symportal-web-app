@@ -3,7 +3,7 @@ from sp_app import app, db
 import os
 from sp_app.forms import LoginForm, ChangePassword
 from flask_login import current_user, login_user, logout_user, login_required
-from sp_app.models import User, Study, SPUser, Submission
+from sp_app.models import ReferenceSequence, SPDataSet, DataSetSample, DataAnalysis, CladeCollection, AnalysisType, Study, SPUser, Submission
 from werkzeug.urls import url_parse
 from sqlalchemy.orm.exc import NoResultFound
 import json
@@ -37,8 +37,8 @@ def index():
 
         # get the studies that belong to the user that are not yet published
         try:
-            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
-            user_unpublished_studies = [study for study in ALL_STUDIES if study.is_published is False and study.display_online is True and sp_user in study.users]
+            sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
+            user_unpublished_studies = [study for study in Study.query.filter(Study.is_published==False, Study.display_online==True) if sp_user in study.users]
             user_pending_submissions = [sub for sub in ALL_SUBMISSIONS if sub.submitting_user_id == sp_user.id]
         except AttributeError as e:
             # Anonymous user
@@ -108,12 +108,10 @@ def data_explorer():
     else:
         # If not admin but signed in, then we want to return the published articles
         # and those that the user is authorised to have.
-        # Must be data_explorer=True, display_online=True, then either (is_published, users.contains sp_user) and not study to load name
-        sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
-        published_and_authorised_studies = [
-            study for study in ALL_STUDIES if
-            study.data_explorer and study.display_online and
-            (study.name != study_to_load.name) and (study.is_published or sp_user in study.users)]
+        sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
+        published_and_authorised_studies = Study.query.filter(Study.data_explorer==True, Study.display_online==True)\
+            .filter(or_(Study.is_published==True, Study.users.contains(sp_user)))\
+            .filter(Study.name != study_to_load.name).all()
     return render_template('data_explorer.html', study_to_load=study_to_load,
                            published_and_authorised_studies=published_and_authorised_studies, map_key=map_key)
 
@@ -138,7 +136,7 @@ def get_study_data(study_name, file_path):
             # unless they are public
             return redirect(url_for('index'))
         else:
-            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+            sp_user = SPUser.query.filter(SPUser.name == current_user.name).one()
             if (sp_user in study_obj.users) or current_user.is_admin:
                 # Then this study belongs to the logged in user and we should release the data
                 # Or the user is an admin and we should release the data
@@ -169,18 +167,10 @@ def login():
         return redirect(url_for('index'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter(User.username==form.username.data).first()
+        user = SPUser.query.filter(SPUser.name==form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash("Invalid username or password")
             return redirect(url_for('login'))
-        try:
-            # We do this as the user may be logged in the local sqlite db but the corresponding object
-            # may not have been created in the symportal_database. If this is the case, the
-            # administrator will need to fix this and the user will need to be told to get in contact
-            # with the administrator.
-            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=user)
-        except NoResultFound:
-            flash("User has not been synced to the symportal_database.\nPlease contact the administrator to fix this.")
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -199,7 +189,7 @@ def change_password():
         return redirect(url_for('index'))
     form=ChangePassword()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = SPUser.query.filter_by(name=form.username.data).first()
         if user is None or not user.check_password(form.current_password.data):
             print("Invalid username or password")
             flash("Invalid username or password")
@@ -221,8 +211,8 @@ def profile():
         if current_user.is_anonymous:
             return redirect(url_for('index'))
         # We will populate a table that shows the studies that the user is authorised for
-        sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
-        user_authorised_studies = [study for study in ALL_STUDIES if sp_user in study.users and study.display_online]
+        sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
+        user_authorised_studies = list(Study.query.filter(Study.users.contains(sp_user), Study.display_online==True).all())
         # We will also populate a table that will only be visible is the user is an admin
         # This table will be populated with all unpublished studies that the user is not authorised on (these will be shown above)
         if current_user.is_admin:
@@ -257,7 +247,7 @@ def profile():
             # regardless of whether the user is in the users_with_access list
             published_and_authorised_studies = [study for study in ALL_STUDIES if study.data_explorer and study.display_online]
         else:
-            sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+            sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
             # If not admin but signed in, then we want to return the published articles
             # and those that the user is authorised to have.
             published_and_authorised_studies = [

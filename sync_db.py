@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+20220628
+We are now connecting remotely to the zygote postgres db so we no longer need to do the syncing
+
+Old
 This script will be run when we transfer a datbase version from the remote symportal instance
 to the symportal.org server. This transfer will always be in one directrion. From the symportal
 instance, to the symportal server. This transfer will most often occur when we are adding a new study and or user
@@ -7,7 +11,7 @@ to the SymPortal.org collection of studies.
 The first thing to do will be to drop the current database, create a newone and then restore with the new back.
 I think we should keep a total of 3 .bak files. We can keep the original names, but append a 0, 1 or 2 to them
 so that the 0 is the newest, the 1 is the next newest etc. If a 2 exists at the point of transfer, we will delete this.
-One the new database has been restored from the .bak, we will sync the database using the published_articles_sp
+Once the new database has been restored from the .bak, we will sync the database using the published_articles_sp
 that will also have been sent up. I think it will be a good idea to have a common part of the name between the 
 published articles sp json and the database. I think date and time are probably a good idea. Like the .bak, we
 can keep some versions of the published articles sp json.
@@ -58,14 +62,9 @@ class DBSync:
         self.prompt = self.args.no_prompt
 
     def _define_args(self):
-        self.parser.add_argument('--path_to_new_bak', help='The path to the new .bak file that will be used to create the new symportal_database version.', required=True)
-        self.parser.add_argument('--bak_archive_dir', help="The path to the directory that holds the archived .bak symportal_database files", default="/home/humebc/symportal.org/symportal_database_versions")
-        self.parser.add_argument('--psql_user', help="Username for postgresql commands", default='humebc')
         self.parser.add_argument('-y', '--no_prompt', help="Do not prompt before making commits", action='store_false', default=True)     
 
     def sync(self):
-        self._archive_bak()
-        self._restore_from_bak()
         self._verfiy_and_create_users()
         print('Sync complete.')
 
@@ -137,7 +136,10 @@ class DBSync:
                 print(f"Match for symportal_database User '{sp_user.name}' was not found")
                 print('Creating a new non-admin User in the symportal_org database')
                 new_user = User(username=sp_user.name)
-                study_name_to_hash_from = sp_user.studies.first().name
+                try:
+                    study_name_to_hash_from = sp_user.studies.first().name
+                except AttributeError:
+                    study_name_to_hash_from = "first_study_281723"
                 # Set the initial password for the user
                 sum_numbers_from_study_name_as_str = str(sum([int(i) for i in list(study_name_to_hash_from) if i.isdigit()]))
                 to_hash = f'{sp_user.name}{sum_numbers_from_study_name_as_str}'.encode('utf-8')
