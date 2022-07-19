@@ -56,7 +56,7 @@ def index():
         if current_user.is_anonymous:
             allow_submission = False
         else:
-            if current_user.username == 'humebc':
+            if current_user.name == 'humebc':
                 # Only enable for me at the moment
                 allow_submission = True
             else:
@@ -277,7 +277,7 @@ def upload_data():
         # I.e. to prevent users by passing navigation controls
         if current_user.is_anonymous:
             return redirect(url_for('index'))
-        if current_user.username == 'humebc':
+        if current_user.name == 'humebc':
             return render_template('submission.html', current_users=SPUser.query.order_by(SPUser.name).all())
         else:
             return redirect(url_for('index'))
@@ -331,10 +331,10 @@ def _check_submission():
             # Here we are checking to see that the currently staged seq files match those listed in the
             # datasheet and that there are no other errors with the datasheet and seq files
             try:
-                datasheet_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username, data_dict["datasheet_data"])
+                datasheet_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.name, data_dict["datasheet_data"])
                 dc = DatasheetChecker(
                     request=request,
-                    user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username),
+                    user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.name),
                     datasheet_path=datasheet_path)
                 try:
                     dc.check_valid_seq_files_added()
@@ -413,7 +413,7 @@ def _check_submission():
             try:
                 dc = DatasheetChecker(
                     request=request,
-                    user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.username))
+                    user_upload_directory=os.path.join(app.config['UPLOAD_FOLDER'], current_user.name))
                 try:
                     # TODO If we have an error here then we should first try to catch it as the
                     # DatasheetGeneralFormattingError that the we have created and then handle
@@ -548,7 +548,7 @@ def _check_submission():
                     # NB we will temporarily se framework_local_dir_path to the submission name as I don't want
                     # to hard code in the zygote path into this code. We will update this once we transfer to
                     # Zygote or whichever server is hosting the framework.
-                    sp_user = get_spuser_by_name_from_orm_spuser_list(user_to_match=current_user)
+                    sp_user = SPUser.query.filter(SPUser.name==current_user.name).one()
                     dt_string = str(datetime.utcnow()).split('.')[0].replace('-','').replace(' ','T').replace(':','')
                     submission_name = f"{dt_string}_{sp_user.name}"
                     # Now that we have a unique string for this submission, create a directory of this name
@@ -679,7 +679,7 @@ def _check_submission():
 
 def _load_data_sheet_df():
     # Load the datasheet as a df
-    user_upload_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username)
+    user_upload_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.name)
     datasheet_path = os.path.join(user_upload_path, request.form['datasheet_filename'])
     if datasheet_path.endswith('.xlsx'):
         df = pd.read_excel(
@@ -706,7 +706,7 @@ def _reset_submission():
     This will be called when a user hits the reset button.
     Delete user upload dir. Recreate dir.
     """
-    user_dir = os.path.join(app.config['UPLOAD_FOLDER'], current_user.username)
+    user_dir = os.path.join(app.config['UPLOAD_FOLDER'], current_user.name)
     # We want to delete the files that ae in the main user_dir, but not the sub directories
     # that will contain submitted files that are waiting for transfer to the framework server
     deleted_files = []
