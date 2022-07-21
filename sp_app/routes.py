@@ -56,8 +56,7 @@ def index():
         if current_user.is_anonymous:
             allow_submission = False
         else:
-            if current_user.name == 'humebc':
-                # Only enable for me at the moment
+            if current_user.has_upload_permission or current_user.is_admin:
                 allow_submission = True
             else:
                 allow_submission = False
@@ -277,8 +276,10 @@ def upload_data():
         # I.e. to prevent users by passing navigation controls
         if current_user.is_anonymous:
             return redirect(url_for('index'))
-        if current_user.name == 'humebc':
-            return render_template('submission.html', current_users=SPUser.query.order_by(SPUser.name).all())
+        if current_user.is_admin:
+            return render_template('submission.html', current_users=SPUser.query.order_by(SPUser.name).all(), assign_user=True)
+        elif current_user.has_upload_permission:
+            return render_template('submission.html', assign_user=False)
         else:
             return redirect(url_for('index'))
 

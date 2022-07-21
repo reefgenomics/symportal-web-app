@@ -150,6 +150,7 @@ class SPUser(UserMixin, db.Model):
     
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
+    has_upload_permission = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
