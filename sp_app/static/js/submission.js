@@ -125,11 +125,70 @@ $(document).ready(function() {
                 // Or deleting/adding files.
                 // Everytime the staged files are changed we will run this same send_files_for_checking
                 // function and therefore this is already coded up.
-                construct_and_display_error_message_seq_file_select(response);
+                if (response.error_type == "AddedFilesError"){
+                    construct_and_display_error_message_AddedFilesError(response);
+                }else if(response.error_type == "LatLonError"){
+                    construct_and_display_error_message_LatLonError(response)
+                }else if(response.error_type == "DateFormatError"){
+                    construct_and_display_error_message_DateFormatError(response)
+                }
+                
             }
         }
 
-        function construct_and_display_error_message_seq_file_select(response){
+        function construct_and_display_error_message_DateFormatError(response){
+            let message = "";
+            message += '<strong class="text-danger">ERROR: bad collection_date format detected</strong><br><br>'
+
+            let bad_format_samples = response.data["date_dict"];
+            if (Object.keys(bad_format_samples).length){
+                // Then there are some missing files
+                message += "Date must be formatted as YYYYMMDD or YYYYMM or YYYY.<br>"
+                message += "The following samples have badly formatted values: <br>"
+                for (let key in bad_format_samples) {
+                    message += `<pre>   ${key}: ${bad_format_samples[key]}</pre>`;
+                }
+                message += "<br>"
+            }
+            
+            message += "To fix the above problems: <br>Hit the 'Reset' button and upload a modified datasheet.<br>Either correct the entry or leave it blank.<br>"
+            display_feedback(message, response["border_class"]);
+
+            // Activate the reset button
+            document.querySelector("#reset").removeAttribute("disabled");
+
+            // Disable the Upload seq files button
+            document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+            reveal_staging_table();
+        }
+
+        function construct_and_display_error_message_LatLonError(response){
+            let message = "";
+            message += '<strong class="text-danger">ERROR: bad latitude or longitude formats detected</strong><br><br>'
+
+            let bad_format_samples = response.data["lat_long_dict"];
+            if (Object.keys(bad_format_samples).length){
+                // Then there are some missing files
+                message += "Latitude and logitude must be formatted in Decimal Degrees format.<br>"
+                message += "The following samples have badly formatted lat/lon values: <br>"
+                for (let key in bad_format_samples) {
+                    message += `<pre>   ${key}: ${bad_format_samples[key]}</pre>`;
+                }
+                message += "<br>"
+            }
+            
+            message += "To fix the above problems: <br>Hit the 'Reset' button and upload a modified datasheet<br>Either correct the entry or leave it blank.<br>"
+            display_feedback(message, response["border_class"]);
+
+            // Activate the reset button
+            document.querySelector("#reset").removeAttribute("disabled");
+
+            // Disable the Upload seq files button
+            document.querySelector("#start_upload_btn").setAttribute("disabled", "");
+            reveal_staging_table();
+        }
+
+        function construct_and_display_error_message_AddedFilesError(response){
             let message = "";
             message += '<strong class="text-danger">ERROR: missing files, extra files or small files were detected</strong><br><br>'
 

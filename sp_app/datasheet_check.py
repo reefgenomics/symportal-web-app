@@ -4,10 +4,11 @@ import os
 import pandas as pd
 from collections import Counter, defaultdict
 import logging
-from numpy import NaN
+from numpy import NaN, isnan
 import ntpath
 import json
 import re
+from calendar import month_abbr, month_name
 
 # TODO QC
 # Staged same file twice
@@ -31,6 +32,30 @@ class AddedFilesError(Exception):
     Raised when there are either files missing,
     there are files that are not in the supplied datasheet
     or if there are files that are too small.
+    """
+    def __init__(self, message, data):
+        self.message = message
+        self.data = data
+
+    def __str__(self):
+        return str(self.message)
+
+class DateFormatError(Exception):
+    """
+    Raised when there is an error in the date format in the
+    supplied datasheet.
+    """
+    def __init__(self, message, data):
+        self.message = message
+        self.data = data
+
+    def __str__(self):
+        return str(self.message)
+
+class LatLonError(Exception):
+    """
+    Raised when there is an error in the latitude or longitude provided
+    in the supplied datasheet.
     """
     def __init__(self, message, data):
         self.message = message
@@ -98,6 +123,8 @@ class DatasheetChecker:
         self.binomial_dict = {}
         # Key will be sample name value will be string of user-provided lat lon values comma separated
         self.lat_long_dict = {}
+        # Key will be sample name, value will be string of the user-provided date
+        self.date_dict = {}
 
     def do_general_format_check(self):
         # drop any cells in which the sample name is null
@@ -157,6 +184,8 @@ class DatasheetChecker:
         self.sample_meta_info_df.set_index('sample_name', inplace=True, drop=True)
         self.sample_meta_info_df.index = self.sample_meta_info_df.index.map(str)
 
+        # Checking for format elements that cause errors
+
         # If this check fails, an AddedFilesError is raised and this will cause an error message
         # to be reported to the user. The user will have to fix the errors before they can upload
         # Errors will be caused by missing seq files, extra seq files, seq files that are too small
@@ -164,13 +193,151 @@ class DatasheetChecker:
         # Warnings will not prevent users from submitting their seq files
         self._check_seq_files_exist()
 
+        self._check_for_missing_info_and_convert_to_str()
+
+        # TODO this will also cause an error if there are bad formats
+        self._check_lat_long()
+
+        # This will also cause an error if there are bad formats
+        self._check_date_format()
+        
+        # Checking for format elements that cause warnings
         self._check_for_binomial()
 
         self._replace_null_vals_in_meta_info_df()
 
-        self._check_lat_long()
+        
 
-        self._check_for_missing_info_and_convert_to_str()
+        
+
+    def _check_date_format(self):
+        """
+        Try to coerce some of the common date format errors into YYYYMMDD format
+        Common inputs will be DD.MM.YYYY, DD.MM.YY, MM.YYYY or MM.YY
+        We shold throw an error if there is some
+        other format given (i.e. one that is not just '.' and integers)
+        """
+        bad_formats = []
+        lower_month_abbr = [_.lower() for _ in month_abbr][1:]
+        lower_month_name = [_.lower() for _ in month_name][1:]
+        for row_name in self.sample_meta_info_df.index:
+            current_date_value = self.sample_meta_info_df.at[row_name, 'collection_date']
+            if current_date_value == "NoData":
+                continue
+            if not pd.isnull(current_date_value):
+                if re.findall("[A-Za-z]+", current_date_value):
+                    # Then this date is in a bad format
+                    # We will try to extract a year and a month from it
+                    # We will assume that the year is in YYYY format
+                    # and that the month is in either in the common abbreviation form
+                    # or written out in form.
+                    putative_months = re.findall("[A-Za-z]+", current_date_value)
+                    if len(putative_months) == 1:
+                        putative_month = putative_months[0].lower()
+                        if putative_month in lower_month_abbr:
+                            month_ind = lower_month_abbr.index(putative_month) + 1
+                        elif putative_month in lower_month_name:
+                            month_ind = lower_month_name.index(putative_month) + 1
+                        else:
+                            # not recognised so log as error
+                            bad_formats.append((row_name, current_date_value))
+                            continue
+                        # If we got here then we have month_id
+                        if month_ind < 10:
+                            month_ind = f"0{month_ind}"
+                        else:
+                            month_ind = str(month_ind)
+
+                        # Then we need to pull out the year
+                        if len(re.findall("[0-9]{4}", current_date_value)) == 1:
+                            year = re.findall("[0-9]{4}", current_date_value)[0]
+                        else:
+                            bad_formats.append((row_name, current_date_value))
+                            continue
+
+                        # Finally check that there is nothing less after we remove the month and the year
+                        remaining = current_date_value.lower().replace(putative_month, "").replace(year, "").rstrip()
+                        if remaining == "":
+                            # Then we can convert
+                            new_date_value = f"{year}{month_ind}"
+                            print(f'changing {current_date_value} to {new_date_value} for {row_name}')
+                            self.sample_meta_info_df.at[row_name, 'collection_date'] = new_date_value
+                            continue
+                        else:
+                            # There is something left and we call it bad
+                            bad_formats.append((row_name, current_date_value))
+                            continue
+                    else:
+                        # Add to the bad_formats list so that we can print out and
+                        # exit at the end of this
+                        bad_formats.append((row_name, current_date_value))
+                        continue
+                elif "." in current_date_value:
+                    if current_date_value.count(".") == 2:
+                        # Then this is DD.MM.YYYY or DD.MM.YY
+                        new_date_value = current_date_value.replace(".", "")
+                        if len(new_date_value) == 6:
+                            new_date_value = ''.join(["20", new_date_value[4:], new_date_value[2:4], new_date_value[:2]])
+                            print(f'changing {current_date_value} to {new_date_value} for {row_name}')
+                            self.sample_meta_info_df.at[row_name, 'collection_date'] = new_date_value
+                        elif len(new_date_value) == 8:
+                            new_date_value = ''.join([new_date_value[4:], new_date_value[2:4], new_date_value[:2]])
+                            print(f'changing {current_date_value} to {new_date_value} for {row_name}')
+                            self.sample_meta_info_df.at[row_name, 'collection_date'] = new_date_value
+                        else:
+                            bad_formats.append((row_name, current_date_value))
+                    elif current_date_value.count(".") == 1:
+                        # Then this is MM.YY or MM.YYYY
+                        new_date_value = current_date_value.replace(".", "")
+                        if len(new_date_value) == 4:
+                            new_date_value = ''.join(["20", new_date_value[2:], new_date_value[:2]])
+                            print(f'changing {current_date_value} to {new_date_value} for {row_name}')
+                            self.sample_meta_info_df.at[row_name, 'collection_date'] = new_date_value
+                        elif len(new_date_value) == 6:
+                            new_date_value = ''.join([new_date_value[2:], new_date_value[:2]])
+                            print(f'changing {current_date_value} to {new_date_value} for {row_name}')
+                            self.sample_meta_info_df.at[row_name, 'collection_date'] = new_date_value
+                        else:
+                            bad_formats.append((row_name, current_date_value))
+                    else:
+                        bad_formats.append((row_name, current_date_value))
+
+                elif len(re.findall("[0-9]{8}", current_date_value)) == 1:
+                    # Then this is good: YYYYMMDD
+                    continue
+                elif len(re.findall("[0-9]{6}", current_date_value)) == 1:
+                    # Then this is good: YYYYMM
+                    continue
+                elif len(re.findall("^[0-9]{4}$", current_date_value)) == 1:
+                    # Then this is good: YYYY
+                    continue
+                else:
+                    # Else, something else is going on
+                    bad_formats.append((row_name, current_date_value))
+            else:
+                continue
+        if bad_formats:
+            print("There are errors in the date_collection formats")
+            print("Date format should be YYYYMMDD or YYYYMM")
+            for bad_sample, bad_val in bad_formats:
+                self._log_date_error(bad_sample, bad_val)
+                print(f"{bad_sample}: {bad_val}")
+
+        if self.date_dict:
+            # Then we either have missing files, size violation files or extra files
+            message = "There are fomatting errors in the collection_date format.\nThe field should be formatted as YYYYMMDD or YYYYMM or YYYY"
+
+            raise DateFormatError(
+                message=message,
+                data={"date_dict":self.date_dict}
+                )
+        else:
+            # Otherwise there were no errors and we can proceed to check for
+            # other errors and warnings
+            return
+
+    def _log_date_error(self, sample_name, bad_val):
+        self.date_dict[sample_name] = str(bad_val)
 
     def _check_for_missing_info_and_convert_to_str(self):
         """First convert each of the columns to type string.
@@ -198,85 +365,265 @@ class DatasheetChecker:
                 except:
                     self.sample_meta_info_df.at[sample_name, col] = 'NoData'
 
+    # def _check_lat_long(self):
+    #     # check the lat long value for each sample listed
+    #     self.sample_meta_info_df['collection_latitude'] = self.sample_meta_info_df['collection_latitude'].astype(str)
+    #     self.sample_meta_info_df['collection_longitude'] = self.sample_meta_info_df['collection_longitude'].astype(str)
+    #     for i, sample_name in enumerate(self.sample_meta_info_df.index.values.tolist()):
+    #         lat = self.sample_meta_info_df.at[sample_name, 'collection_latitude']
+    #         lon = self.sample_meta_info_df.at[sample_name, 'collection_longitude']
+    #         lat = lat.rstrip().lstrip().replace(chr(176), '')
+    #         lon = lon.rstrip().lstrip().replace(chr(176), '')
+
+    #         # 1 - Check to see if we are dealing with nan values
+    #         # any nan values would initially have been numpy.NaN but after conversion to string above
+    #         # will be "nan".
+    #         # This may cause an issue if the column is in str format already
+    #         if lat == 'nan' or lon == 'nan':
+    #             self.lat_lon_missing.append(sample_name)
+    #             self._set_lat_lon_to_999(sample_name)
+    #             continue
+    #         else:
+    #             # try to see if they are compatable floats
+    #             try:
+    #                 lat_float = float(lat)
+    #                 lon_float = float(lon)
+    #             except Exception:
+    #                 # see if they are decimal degrees only with the hemisphere anotation of degree sign
+    #                 try:
+    #                     if 'N' in lat:
+    #                         lat_float = float(lat.replace('N', '').replace(chr(176), ''))
+    #                         # lat_float should be positive
+    #                         if lat_float < 0:
+    #                             lat_float = lat_float * -1
+    #                     elif 'S' in lat:
+    #                         lat_float = float(lat.replace('S', '').replace(chr(176), ''))
+    #                         # lat_float should be negative
+    #                         if lat_float > 0:
+    #                             lat_float = lat_float * -1
+    #                     else:
+    #                         # There was not an N or S found in the lat so we should raise error
+    #                         raise RuntimeError
+    #                     if 'E' in lon:
+    #                         lon_float = float(lon.replace('E', '').replace(chr(176), ''))
+    #                         # lon_float should be positive
+    #                         if lon_float < 0:
+    #                             lon_float = lon_float * -1
+    #                     elif 'W' in lon:
+    #                         lon_float = float(lon.replace('W', '').replace(chr(176), ''))
+    #                         # lon_float should be negative
+    #                         if lon_float > 0:
+    #                             lon_float = lon_float * -1
+    #                     else:
+    #                         # There was not an N or S found in the lat so we should raise error
+    #                         raise RuntimeError
+    #                 except:
+    #                     # see if they are in proper dms format
+    #                     try:
+    #                         lat_float = self.dms2dec(lat)
+    #                         lon_float = self.dms2dec(lon)
+    #                     # if all this fails, convert to 999
+    #                     except Exception:
+    #                         # The string will be the original values comma separated
+    #                         self._log_lat_lon_error(sample_name)
+    #                         self._set_lat_lon_to_999(sample_name)
+    #                         continue
+    #             # final check to make sure that the values are in a sensible range
+    #             if (-90 <= lat_float <= 90) and (-180 <= lon_float <= 180):
+    #                 self.sample_meta_info_df.at[sample_name, 'collection_latitude'] = lat_float
+    #                 self.sample_meta_info_df.at[sample_name, 'collection_longitude'] = lon_float
+    #             else:
+    #                 self._log_lat_lon_error(sample_name)
+    #                 self._set_lat_lon_to_999(sample_name)
+    #     # finally make sure that the lat and long cols are typed as float
+    #     self.sample_meta_info_df['collection_latitude'] = self.sample_meta_info_df['collection_latitude'].astype(float)
+    #     self.sample_meta_info_df['collection_longitude'] = self.sample_meta_info_df['collection_longitude'].astype(
+    #         float)
+
+    #     if self.lat_long_dict:
+    #         # There were erros in the lat lon formatting
+    #         message = "There are fomatting errors in the lat lon format."
+
+    #         raise LatLonError(
+    #             message=message,
+    #             data={"lat_long_dict":self.lat_long_dict}
+    #             )
+    #     else:
+    #         # Otherwise there were no errors and we can proceed to check for
+    #         # other errors and warnings
+    #         return
+
     def _check_lat_long(self):
         # check the lat long value for each sample listed
-        self.sample_meta_info_df['collection_latitude'] = self.sample_meta_info_df['collection_latitude'].astype(str)
-        self.sample_meta_info_df['collection_longitude'] = self.sample_meta_info_df['collection_longitude'].astype(str)
-        for i, sample_name in enumerate(self.sample_meta_info_df.index.values.tolist()):
+        for i, sample_name in enumerate(self.sample_meta_info_df.index):
             lat = self.sample_meta_info_df.at[sample_name, 'collection_latitude']
             lon = self.sample_meta_info_df.at[sample_name, 'collection_longitude']
-            lat = lat.rstrip().lstrip().replace(chr(176), '')
-            lon = lon.rstrip().lstrip().replace(chr(176), '')
 
-            # 1 - Check to see if we are dealing with nan values
-            # any nan values would initially have been numpy.NaN but after conversion to string above
-            # will be "nan".
-            # This may cause an issue if the column is in str format already
-            if lat == 'nan' or lon == 'nan':
-                self.lat_lon_missing.append(sample_name)
+            try:
+                lat_float, lon_float = self._check_individual_lat_lon(lat, lon)
+            except Exception:
+                self._log_lat_lon_error(sample_name)
                 self._set_lat_lon_to_999(sample_name)
                 continue
+
+            # final check to make sure that the values are in a sensible range
+            if (-90 <= lat_float <= 90) and (-180 <= lon_float <= 180):
+                self.sample_meta_info_df.at[sample_name, 'collection_latitude'] = lat_float
+                self.sample_meta_info_df.at[sample_name, 'collection_longitude'] = lon_float
             else:
-                # try to see if they are compatable floats
-                try:
-                    lat_float = float(lat)
-                    lon_float = float(lon)
-                except Exception:
-                    # see if they are decimal degrees only with the hemisphere anotation of degree sign
-                    try:
-                        if 'N' in lat:
-                            lat_float = float(lat.replace('N', '').replace(chr(176), ''))
-                            # lat_float should be positive
-                            if lat_float < 0:
-                                lat_float = lat_float * -1
-                        elif 'S' in lat:
-                            lat_float = float(lat.replace('S', '').replace(chr(176), ''))
-                            # lat_float should be negative
-                            if lat_float > 0:
-                                lat_float = lat_float * -1
-                        else:
-                            # There was not an N or S found in the lat so we should raise error
-                            raise RuntimeError
-                        if 'E' in lon:
-                            lon_float = float(lon.replace('E', '').replace(chr(176), ''))
-                            # lon_float should be positive
-                            if lon_float < 0:
-                                lon_float = lon_float * -1
-                        elif 'W' in lon:
-                            lon_float = float(lon.replace('W', '').replace(chr(176), ''))
-                            # lon_float should be negative
-                            if lon_float > 0:
-                                lon_float = lon_float * -1
-                        else:
-                            # There was not an N or S found in the lat so we should raise error
-                            raise RuntimeError
-                    except:
-                        # see if they are in proper dms format
-                        try:
-                            lat_float = self.dms2dec(lat)
-                            lon_float = self.dms2dec(lon)
-                        # if all this fails, convert to 999
-                        except Exception:
-                            # The string will be the original values comma separated
-                            self._log_lat_lon_error(sample_name)
-                            self._set_lat_lon_to_999(sample_name)
-                            continue
-                # final check to make sure that the values are in a sensible range
-                if (-90 <= lat_float <= 90) and (-180 <= lon_float <= 180):
-                    self.sample_meta_info_df.at[sample_name, 'collection_latitude'] = lat_float
-                    self.sample_meta_info_df.at[sample_name, 'collection_longitude'] = lon_float
-                else:
-                    self._log_lat_lon_error(sample_name)
-                    self._set_lat_lon_to_999(sample_name)
+                self._log_lat_lon_error(sample_name)
+                self._set_lat_lon_to_999(sample_name)
+
         # finally make sure that the lat and long cols are typed as float
         self.sample_meta_info_df['collection_latitude'] = self.sample_meta_info_df['collection_latitude'].astype(float)
         self.sample_meta_info_df['collection_longitude'] = self.sample_meta_info_df['collection_longitude'].astype(
             float)
 
+        if self.lat_long_dict:
+            # There were erros in the lat lon formatting
+            message = "There are fomatting errors in the lat lon format."
+
+            raise LatLonError(
+                message=message,
+                data={"lat_long_dict":self.lat_long_dict}
+                )
+        else:
+            # Otherwise there were no errors and we can proceed to check for
+            # other errors and warnings
+            return
+
+    def _check_individual_lat_lon(self, lat, lon):
+        """
+        Takes a dirty lat and lon value and either converts to decimial degrees or raises a run time error.
+        Should be able to handle:
+            decimal degrees that have a N S W or E character added to it
+            degrees decimal minute (with N S W or E)
+            degrees minutes seconds (with N S W or E)
+        """
+        if lat == 'nan' or lon == 'nan':
+            raise RuntimeError
+        try:
+            if isnan(lat) or isnan(lon):
+                raise RuntimeError
+        except TypeError:
+            pass
+        try:
+            lat_float = float(lat)
+            lon_float = float(lon)
+        except ValueError as e:
+            # Three options.
+            # 1 - we have been given decimal degrees with a hemisphere sign
+            # 2 - we have been given degree decimal minutes I.e. 27°38.611'N or N27°38.611'
+            # 3 - we have been given degree minutes seconds
+            try:
+                if chr(176) in lat and chr(176) in lon:
+                    # Then we are working with either 2 or 3
+                    if "\"" in lat and "\"" in lon:
+                        # Then we are working with degree minutes seconds (DMS)
+                        # and we should convert using self.dms2dec
+                        lat_float = self._dms2dec(lat)
+                        lon_float = self._dms2dec(lon)
+                    elif "\"" not in lat and "\"" not in lon:
+                        # Then we are working with degree degree minutes (DDM)
+                        # To convert to DD we simply need to remove the NWES characters,
+                        # divide the decimal part by 60 and add it to the degrees part
+                        if "N" in lat:
+                            lat = lat.replace("N", "").replace("'", "")
+                            (lat_deg, lat_degmin) = lat.split(chr(176))
+                            lat_float = int(lat_deg) + (float(lat_degmin) / 60)
+                            if lat_float < 0:
+                                lat_float = lat_float * -1
+                        elif "S" in lat:
+                            lat = lat.replace("S", "").replace("'", "")
+                            (lat_deg, lat_degmin) = lat.split(chr(176))
+                            lat_float = int(lat_deg) + (float(lat_degmin) / 60)
+                            if lat_float > 0:
+                                lat_float = lat_float * -1
+                        else:
+                            raise RuntimeError
+                        if "E" in lon:
+                            lon = lon.replace("E", "").replace("'", "")
+                            (lon_deg, lon_degmin) = lon.split(chr(176))
+                            lon_float = int(lon_deg) + (float(lon_degmin) / 60)
+                            if lon_float < 0:
+                                lon_float = lon_float * -1
+                        elif "W" in lon:
+                            lon = lon.replace("W", "").replace("'", "")
+                            (lon_deg, lon_degmin) = lon.split(chr(176))
+                            lon_float = int(lon_deg) + (float(lon_degmin) / 60)
+                            if lon_float > 0:
+                                lon_float = lon_float * -1
+                        else:
+                            raise RuntimeError
+                    else:
+                        # Then the lat and lon are in different formats
+                        raise RuntimeError
+
+                elif chr(176) not in lat and chr(176) not in lon:
+                    # Then we are working with 1
+                    if "N" in lat:
+                        lat_float = float(lat.replace("N", ""))
+                        if lat_float < 0:
+                            lat_float = lat_float * -1
+                    elif "S" in lat:
+                        lat_float = float(lat.replace("S", ""))
+                        if lat_float > 0:
+                            lat_float = lat_float * -1
+                    else:
+                        raise RuntimeError
+                    if "E" in lon:
+                        lon_float = float(lon.replace("E", ""))
+                        if lon_float < 0:
+                            lon_float = lon_float * -1
+                    elif "W" in lon:
+                        lon_float = float(lon.replace("W", ""))
+                        if lon_float > 0:
+                            lon_float = lon_float * -1
+                    else:
+                        raise RuntimeError
+                elif chr(176) in lat or chr(176) in lon:
+                    # THen there is a degree sign in only one of them and we should raise an error
+                    raise RuntimeError
+            except Exception:
+                raise RuntimeError
+        return lat_float, lon_float
+
+    @staticmethod
+    def _dms2dec(dms_str):
+        """Return decimal representation of DMS
+
+            dms2dec(utf8(48°53'10.18"N))
+            48.8866111111F
+
+            dms2dec(utf8(2°20'35.09"E))
+            2.34330555556F
+
+            dms2dec(utf8(48°53'10.18"S))
+            -48.8866111111F
+
+            dms2dec(utf8(2°20'35.09"W))
+            -2.34330555556F
+
+            """
+
+        dms_str = re.sub(r'\s', '', dms_str)
+
+        sign = -1 if re.search('[swSW]', dms_str) else 1
+
+        numbers = [*filter(len, re.split('\D+', dms_str, maxsplit=4))]
+
+        degree = numbers[0]
+        minute = numbers[1] if len(numbers) >= 2 else '0'
+        second = numbers[2] if len(numbers) >= 3 else '0'
+        frac_seconds = numbers[3] if len(numbers) >= 4 else '0'
+
+        second += "." + frac_seconds
+        return sign * (int(degree) + float(minute) / 60 + float(second) / 3600)
+
     def _log_lat_lon_error(self, sample_name):
-        self.lat_long_dict[sample_name] = ','.join(
-            [self.sample_meta_info_df.at[sample_name, 'collection_latitude'],
-             self.sample_meta_info_df.at[sample_name, 'collection_longitude']
+        self.lat_long_dict[sample_name] = ', '.join(
+            [str(self.sample_meta_info_df.at[sample_name, 'collection_latitude']),
+             str(self.sample_meta_info_df.at[sample_name, 'collection_longitude'])
              ])
 
     def _set_lat_lon_to_999(self, sample_name):

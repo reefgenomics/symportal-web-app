@@ -7,7 +7,7 @@ from sp_app.models import ReferenceSequence, SPDataSet, DataSetSample, DataAnaly
 from werkzeug.urls import url_parse
 from sqlalchemy.orm.exc import NoResultFound
 import json
-from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError, AddedFilesError, UploadedFilesError
+from sp_app.datasheet_check import DatasheetChecker, DatasheetGeneralFormattingError, AddedFilesError, UploadedFilesError, DateFormatError, LatLonError
 import shutil
 import traceback
 import ntpath
@@ -353,12 +353,11 @@ def _check_submission():
                             'error': False, 'warning':True,
                             "data": {
                                 'binomial_dict': dc.binomial_dict,
-                                'lat_long_dict': dc.lat_long_dict,
                                 'lat_long_missing': dc.lat_lon_missing,
                                 'date_missing':dc.date_missing_list,
                                 'depth_missing': dc.depth_missing_list,
                                 'sample_type_missing':dc.sample_type_missing_list,
-                                'taxonomy_missing': list(dc.taxonomy_missing_set)
+                                'taxonomy_missing': list(dc.taxonomy_missing_set),
                             },
                             "border_class": "border-warning"
                         }
@@ -372,10 +371,30 @@ def _check_submission():
                             "border_class": "border-success"
                         }
                         return jsonify(response)
+                
+                # TODO add Error types for bad date and bad lat long values
+                # Force the user to either correct the values to appropriate values or
+                # to delte the offending values
+                except LatLonError as e:
+                    response = {
+                        "error_type": "LatLonError", "check_type": "seq_files", "add_or_upload": "add",
+                        'error': True, 'message': str(e),
+                        "data": e.data,
+                        "border_class": "border-danger"
+                    }
+                    return jsonify(response)
+                except DateFormatError as e:
+                    response = {
+                        "error_type": "DateFormatError", "check_type": "seq_files", "add_or_upload": "add",
+                        'error': True, 'message': str(e),
+                        "data": e.data,
+                        "border_class": "border-danger"
+                    }
+                    return jsonify(response)
                 except AddedFilesError as e:
                     # Then files were missing, too small, or extra files were added
                     response = {
-                        "check_type": "seq_files", "add_or_upload": "add",
+                        "error_type": "AddedFilesError", "check_type": "seq_files", "add_or_upload": "add",
                         'error': True, 'message': str(e),
                         "data": e.data,
                         "border_class": "border-danger"
