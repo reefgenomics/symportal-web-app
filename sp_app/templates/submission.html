@@ -14,6 +14,7 @@
         <!-- Dropzone -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/submission.css') }}">
+        <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
         <title>SymPortal:Submission</title>
     </head>
     <body>
@@ -122,10 +123,8 @@
                 <div class="card-body collapse show" id="collapseInstr">
                     <!-- Instructions that can be collapsed -->
                         <ol>
-                            <li>Complete and upload a datasheet <a href="{{ url_for('static', filename='resources/SymPortal_datasheet_20190419.xlsx') }}">[template]</a></li>
+                            <li>Complete and upload a datasheet <a href="{{ url_for('static', filename='resources/SymPortal_datasheet_20220722.xlsx') }}">[template]</a></li>
                             <li>Upload your paired fastq.gz ITS2 amplicon sequencing files</li>
-<!--                            <li>With your files successfully uploaded click “Validate" </li>-->
-<!--                            <li>After successful validation click "Submit"</li>-->
                         </ol>
                 </div>
             </div>

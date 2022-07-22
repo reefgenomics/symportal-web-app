@@ -45,6 +45,9 @@
                 {% else %}
                 <span style="padding-right:1rem;">Logged in as: <b><a href="{{ url_for('profile') }}" style="text-decoration: underline;">{{ current_user.name }}</a></b></span>
                 <a href="{{ url_for('logout') }}">Logout</a>
+                    {% if current_user.has_upload_permission or current_user.is_admin %}
+                        <a href="{{ url_for('upload_data') }}">Submit Data</a>
+                    {% endif %}
                 {% endif %}
                 <a href="https://github.com/SymPortal/SymPortal_framework">source code</a><span class="vert_div_smll"></span><a href="https://github.com/SymPortal/SymPortal_framework/wiki">wiki</a><span class="vert_div_smll"></span><a href="/">home</a>
             </div>
