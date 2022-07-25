@@ -17,6 +17,7 @@ from datetime import datetime
 import subprocess
 from subprocess import CalledProcessError
 import stat
+from sqlalchemy import or_
 
 # As we start to work with the remote database we will want to minimise calls to it.
 # As such we will make an initial call to get all studies
