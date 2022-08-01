@@ -152,6 +152,16 @@ class DatasheetChecker:
         """
         self.sample_meta_info_df.set_index('sample_name', inplace=True)
         for sample_name in self.sample_meta_info_df.index:
+            # First check that the sample_name only contains sane characters:
+            for c in sample_name:
+                if c not in list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."):
+                    raise DatasheetGeneralFormattingError(
+                    message=f'<strong class="text-danger">Invalid sample name.</strong><br>'
+                            f"The sample {sample_name} contains invalid characters.<br>"
+                            f"Sample names may only contain alphanumeric characters [A-Z,a-z,0-9], underscores [_], dashes [-] and periods [.].<br>"
+                            f"Please fix this problem and upload again.<br>",
+                    data={"error_type": "invalid_sample_name_format"}
+                )
             fwd_str = self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name'].rstrip().lstrip()
             rev_str = self.sample_meta_info_df.at[sample_name, 'fastq_rev_file_name'].rstrip().lstrip()
             if (

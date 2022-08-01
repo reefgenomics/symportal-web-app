@@ -483,6 +483,13 @@ def _check_submission():
                             "response_type": "datasheet",
                             "border_class": "border-danger"
                         }
+                    elif e.data["error_type"] == "invalid_sample_name_format":
+                        response = {
+                            'error': True, 'message': str(e),
+                            "error_type": "invalid_sample_name_format",
+                            "response_type": "datasheet",
+                            "border_class": "border-danger"
+                        }
                     os.remove(dc.datasheet_path)
                     return jsonify(response)
             except Exception as e:
