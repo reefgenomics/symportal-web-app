@@ -245,7 +245,6 @@ $(document).ready(function() {
             let taxonomy_missing = response.data.taxonomy_missing;
             let binomial_dict = response.data.binomial_dict;
             let lat_long_missing = response.data.lat_long_missing;
-            let lat_long_dict = response.data.lat_long_dict;
             let sample_type_missing = response.data.sample_type_missing;
             let date_missing = response.data.date_missing;
             let depth_missing = response.data.depth_missing;
@@ -275,14 +274,6 @@ $(document).ready(function() {
                 lat_long_missing.forEach(function(sample_name){
                     message += `<pre class="text-warning">   ${sample_name}</pre>`;
                 });
-                message += "<br>"
-            }
-            if (Object.keys(lat_long_dict).length > 0){
-                // Then we split binomials that were provided in the species field
-                message += "Lat/lon format is bad for the following samples:<br>"
-                for (let key in lat_long_dict) {
-                    message += `<pre class="text-warning">   ${key}: ${lat_long_dict[key]}</pre>`;
-                }
                 message += "<br>"
             }
             if (sample_type_missing.length > 0){
