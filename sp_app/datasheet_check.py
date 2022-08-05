@@ -205,7 +205,7 @@ class DatasheetChecker:
 
         self._check_for_missing_info_and_convert_to_str()
 
-        # TODO this will also cause an error if there are bad formats
+        # this will also cause an error if there are bad formats
         self._check_lat_long()
 
         # This will also cause an error if there are bad formats
@@ -392,6 +392,8 @@ class DatasheetChecker:
             if (-90 <= lat_float <= 90) and (-180 <= lon_float <= 180):
                 self.sample_meta_info_df.at[sample_name, 'collection_latitude'] = lat_float
                 self.sample_meta_info_df.at[sample_name, 'collection_longitude'] = lon_float
+            elif lat_float==999 or lon_float==999:
+                continue
             else:
                 self._log_lat_lon_error(sample_name)
                 self._set_lat_lon_to_999(sample_name)
@@ -422,11 +424,11 @@ class DatasheetChecker:
             degrees decimal minute (with N S W or E)
             degrees minutes seconds (with N S W or E)
         """
-        if lat == 'nan' or lon == 'nan':
-            raise RuntimeError
+        if lat == 'nan' or lon == 'nan': # This is OK simply set the lat lon to 999
+            return 999, 999
         try:
             if isnan(lat) or isnan(lon):
-                raise RuntimeError
+                return 999, 999
         except TypeError:
             pass
         try:
