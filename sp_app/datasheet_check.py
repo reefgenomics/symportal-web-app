@@ -235,6 +235,11 @@ class DatasheetChecker:
             if current_date_value == "NoData":
                 continue
             if not pd.isnull(current_date_value):
+                # sometime a weird float string was coming in e.g. 20220601.0
+                try:
+                    current_date_value = str(int(float(current_date_value)))
+                except ValueError:
+                    pass
                 if re.findall("[A-Za-z]+", current_date_value):
                     # Then this date is in a bad format
                     # We will try to extract a year and a month from it
