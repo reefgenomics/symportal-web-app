@@ -25,6 +25,11 @@ This will be the signal for the symportal.org code to display these new Study ob
 """
 
 import sys
+from pathlib import Path
+# We have to add the Symportal_framework path so that the settings.py module
+# can be found.
+os.chdir(str(Path(__file__).resolve().parent))
+sys.path.append(str(Path(__file__).resolve().parent))
 import cron_config
 import os
 import subprocess
@@ -164,9 +169,14 @@ class TransferFrameworkToWeb:
             if captured_output.returncode == 0:  # PIDs were returned
                 procs = captured_output.stdout.decode('UTF-8').rstrip().split('\n')
                 if platform.system() == 'Linux':
+                    print("Linux system detected")
                     # Then we expect there to be one PID for the current process
-                    if len(procs) > 1:
-                        sys.exit()
+                    # And one for the cron job
+                    if len(procs) > 2:
+                        print("The following procs were returned:")
+                        for p in procs:
+                            print(p)
+                        raise RuntimeError('\nMore than one instance of cron_transfer_framework_to_web detected. Killing process.')
                 else:
                     # Then we are likely on mac and we expect no PIDs
                     sys.exit()
