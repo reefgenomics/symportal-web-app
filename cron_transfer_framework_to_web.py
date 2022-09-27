@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This script will be managed by chron jobs and will be run once every hour
+This script will be managed by cron jobs and will be run once every hour
 It will be responsible for transfering the output results from datasets/studies that have been
 output on the SymPortal framework over to the web server so that they can be displayed to the user.
 It will do much of the work that was previously done by the combination of the automate_sync.py
@@ -25,7 +25,7 @@ This will be the signal for the symportal.org code to display these new Study ob
 """
 
 import sys
-import chron_config
+import cron_config
 import os
 import subprocess
 import platform
@@ -49,13 +49,13 @@ class TransferFrameworkToWeb:
             Submission.error_has_occured==False
         ).all()
         # The directory to which the Study output directory should be pulled to and processed
-        self.explorer_data_dir = chron_config.explorer_data_dir
+        self.explorer_data_dir = cron_config.explorer_data_dir
 
         # Use paramiko to set up an sftp that we can use to transfer
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
-        self.ssh_client.connect(hostname=chron_config.framework_ip, username=chron_config.framework_user,
-                                password=chron_config.framework_pass)
+        self.ssh_client.connect(hostname=cron_config.framework_ip, username=cron_config.framework_user,
+                                password=cron_config.framework_pass)
 
         # Open sftp client
         self.sftp_client = self.ssh_client.open_sftp()
@@ -160,7 +160,7 @@ class TransferFrameworkToWeb:
             else:
                 raise RuntimeError('Unknown arg at sys.argv[1]')
         except IndexError:
-            captured_output = subprocess.run(['pgrep', '-f', 'chron_transfer_web_to_framework.py'], capture_output=True)
+            captured_output = subprocess.run(['pgrep', '-f', 'cron_transfer_web_to_framework.py'], capture_output=True)
             if captured_output.returncode == 0:  # PIDs were returned
                 procs = captured_output.stdout.decode('UTF-8').rstrip().split('\n')
                 if platform.system() == 'Linux':

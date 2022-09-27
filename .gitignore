@@ -35,4 +35,4 @@ nginx/conf.d/virtual*
 sp_app/explorer_data/
 sp_app/uploads
 submission_test_data/
-/chron_config.py
+/cron_config.py

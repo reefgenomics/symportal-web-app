@@ -590,7 +590,7 @@ def _check_submission():
                     submission_dir = os.path.join(user_upload_path, submission_name)
                     os.makedirs(submission_dir, exist_ok=False)
                     # change the file permissions so that other can execute so that the
-                    # directory can be deleted remotely by the chron job from zygote
+                    # directory can be deleted remotely by the cron job from zygote
                     os.chmod(submission_dir, 0o777)
                     # Change ownership to 
                     os.chown(submission_dir, 1001, 1001)
