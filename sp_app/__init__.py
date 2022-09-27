@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 with open(os.path.join(basedir, 'sp_app', 'password.txt'), 'r') as f:
     password = f.read().rstrip()
-app.config['SQLALCHEMY_BINDS'] = {'symportal_database': f'postgresql://humebc:{password}@172.104.241.93:5432/symportal_database?sslmode=require'}
+app.config['SQLALCHEMY_BINDS'] = {'symportal_database': f'postgresql://humebc:{password}@localhost:5432/symportal_database?sslmode=require'}
 
 # See here: https://stackoverflow.com/a/45537199/5516420 as a possible answer that we are trying to receiving the following error:
 # from the logs here: /var/log/sp_app/sp_app.err.log error is: psycopg2.DatabaseError: SSL SYSCALL error: Connection timed out
