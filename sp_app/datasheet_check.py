@@ -164,8 +164,30 @@ class DatasheetChecker:
                             f"Please fix this problem and upload again.<br>",
                     data={"error_type": "invalid_sample_name_format"}
                 )
-            fwd_str = self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name'].rstrip().lstrip()
-            rev_str = self.sample_meta_info_df.at[sample_name, 'fastq_rev_file_name'].rstrip().lstrip()
+
+            # Check that the sequencing file names exist
+            if pd.isnull(self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name']) or pd.isnull(self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name']):
+                raise DatasheetGeneralFormattingError(
+                message=f'<strong class="text-danger">Invalid file name.</strong><br>'
+                        f"A fwd and rev seq file must be provided for every sample.<br>"
+                        f"All seq files must be in fastq.gz format.<br>"
+                        f"Please fix this problem and upload again.<br>"
+                        f"This error was raised because one of the file names for '{sample_name}' did not end with 'fastq.gz' or 'fq.gz'.",
+                data={"error_type": "invalid_file_format"}
+            )
+            try:
+                fwd_str = self.sample_meta_info_df.at[sample_name, 'fastq_fwd_file_name'].rstrip().lstrip()
+                rev_str = self.sample_meta_info_df.at[sample_name, 'fastq_rev_file_name'].rstrip().lstrip()
+            except AttributeError:
+                raise DatasheetGeneralFormattingError(
+                    message=f'<strong class="text-danger">Invalid file name.</strong><br>'
+                            f"A fwd and rev seq file must be provided for every sample.<br>"
+                            f"All seq files must be in fastq.gz format.<br>"
+                            f"Please fix this problem and upload again.<br>"
+                            f"This error was raised because one of the file names for '{sample_name}' did not end with 'fastq.gz' or 'fq.gz'.",
+                    data={"error_type": "invalid_file_format"}
+                )
+
             if (
                     not fwd_str.endswith('fastq.gz') and not fwd_str.endswith('fq.gz')
             ) or (
