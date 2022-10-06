@@ -26,12 +26,12 @@ This will be the signal for the symportal.org code to display these new Study ob
 
 import sys
 from pathlib import Path
+import os
 # We have to add the Symportal_framework path so that the settings.py module
 # can be found.
 os.chdir(str(Path(__file__).resolve().parent))
 sys.path.append(str(Path(__file__).resolve().parent))
 import cron_config
-import os
 import subprocess
 import platform
 from sp_app import app, db
