@@ -137,11 +137,13 @@ class DatasheetChecker:
             )
         self._format_sample_names()
 
+        self._check_valid_file_names()
+
         # This will raise a DatasheetFormattingError
         # It will be handled in routes.py
         self._check_datasheet_df_vals_unique()
 
-        self._check_valid_file_names()
+        
 
     def _check_valid_file_names(self):
         """
