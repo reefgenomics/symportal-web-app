@@ -757,7 +757,10 @@ class DatasheetChecker:
 
     def _check_vals_of_col_unique(self, column_name):
         # check to see that the values held in a column are unique
-        sample_name_counter = Counter(self.sample_meta_info_df[column_name].values.tolist())
+        if column_name == "sample_name":
+            sample_name_counter = Counter(list(self.sample_meta_info_df.index))
+        else:
+            sample_name_counter = Counter(self.sample_meta_info_df[column_name].values.tolist())
         non_unique_name_list = []
         for col_val, count in sample_name_counter.items():
             if count != 1:
