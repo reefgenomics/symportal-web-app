@@ -744,7 +744,7 @@ class DatasheetChecker:
                 logging.error(f"\t{item}")
             self.duplication_dict[column_name] = non_unique_name_list
             raise DatasheetGeneralFormattingError(
-                message=f'<strong class="text-danger">Column "{column_name}" contains non unique values.</strong><br>Please fix this problem and upload again.',
+                message=f'<strong class="text-danger">Column "{column_name}" contains non unique values.</strong><br>For example, there cannot be two samples with the same name. Please fix this problem and upload again.',
                 data={"error_type": "non_unique", "non_unique_data": self.duplication_dict})
 
     def _make_sample_meta_info_df(self):
