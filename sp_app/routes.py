@@ -634,14 +634,18 @@ def _check_submission():
                     # TODO after we've done the moving, delete any files that might remain in the generic
                     # user directory
 
+                    # 20221010 I am switiching off the for_analysis being false for the below sample types
                     # Determine if the Submission object for_analysis is True or False
                     # We will make the Submission for_analysis False if there are sample types of
                     # sponge, other_animal_host, seawater, sediment, epiphytic or other
                     sample_types = set(df['sample_type'].values)
                     for_analysis = True
-                    for sample_type in 'sponge other_animal_host seawater sediment epiphytic other'.split():
-                        if sample_type in sample_types:
-                            for_analysis = False
+                    # Start of turn off
+                    # for sample_type in 'sponge other_animal_host seawater sediment epiphytic other'.split():
+                    #     if sample_type in sample_types:
+                    #         for_analysis = False
+                    # End of turn off
+
                     # TODO allow a user other than the logged in user to be assigned to the submission.
                     # In the case that the user doesn't already exist, create the user and password credentials
                     # This will only be possible if admin. Also provide a dropdown menu for the admin of users.
