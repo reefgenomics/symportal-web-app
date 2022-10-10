@@ -608,6 +608,9 @@ def _check_submission():
                                 if ".xlsx" in filename: # rename the datasheet to a standard format
                                     shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, f"{submission_name}_datasheet.xlsx"))
                                     os.chmod(os.path.join(submission_dir, f"{submission_name}_datasheet.xlsx"), 0o777)
+                                elif ".csv" in filename: # rename the datasheet to a standard format
+                                    shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, f"{submission_name}_datasheet.csv"))
+                                    os.chmod(os.path.join(submission_dir, f"{submission_name}_datasheet.csv"), 0o777)
                                 else:
                                     shutil.move(os.path.join(user_upload_path, filename), os.path.join(submission_dir, filename))
                                     os.chmod(os.path.join(submission_dir, filename), 0o777)
