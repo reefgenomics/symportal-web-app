@@ -18,6 +18,7 @@ import subprocess
 from subprocess import CalledProcessError
 import stat
 from sqlalchemy import or_
+import warnings
 
 # As we start to work with the remote database we will want to minimise calls to it.
 # As such we will make an initial call to get all studies
@@ -292,6 +293,9 @@ def _check_submission():
     This is also called when a user clicks the #start_upload_btn, to upload either the datasheet or
     the seq files.
     """
+    # Ignore the: UserWarning: Data Validation extension is not supported and will be removed
+    # that we get when reading in the excel sheet in pandas
+    warnings.simplefilter(action='ignore', category=UserWarning)
     if not request.files:
     # Then this is checking files in the staged area, i.e. files have been added (selected from the users OS file
     # system) or removed from the staging area.
