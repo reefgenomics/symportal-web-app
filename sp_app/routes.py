@@ -558,8 +558,8 @@ def _check_submission():
                             "border_class": "border-danger"
                         }
                         return jsonify(response)
-                filenames_in_datasheet = list(df['fastq_fwd_file_name'])
-                filenames_in_datasheet.extend(list(df['fastq_rev_file_name']))
+                filenames_in_datasheet = list(_.strip() for _ in df['fastq_fwd_file_name'])
+                filenames_in_datasheet.extend(_.strip() for _ in list(df['fastq_rev_file_name']))
                 for _filename in uploaded_filename_dict.keys():
                     if _filename not in filenames_in_datasheet:
                         raise UploadedFilesError(f'{_filename} is uploaded but not found in the datasheet', data=None)
